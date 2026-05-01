@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The Scavenger's Chronicles</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <canvas id="game" aria-label="The Scavenger's Chronicles prototype"></canvas>
+
+      <section class="hud" aria-live="polite">
+        <div>
+          <span class="eyebrow">The Scavenger's Chronicles</span>
+          <strong id="modeLabel">Estate</strong>
+        </div>
+        <div class="hud-meter">
+          <span>Place</span>
+          <strong id="placeLabel">Retro living room</strong>
+        </div>
+        <div class="hud-meter hud-wide">
+          <span>Mission</span>
+          <strong id="missionLabel">Sacred Cable Pilgrimage</strong>
+        </div>
+        <div class="hud-meter hud-wide">
+          <span>Inventory</span>
+          <strong id="inventoryLabel">Empty</strong>
+        </div>
+        <button id="missionButton" class="hud-button" type="button">Missions</button>
+        <button id="checklistButton" class="hud-button" type="button">Checklist</button>
+      </section>
+
+      <section class="mission-dock" aria-live="polite">
+        <div>
+          <span class="eyebrow">Current Compulsion</span>
+          <strong id="missionDockTitle">Sacred Cable Pilgrimage</strong>
+          <p id="guideLabel">Read the intro</p>
+        </div>
+      </section>
+
+      <div id="toast" class="toast" hidden></div>
+
+      <section id="missionOverlay" class="panel-overlay" aria-labelledby="missionTitle" hidden>
+        <div class="panel">
+          <header class="panel-header">
+            <div>
+              <span class="eyebrow">Project Management By Hoard</span>
+              <h2 id="missionTitle">Mission Browser</h2>
+            </div>
+            <button id="missionClose" class="panel-close" type="button">Close</button>
+          </header>
+          <p class="panel-help">
+            Pick the errand The Scavenger is currently pretending is the last obstacle before genius.
+          </p>
+          <div id="missionList" class="mission-list"></div>
+        </div>
+      </section>
+
+      <section id="checklistOverlay" class="panel-overlay" aria-labelledby="checklistTitle" hidden>
+        <div class="panel checklist-panel">
+          <header class="panel-header">
+            <div>
+              <span class="eyebrow">Optional Personal Decline Audit</span>
+              <h2 id="checklistTitle">Self-Assigned Goals</h2>
+            </div>
+            <button id="checklistClose" class="panel-close" type="button">Close</button>
+          </header>
+          <p class="panel-help">
+            These do not advance the game. They simply document a lifestyle that insists it is research.
+          </p>
+          <div id="checklistProgress" class="checklist-progress">0/10 optional items completed</div>
+          <div id="checklistList" class="checklist-list"></div>
+        </div>
+      </section>
+
+      <section id="endingOverlay" class="ending-overlay" aria-labelledby="endingTitle" hidden>
+        <div class="ending-panel">
+          <span class="eyebrow">Masterpiece Deferred. Escape Attempted.</span>
+          <h2 id="endingTitle">The Airfield Plan</h2>
+          <p>
+            Five errands complete, one basement slightly more dangerous, and still no actual music.
+            The Scavenger decides this means the jet is ready.
+          </p>
+          <canvas id="endingCanvas" class="ending-scene" aria-label="Animated airfield ending scene"></canvas>
+          <p class="ending-signoff">
+            The masterpiece can begin after takeoff, once the correct adapter is found.
+          </p>
+          <button id="endingClose" class="ending-close" type="button">Keep Scavenging</button>
+        </div>
+      </section>
+
+      <section id="introOverlay" class="intro-overlay" aria-labelledby="introTitle" aria-describedby="introCopy">
+        <div class="intro-panel">
+          <div class="intro-window">
+            <div id="introCopy" class="intro-scroll">
+              <p class="intro-kicker">2026. Retro estate. Cable panic.</p>
+              <h1 id="introTitle">The Scavenger's Chronicles</h1>
+              <p>
+                The Scavenger lives in a house where the 1950s interior never blinked, the basement
+                never surrendered, and every newspaper stack is apparently part of a filing system.
+              </p>
+              <p>
+                He owns synthesizers, mixers, rack gear, mystery power supplies, and enough cables to
+                restrain a small elevator. None of this has produced music, but he remains confident
+                the masterpiece is one adapter away.
+              </p>
+              <p>
+                The first objective is simple: find the obscure DIN sync cable in the basement hoard
+                and bring it to the synth altar. After that, surely, forty years of composition will
+                begin immediately.
+              </p>
+              <p>
+                Controls: move with WASD or arrows. Press E, Space, or Enter to inspect, pick up,
+                and deliver. M opens missions. C opens the optional checklist. R drops cargo. F uses
+                it. The hairspray can is not a mechanic. It is a cry for help in aerosol form.
+              </p>
+              <p class="intro-signoff">
+                Good luck. Try not to trip over a cable he calls "load-bearing."
+              </p>
+            </div>
+          </div>
+          <button id="introStart" class="intro-start is-reading" type="button">
+            Mandatory Nostalgia In Progress
+          </button>
+        </div>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
