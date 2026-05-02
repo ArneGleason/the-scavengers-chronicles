@@ -4796,64 +4796,7 @@
     drawPrivateJetArt(endingCtx, { bob: Math.sin(now / 360) * 2 });
     endingCtx.restore();
 
-    const characterScale = w < 420 ? 0.82 : 1;
-    endingCtx.save();
-    endingCtx.translate(w * 0.23, h * 0.72);
-    endingCtx.scale(characterScale, characterScale);
-    endingCtx.fillStyle = "rgba(7, 14, 17, 0.35)";
-    endingCtx.beginPath();
-    endingCtx.ellipse(6, 14, 42, 10, 0, 0, Math.PI * 2);
-    endingCtx.fill();
-    endingCtx.fillStyle = "#2f3030";
-    endingCtx.strokeStyle = "#171c1f";
-    endingCtx.lineWidth = 2;
-    drawRoundedPath(endingCtx, -21, -41, 42, 52, 7);
-    endingCtx.fill();
-    endingCtx.stroke();
-    endingCtx.fillStyle = "#56483d";
-    endingCtx.beginPath();
-    endingCtx.moveTo(-21, -31);
-    endingCtx.lineTo(21, -31);
-    endingCtx.lineTo(17, 7);
-    endingCtx.lineTo(-18, 8);
-    endingCtx.closePath();
-    endingCtx.fill();
-    endingCtx.fillStyle = "#c4936d";
-    endingCtx.beginPath();
-    endingCtx.arc(0, -52, 15, 0, Math.PI * 2);
-    endingCtx.fill();
-    endingCtx.fillStyle = "#44372e";
-    endingCtx.beginPath();
-    endingCtx.ellipse(-15, -42, 6, 24, -0.14, 0, Math.PI * 2);
-    endingCtx.ellipse(15, -42, 6, 24, 0.14, 0, Math.PI * 2);
-    endingCtx.fill();
-    endingCtx.fillStyle = "#d6a57c";
-    endingCtx.beginPath();
-    endingCtx.ellipse(0, -60, 9, 4, 0, 0, Math.PI * 2);
-    endingCtx.fill();
-    endingCtx.fillStyle = "#fff0bd";
-    endingCtx.beginPath();
-    endingCtx.arc(-5, -53, 1.5, 0, Math.PI * 2);
-    endingCtx.arc(6, -53, 1.5, 0, Math.PI * 2);
-    endingCtx.fill();
-    endingCtx.strokeStyle = "#d8c78e";
-    endingCtx.lineWidth = 4;
-    endingCtx.beginPath();
-    endingCtx.moveTo(18, -26);
-    endingCtx.lineTo(53, -15 + Math.sin(now / 220) * 4);
-    endingCtx.stroke();
-    endingCtx.fillStyle = "#39414b";
-    endingCtx.strokeStyle = "#1f272d";
-    endingCtx.lineWidth = 2;
-    drawRoundedPath(endingCtx, 50, -25, 39, 24, 4);
-    endingCtx.fill();
-    endingCtx.stroke();
-    endingCtx.fillStyle = "#e2b262";
-    endingCtx.font = "900 9px sans-serif";
-    endingCtx.textAlign = "left";
-    endingCtx.textBaseline = "alphabetic";
-    endingCtx.fillText("ADPT", 56, -10);
-    endingCtx.restore();
+    drawEndingScavenger(endingCtx, w * 0.23, h * 0.72, w < 420 ? 0.82 : 1, now);
 
     endingCtx.fillStyle = "rgba(24, 20, 16, 0.72)";
     drawRoundedPath(endingCtx, 16, 16, Math.min(426, w - 32), 31, 6);
@@ -4863,6 +4806,187 @@
     endingCtx.textAlign = "left";
     endingCtx.textBaseline = "middle";
     endingCtx.fillText("Private Airfield // Final Adapter Accepted", 30, 31);
+  }
+
+  function drawEndingScavenger(renderCtx, x, y, scale, now) {
+    const armLift = Math.sin(now / 220) * 3.5;
+    const coatSwing = Math.sin(now / 360) * 1.5;
+
+    renderCtx.save();
+    renderCtx.translate(x, y);
+    renderCtx.scale(scale, scale);
+
+    renderCtx.fillStyle = "rgba(7, 14, 17, 0.36)";
+    renderCtx.beginPath();
+    renderCtx.ellipse(7, 14, 43, 10, 0, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    drawEndingLimb(renderCtx, -11, 0, -18, 24, 8, "#25282a", "#141414");
+    drawEndingLimb(renderCtx, 10, 0, 18, 24, 8, "#323333", "#171717");
+    drawEndingShoe(renderCtx, -21, 25, -1, "#1b1917");
+    drawEndingShoe(renderCtx, 22, 25, 1, "#24211e");
+
+    drawEndingLimb(renderCtx, -20, -29, -31, -5, 7, "#c4936d", "#80573f");
+    drawEndingLimb(renderCtx, 19, -29, 54, -16 + armLift, 7, "#d0a079", "#80573f");
+    renderCtx.fillStyle = "#d0a079";
+    renderCtx.beginPath();
+    renderCtx.arc(55, -16 + armLift, 4, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#4f3b30";
+    drawRoundedPath(renderCtx, -28, -35, 18, 45, 5);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#2f3030";
+    renderCtx.strokeStyle = "#3c3d38";
+    renderCtx.lineWidth = 1.2;
+    drawRoundedPath(renderCtx, -20, -43, 43, 55, 8);
+    renderCtx.fill();
+    renderCtx.stroke();
+
+    renderCtx.fillStyle = "#3c3d37";
+    drawRoundedPath(renderCtx, -17, -40, 17, 50, 5);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#4d342a";
+    renderCtx.beginPath();
+    renderCtx.moveTo(0, -40);
+    renderCtx.lineTo(23, -35 + coatSwing);
+    renderCtx.lineTo(18, 10);
+    renderCtx.lineTo(-1, 7);
+    renderCtx.closePath();
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#7b5a45";
+    drawRoundedPath(renderCtx, -25, -37, 50, 16, 5);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#c8a36f";
+    renderCtx.beginPath();
+    renderCtx.arc(-2, -27, 3.3, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#5f6a52";
+    drawRoundedPath(renderCtx, 10, -17, 21, 33, 6);
+    renderCtx.fill();
+    renderCtx.fillStyle = "#434b3c";
+    drawRoundedPath(renderCtx, 14, -11, 13, 16, 3);
+    renderCtx.fill();
+    renderCtx.strokeStyle = "#8b6b4f";
+    renderCtx.lineWidth = 2.3;
+    renderCtx.beginPath();
+    renderCtx.moveTo(-15, -42);
+    renderCtx.lineTo(22, 16);
+    renderCtx.stroke();
+
+    renderCtx.fillStyle = "#c4936d";
+    renderCtx.beginPath();
+    renderCtx.arc(0, -56, 16, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#44372e";
+    renderCtx.beginPath();
+    renderCtx.ellipse(-16, -45, 7, 27, -0.15, 0, Math.PI * 2);
+    renderCtx.ellipse(16, -45, 7, 27, 0.15, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#6b5646";
+    renderCtx.beginPath();
+    renderCtx.ellipse(0, -47, 12, 9, 0, 0, Math.PI);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#d6a57c";
+    renderCtx.beginPath();
+    renderCtx.ellipse(2, -64, 9, 4, 0, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    renderCtx.strokeStyle = "#5a4639";
+    renderCtx.lineWidth = 1.4;
+    renderCtx.beginPath();
+    renderCtx.moveTo(-5, -69);
+    renderCtx.quadraticCurveTo(-1, -74, 2, -69);
+    renderCtx.moveTo(5, -69);
+    renderCtx.quadraticCurveTo(9, -72, 11, -68);
+    renderCtx.stroke();
+
+    renderCtx.fillStyle = "#2d2823";
+    renderCtx.beginPath();
+    renderCtx.arc(-5, -57, 1.6, 0, Math.PI * 2);
+    renderCtx.arc(6, -57, 1.6, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    renderCtx.strokeStyle = "#7d5d45";
+    renderCtx.lineWidth = 1.8;
+    renderCtx.beginPath();
+    renderCtx.moveTo(2, -55);
+    renderCtx.lineTo(6, -51);
+    renderCtx.stroke();
+
+    renderCtx.strokeStyle = "#744d3a";
+    renderCtx.lineWidth = 1.6;
+    renderCtx.beginPath();
+    renderCtx.arc(0, -50, 4.5, 0.1, Math.PI - 0.1);
+    renderCtx.stroke();
+
+    renderCtx.strokeStyle = "#f2d88a";
+    renderCtx.lineWidth = 2.5;
+    renderCtx.beginPath();
+    renderCtx.moveTo(9, -54);
+    renderCtx.lineTo(20, -49);
+    renderCtx.stroke();
+    renderCtx.fillStyle = "rgba(226, 178, 98, 0.8)";
+    renderCtx.beginPath();
+    renderCtx.arc(21, -49, 2.2, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#39414b";
+    renderCtx.strokeStyle = "#2c353c";
+    renderCtx.lineWidth = 1.2;
+    drawRoundedPath(renderCtx, 49, -28 + armLift, 43, 25, 4);
+    renderCtx.fill();
+    renderCtx.stroke();
+    renderCtx.fillStyle = "#e2b262";
+    renderCtx.font = "900 9px sans-serif";
+    renderCtx.textAlign = "left";
+    renderCtx.textBaseline = "alphabetic";
+    renderCtx.fillText("ADPT", 56, -12 + armLift);
+
+    renderCtx.restore();
+  }
+
+  function drawEndingLimb(renderCtx, x1, y1, x2, y2, width, fill, shade = "") {
+    renderCtx.lineCap = "round";
+    renderCtx.lineJoin = "round";
+    renderCtx.strokeStyle = fill;
+    renderCtx.lineWidth = width;
+    renderCtx.beginPath();
+    renderCtx.moveTo(x1, y1);
+    renderCtx.lineTo(x2, y2);
+    renderCtx.stroke();
+    if (!shade) return;
+    renderCtx.save();
+    renderCtx.globalAlpha = 0.18;
+    renderCtx.strokeStyle = shade;
+    renderCtx.lineWidth = Math.max(1.5, width * 0.42);
+    renderCtx.beginPath();
+    renderCtx.moveTo(lerp(x1, x2, 0.52), lerp(y1, y2, 0.52));
+    renderCtx.lineTo(x2, y2);
+    renderCtx.stroke();
+    renderCtx.restore();
+  }
+
+  function drawEndingShoe(renderCtx, x, y, facing, fill) {
+    renderCtx.fillStyle = fill;
+    renderCtx.beginPath();
+    renderCtx.ellipse(x + facing * 3, y, 9, 4.4, 0.08 * facing, 0, Math.PI * 2);
+    renderCtx.fill();
+    renderCtx.save();
+    renderCtx.globalAlpha = 0.18;
+    renderCtx.fillStyle = "#fff5d7";
+    renderCtx.beginPath();
+    renderCtx.ellipse(x + facing, y - 1, 5, 1.4, 0.08 * facing, 0, Math.PI * 2);
+    renderCtx.fill();
+    renderCtx.restore();
   }
 
   function roundedRect(x, y, w, h, r) {

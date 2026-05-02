@@ -29,6 +29,7 @@ All notable prototype milestones for The Scavenger's Chronicles are tracked here
 - Upgraded NPC rendering with flat cutout-style body parts, clearer faces/clothing, and more articulated limb animation for Big Wanda, Gary, gym guys, cops, and ambient animals.
 - Upgraded The Scavenger's lead-character rendering with layered clothing, softer cutout articulation, clearer hair/balding details, directional face cues, satchel detail, and richer walking/carrying states.
 - Let Space, Enter, or E dismiss the mission browser so players can return to scavenging without reaching for the mouse.
+- Polished the finale airfield Scavenger so the ending frame uses the richer lead-character design instead of the older simplified figure.
 
 ## 0.1.0 - First Scavenging Slice
 
