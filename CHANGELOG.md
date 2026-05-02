@@ -6,6 +6,7 @@ All notable prototype milestones for The Scavenger's Chronicles are tracked here
 
 - Added a real Final Adapter leg to the last mission so the adapter joke resolves as a playable objective.
 - Improved the estate, basement, backyard, neighbourhood, landfill, factory, and airfield visuals with more props, texture, furniture, clutter, and environmental detail.
+- Reworked the private jet and final airfield end-card art with a more detailed shared procedural jet graphic.
 - Improved The Scavenger's character silhouette with clearer hair, face, satchel, and body details.
 - Added a broader procedural gag-sound layer for cables, metal, wood, paper, cops, hairspray, synth burps, house creaks, and jet nonsense.
 - Added an intro joke clarifying that the best thing about the game is that it is very short.

@@ -4502,34 +4502,199 @@
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.scale(scale, scale);
-    ctx.fillStyle = "#20262b";
-    ctx.strokeStyle = "#0f1316";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 92, 20, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(-18, -8);
-    ctx.lineTo(-82, -50);
-    ctx.lineTo(6, -18);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(-22, 8);
-    ctx.lineTo(-88, 48);
-    ctx.lineTo(4, 18);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#d8c78e";
-    for (let i = 0; i < 5; i += 1) {
-      ctx.beginPath();
-      ctx.arc(-35 + i * 18, -3, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    drawPrivateJetArt(ctx);
     ctx.restore();
+  }
+
+  function drawPrivateJetArt(renderCtx, options = {}) {
+    const bob = options.bob || 0;
+    renderCtx.save();
+    renderCtx.translate(0, bob);
+    renderCtx.lineJoin = "round";
+    renderCtx.lineCap = "round";
+
+    if (options.shadow !== false) {
+      renderCtx.fillStyle = "rgba(7, 14, 17, 0.34)";
+      renderCtx.beginPath();
+      renderCtx.ellipse(6, 36, 150, 19, -0.04, 0, Math.PI * 2);
+      renderCtx.fill();
+    }
+
+    const outline = "#17242b";
+    const wing = renderCtx.createLinearGradient(-112, -68, 32, 26);
+    wing.addColorStop(0, "#44535a");
+    wing.addColorStop(0.52, "#748288");
+    wing.addColorStop(1, "#c9cfcb");
+
+    renderCtx.fillStyle = wing;
+    renderCtx.strokeStyle = outline;
+    renderCtx.lineWidth = 3;
+    renderCtx.beginPath();
+    renderCtx.moveTo(-34, -9);
+    renderCtx.lineTo(-124, -70);
+    renderCtx.lineTo(24, -21);
+    renderCtx.closePath();
+    renderCtx.fill();
+    renderCtx.stroke();
+
+    renderCtx.fillStyle = "#536269";
+    renderCtx.beginPath();
+    renderCtx.moveTo(-104, -10);
+    renderCtx.lineTo(-145, -58);
+    renderCtx.lineTo(-79, -23);
+    renderCtx.closePath();
+    renderCtx.fill();
+    renderCtx.stroke();
+
+    renderCtx.fillStyle = "#4b5a61";
+    renderCtx.beginPath();
+    renderCtx.moveTo(-112, 9);
+    renderCtx.lineTo(-156, 39);
+    renderCtx.lineTo(-81, 21);
+    renderCtx.closePath();
+    renderCtx.fill();
+    renderCtx.stroke();
+
+    const fuselage = renderCtx.createLinearGradient(-132, -30, 136, 24);
+    fuselage.addColorStop(0, "#b9c0bc");
+    fuselage.addColorStop(0.22, "#eef0e4");
+    fuselage.addColorStop(0.58, "#d1dad8");
+    fuselage.addColorStop(0.82, "#8a999d");
+    fuselage.addColorStop(1, "#f3ead3");
+
+    renderCtx.fillStyle = fuselage;
+    renderCtx.strokeStyle = outline;
+    renderCtx.lineWidth = 3.5;
+    renderCtx.beginPath();
+    renderCtx.moveTo(-130, -11);
+    renderCtx.bezierCurveTo(-90, -35, 48, -31, 119, -12);
+    renderCtx.bezierCurveTo(141, -6, 147, 0, 132, 8);
+    renderCtx.bezierCurveTo(76, 31, -75, 31, -130, 13);
+    renderCtx.bezierCurveTo(-145, 8, -145, -4, -130, -11);
+    renderCtx.closePath();
+    renderCtx.fill();
+    renderCtx.stroke();
+
+    renderCtx.fillStyle = "#fff8dc";
+    renderCtx.globalAlpha = 0.48;
+    renderCtx.beginPath();
+    renderCtx.moveTo(-96, -18);
+    renderCtx.bezierCurveTo(-28, -31, 68, -25, 118, -8);
+    renderCtx.bezierCurveTo(42, -14, -33, -11, -108, 0);
+    renderCtx.closePath();
+    renderCtx.fill();
+    renderCtx.globalAlpha = 1;
+
+    renderCtx.strokeStyle = "#d47a4a";
+    renderCtx.lineWidth = 4.5;
+    renderCtx.beginPath();
+    renderCtx.moveTo(-112, 7);
+    renderCtx.bezierCurveTo(-45, 13, 42, 12, 111, 1);
+    renderCtx.stroke();
+    renderCtx.strokeStyle = "#fff0bd";
+    renderCtx.lineWidth = 1.6;
+    renderCtx.beginPath();
+    renderCtx.moveTo(-106, 2);
+    renderCtx.bezierCurveTo(-33, 6, 54, 5, 113, -5);
+    renderCtx.stroke();
+
+    renderCtx.fillStyle = "#22323b";
+    renderCtx.strokeStyle = "rgba(255, 245, 215, 0.56)";
+    renderCtx.lineWidth = 1.1;
+    renderCtx.beginPath();
+    renderCtx.moveTo(86, -17);
+    renderCtx.bezierCurveTo(105, -15, 121, -9, 129, -4);
+    renderCtx.lineTo(111, 0);
+    renderCtx.bezierCurveTo(101, -4, 92, -8, 84, -9);
+    renderCtx.closePath();
+    renderCtx.fill();
+    renderCtx.stroke();
+
+    for (let i = 0; i < 6; i += 1) {
+      const x = -69 + i * 24;
+      const y = -12 + Math.sin(i * 0.7) * 1.3;
+      drawRoundedPath(renderCtx, x, y, 11, 8, 3);
+      renderCtx.fillStyle = "#243640";
+      renderCtx.fill();
+      renderCtx.strokeStyle = "rgba(255, 245, 215, 0.52)";
+      renderCtx.lineWidth = 1;
+      renderCtx.stroke();
+      renderCtx.fillStyle = "rgba(255, 255, 255, 0.26)";
+      renderCtx.fillRect(x + 2, y + 1.5, 3.5, 1.2);
+    }
+
+    const nearWing = renderCtx.createLinearGradient(-116, 18, 36, 76);
+    nearWing.addColorStop(0, "#d8ded8");
+    nearWing.addColorStop(0.48, "#88979a");
+    nearWing.addColorStop(1, "#44525a");
+    renderCtx.fillStyle = nearWing;
+    renderCtx.strokeStyle = outline;
+    renderCtx.lineWidth = 3;
+    renderCtx.beginPath();
+    renderCtx.moveTo(-27, 9);
+    renderCtx.lineTo(-122, 75);
+    renderCtx.lineTo(32, 21);
+    renderCtx.closePath();
+    renderCtx.fill();
+    renderCtx.stroke();
+
+    renderCtx.fillStyle = "#2b3840";
+    renderCtx.beginPath();
+    renderCtx.ellipse(-56, 23, 22, 11, 0.06, 0, Math.PI * 2);
+    renderCtx.fill();
+    renderCtx.stroke();
+    renderCtx.fillStyle = "#d1d8d2";
+    renderCtx.beginPath();
+    renderCtx.ellipse(-49, 21, 11, 5.4, 0.06, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    renderCtx.strokeStyle = "#1d272d";
+    renderCtx.lineWidth = 3;
+    renderCtx.beginPath();
+    renderCtx.moveTo(-58, 24);
+    renderCtx.lineTo(-58, 43);
+    renderCtx.moveTo(62, 18);
+    renderCtx.lineTo(62, 36);
+    renderCtx.stroke();
+    renderCtx.fillStyle = "#1d272d";
+    renderCtx.beginPath();
+    renderCtx.arc(-58, 46, 6, 0, Math.PI * 2);
+    renderCtx.arc(62, 39, 5, 0, Math.PI * 2);
+    renderCtx.fill();
+    renderCtx.fillStyle = "#eef0e4";
+    renderCtx.beginPath();
+    renderCtx.arc(-58, 46, 2, 0, Math.PI * 2);
+    renderCtx.arc(62, 39, 1.8, 0, Math.PI * 2);
+    renderCtx.fill();
+
+    renderCtx.fillStyle = "#d8c783";
+    renderCtx.strokeStyle = "#26323a";
+    renderCtx.lineWidth = 1.4;
+    drawRoundedPath(renderCtx, -17, 9, 39, 13, 4);
+    renderCtx.fill();
+    renderCtx.stroke();
+    renderCtx.fillStyle = "#2f3438";
+    renderCtx.font = "900 8px sans-serif";
+    renderCtx.textAlign = "center";
+    renderCtx.textBaseline = "middle";
+    renderCtx.fillText("ADPT", 2.5, 16.2);
+
+    renderCtx.restore();
+  }
+
+  function drawRoundedPath(renderCtx, x, y, w, h, r) {
+    const radius = Math.min(r, w / 2, h / 2);
+    renderCtx.beginPath();
+    renderCtx.moveTo(x + radius, y);
+    renderCtx.lineTo(x + w - radius, y);
+    renderCtx.quadraticCurveTo(x + w, y, x + w, y + radius);
+    renderCtx.lineTo(x + w, y + h - radius);
+    renderCtx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    renderCtx.lineTo(x + radius, y + h);
+    renderCtx.quadraticCurveTo(x, y + h, x, y + h - radius);
+    renderCtx.lineTo(x, y + radius);
+    renderCtx.quadraticCurveTo(x, y, x + radius, y);
+    renderCtx.closePath();
   }
 
   function drawEndingScene(now) {
@@ -4544,55 +4709,115 @@
     const h = rect.height;
     endingCtx.clearRect(0, 0, w, h);
     const sky = endingCtx.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, "#6f8290");
-    sky.addColorStop(0.55, "#d0a66e");
-    sky.addColorStop(1, "#313a39");
+    sky.addColorStop(0, "#536a79");
+    sky.addColorStop(0.46, "#d0a66e");
+    sky.addColorStop(0.72, "#57493f");
+    sky.addColorStop(1, "#273536");
     endingCtx.fillStyle = sky;
     endingCtx.fillRect(0, 0, w, h);
 
-    endingCtx.fillStyle = "#394346";
-    endingCtx.fillRect(0, h * 0.62, w, h * 0.38);
-    endingCtx.strokeStyle = "rgba(255, 245, 215, 0.45)";
+    endingCtx.fillStyle = "rgba(255, 214, 116, 0.24)";
+    endingCtx.beginPath();
+    endingCtx.arc(w * 0.17, h * 0.28, 36, 0, Math.PI * 2);
+    endingCtx.fill();
+
+    endingCtx.fillStyle = "rgba(39, 49, 48, 0.8)";
+    endingCtx.beginPath();
+    endingCtx.moveTo(0, h * 0.54);
+    endingCtx.lineTo(w * 0.18, h * 0.45);
+    endingCtx.lineTo(w * 0.33, h * 0.53);
+    endingCtx.lineTo(w * 0.51, h * 0.43);
+    endingCtx.lineTo(w * 0.68, h * 0.55);
+    endingCtx.lineTo(w, h * 0.47);
+    endingCtx.lineTo(w, h * 0.67);
+    endingCtx.lineTo(0, h * 0.67);
+    endingCtx.closePath();
+    endingCtx.fill();
+
+    endingCtx.fillStyle = "rgba(64, 73, 68, 0.76)";
+    endingCtx.fillRect(0, h * 0.56, w, h * 0.12);
+    endingCtx.strokeStyle = "rgba(248, 230, 185, 0.38)";
+    endingCtx.lineWidth = 1;
+    for (let x = -24; x < w + 30; x += 26) {
+      endingCtx.beginPath();
+      endingCtx.moveTo(x, h * 0.58);
+      endingCtx.lineTo(x + 12, h * 0.66);
+      endingCtx.stroke();
+    }
+
+    endingCtx.fillStyle = "#303b3f";
+    endingCtx.beginPath();
+    endingCtx.moveTo(0, h * 0.69);
+    endingCtx.lineTo(w, h * 0.62);
+    endingCtx.lineTo(w, h);
+    endingCtx.lineTo(0, h);
+    endingCtx.closePath();
+    endingCtx.fill();
+
+    endingCtx.fillStyle = "#222b30";
+    endingCtx.beginPath();
+    endingCtx.moveTo(w * 0.33, h * 0.69);
+    endingCtx.lineTo(w * 0.59, h * 0.64);
+    endingCtx.lineTo(w * 0.76, h);
+    endingCtx.lineTo(w * 0.09, h);
+    endingCtx.closePath();
+    endingCtx.fill();
+
+    endingCtx.strokeStyle = "rgba(255, 245, 215, 0.54)";
     endingCtx.lineWidth = 3;
     endingCtx.setLineDash([18, 18]);
     endingCtx.beginPath();
-    endingCtx.moveTo(30, h * 0.78);
-    endingCtx.lineTo(w - 30, h * 0.72);
+    endingCtx.moveTo(w * 0.45, h * 0.68);
+    endingCtx.lineTo(w * 0.43, h * 0.98);
     endingCtx.stroke();
     endingCtx.setLineDash([]);
 
-    endingCtx.save();
-    endingCtx.translate(w * 0.58, h * 0.52 + Math.sin(now / 360) * 2);
-    endingCtx.scale(1.1, 1.1);
-    endingCtx.fillStyle = "#20262b";
-    endingCtx.beginPath();
-    endingCtx.ellipse(0, 0, 120, 28, 0, 0, Math.PI * 2);
-    endingCtx.fill();
-    endingCtx.fillStyle = "#151a1e";
-    endingCtx.beginPath();
-    endingCtx.moveTo(-20, -12);
-    endingCtx.lineTo(-110, -72);
-    endingCtx.lineTo(22, -20);
-    endingCtx.closePath();
-    endingCtx.fill();
-    endingCtx.beginPath();
-    endingCtx.moveTo(-28, 12);
-    endingCtx.lineTo(-118, 68);
-    endingCtx.lineTo(20, 22);
-    endingCtx.closePath();
-    endingCtx.fill();
-    endingCtx.fillStyle = "#e1c374";
-    for (let i = 0; i < 6; i += 1) {
+    for (let i = 0; i < 7; i += 1) {
+      const t = i / 6;
+      const leftX = w * (0.31 - t * 0.2);
+      const rightX = w * (0.62 + t * 0.22);
+      const y = h * (0.7 + t * 0.25);
+      endingCtx.fillStyle = i % 2 ? "#d47a4a" : "#e2b262";
       endingCtx.beginPath();
-      endingCtx.arc(-52 + i * 22, -4, 4, 0, Math.PI * 2);
+      endingCtx.arc(leftX, y, 3.2 + t * 2, 0, Math.PI * 2);
+      endingCtx.arc(rightX, y, 3.2 + t * 2, 0, Math.PI * 2);
+      endingCtx.fill();
+      endingCtx.fillStyle = "rgba(255, 211, 109, 0.16)";
+      endingCtx.beginPath();
+      endingCtx.arc(leftX, y, 9 + t * 7, 0, Math.PI * 2);
+      endingCtx.arc(rightX, y, 9 + t * 7, 0, Math.PI * 2);
       endingCtx.fill();
     }
+
+    const jetScale = Math.min(1.03, Math.max(0.72, w / 360));
+    endingCtx.save();
+    endingCtx.translate(w * (w < 420 ? 0.56 : 0.59), h * 0.49);
+    endingCtx.scale(jetScale, jetScale);
+    drawPrivateJetArt(endingCtx, { bob: Math.sin(now / 360) * 2 });
     endingCtx.restore();
 
+    const characterScale = w < 420 ? 0.82 : 1;
     endingCtx.save();
-    endingCtx.translate(w * 0.25, h * 0.68);
+    endingCtx.translate(w * 0.23, h * 0.72);
+    endingCtx.scale(characterScale, characterScale);
+    endingCtx.fillStyle = "rgba(7, 14, 17, 0.35)";
+    endingCtx.beginPath();
+    endingCtx.ellipse(6, 14, 42, 10, 0, 0, Math.PI * 2);
+    endingCtx.fill();
     endingCtx.fillStyle = "#2f3030";
-    endingCtx.fillRect(-18, -38, 36, 48);
+    endingCtx.strokeStyle = "#171c1f";
+    endingCtx.lineWidth = 2;
+    drawRoundedPath(endingCtx, -21, -41, 42, 52, 7);
+    endingCtx.fill();
+    endingCtx.stroke();
+    endingCtx.fillStyle = "#56483d";
+    endingCtx.beginPath();
+    endingCtx.moveTo(-21, -31);
+    endingCtx.lineTo(21, -31);
+    endingCtx.lineTo(17, 7);
+    endingCtx.lineTo(-18, 8);
+    endingCtx.closePath();
+    endingCtx.fill();
     endingCtx.fillStyle = "#c4936d";
     endingCtx.beginPath();
     endingCtx.arc(0, -52, 15, 0, Math.PI * 2);
@@ -4606,22 +4831,38 @@
     endingCtx.beginPath();
     endingCtx.ellipse(0, -60, 9, 4, 0, 0, Math.PI * 2);
     endingCtx.fill();
+    endingCtx.fillStyle = "#fff0bd";
+    endingCtx.beginPath();
+    endingCtx.arc(-5, -53, 1.5, 0, Math.PI * 2);
+    endingCtx.arc(6, -53, 1.5, 0, Math.PI * 2);
+    endingCtx.fill();
     endingCtx.strokeStyle = "#d8c78e";
     endingCtx.lineWidth = 4;
     endingCtx.beginPath();
     endingCtx.moveTo(18, -26);
-    endingCtx.lineTo(52, -14 + Math.sin(now / 220) * 4);
+    endingCtx.lineTo(53, -15 + Math.sin(now / 220) * 4);
     endingCtx.stroke();
     endingCtx.fillStyle = "#39414b";
-    endingCtx.fillRect(50, -24, 36, 22);
+    endingCtx.strokeStyle = "#1f272d";
+    endingCtx.lineWidth = 2;
+    drawRoundedPath(endingCtx, 50, -25, 39, 24, 4);
+    endingCtx.fill();
+    endingCtx.stroke();
     endingCtx.fillStyle = "#e2b262";
     endingCtx.font = "900 9px sans-serif";
+    endingCtx.textAlign = "left";
+    endingCtx.textBaseline = "alphabetic";
     endingCtx.fillText("ADPT", 56, -10);
     endingCtx.restore();
 
-    endingCtx.fillStyle = "rgba(24, 20, 16, 0.64)";
-    endingCtx.font = "800 14px sans-serif";
-    endingCtx.fillText("Private Airfield: Escape Plan Pending Correct Adapter", 20, 28);
+    endingCtx.fillStyle = "rgba(24, 20, 16, 0.72)";
+    drawRoundedPath(endingCtx, 16, 16, Math.min(426, w - 32), 31, 6);
+    endingCtx.fill();
+    endingCtx.fillStyle = "#fff0bd";
+    endingCtx.font = `900 ${Math.max(10, Math.min(14, w / 24))}px sans-serif`;
+    endingCtx.textAlign = "left";
+    endingCtx.textBaseline = "middle";
+    endingCtx.fillText("Private Airfield // Final Adapter Accepted", 30, 31);
   }
 
   function roundedRect(x, y, w, h, r) {
