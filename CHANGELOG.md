@@ -2,6 +2,27 @@
 
 All notable prototype milestones for The Scavenger's Chronicles are tracked here.
 
+## 0.2.0 - Graphics and Final Adapter Pass
+
+- Added a real Final Adapter leg to the last mission so the adapter joke resolves as a playable objective.
+- Improved the estate, basement, backyard, neighbourhood, landfill, factory, and airfield visuals with more props, texture, furniture, clutter, and environmental detail.
+- Improved The Scavenger's character silhouette with clearer hair, face, satchel, and body details.
+- Added a broader procedural gag-sound layer for cables, metal, wood, paper, cops, hairspray, synth burps, house creaks, and jet nonsense.
+- Added an intro joke clarifying that the best thing about the game is that it is very short.
+- Added always-on mission auto-selection so players are never left missionless between errands.
+- Added escalating mission guidance with directional text, brighter target markers, breadcrumb arrows, snide nudges, and tiny impatient guide beeps.
+- Added comic ambient NPCs: rabbits that adore The Scavenger from a safe distance, birds that bonk into him and recover, rats that trigger a brief involuntary chase, and gym guys who laugh off his distant insults.
+- Improved the corner-store patrol graphics with clearer bylaw uniforms, gadgets, flashlight cones, badges, hats, and movement details.
+- Added the perpetual shabby-kitchen soup timer: every minute The Scavenger must forage a backyard ingredient and return it to the pot before the photo-worthy soup boils over.
+- Added soup-compulsion control pull, soup HUD countdowns, pot/weed target markers, boiling-over disappointment, crying animation, and procedural soup alarm/plop/sob-burp sounds.
+- Reworked the neighbourhood geography so bylaw patrols and gym guys sit across the main dumpster route instead of politely existing where they could be ignored.
+- Replaced the dumpster power-brick errand with a Speak & Spell salvage duel guarded by Gary the Rummager, who must be lured away before the pickup.
+- Added a narrator toggle using browser speech synthesis for gag text, guidance beats, and urgent soup countdown warnings.
+- Added rotating gag-line pools for soup panic, narrator countdowns, Gary, cops, rabbits, rats, birds, gym taunts, discovery re-inspection, inventory nags, and guidance zingers so repeated actions vary instead of grinding the same joke flat.
+- Made narration more robust by debouncing rapid speech calls, preserving the active utterance, resuming browser speech after user gestures, and clarifying the narrator button state.
+- Spread bylaw patrols, gym guys, rabbits, birds, and rats across the estate route, dumpster approach, and gate area so hazards are distributed instead of clumped around one crowded choke point.
+- Added a shared five-second ambient text cooldown so low-priority NPC gags and background barks do not interrupt mission, soup, inventory, or player-triggered narration.
+
 ## 0.1.0 - First Scavenging Slice
 
 - Created a standalone static browser game from the Whiskey Runner Rob canvas pattern.

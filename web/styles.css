@@ -64,6 +64,15 @@ body {
   max-width: 280px;
 }
 
+.hud .hud-soup {
+  min-width: 150px;
+  max-width: 220px;
+}
+
+.hud .hud-soup strong {
+  color: #ffd36d;
+}
+
 .hud-button {
   align-self: center;
   min-height: 38px;

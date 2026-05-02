@@ -68,8 +68,8 @@ The hairspray can is only a background gag. It is not a central mechanic.
 
 - Gated estate alley.
 - Abandoned lot with old appliances.
-- Corner-store dumpster with functional trash.
-- Light cop patrol pressure.
+- Corner-store dumpster with functional trash and antique educational electronics nobody should be emotionally attached to.
+- Bylaw patrol and gym-guy pressure placed directly on the main scavenging route, so the trip to the dumpster feels like crossing a social minefield in bad shoes.
 
 ### Later Zones
 
@@ -85,8 +85,15 @@ The hairspray can is only a background gag. It is not a central mechanic.
 - He can walk through the house, basement, backyard, alley, lot, dumpster route, landfill, factory, and airfield.
 - He has a four-slot inventory with pickup, drop, re-pick, and use.
 - A mission browser lets the player switch active errands.
-- A guidance dock gives wrapped instructions and nearby interaction hints.
+- A guidance dock gives wrapped instructions, nearby interaction hints, directional help, and increasingly snide nudges if the player takes too long.
+- The mission system auto-selects the next available errand so the player is never missionless unless the game has reached the final airfield objective.
+- A shabby-kitchen soup timer interrupts play every minute: The Scavenger must forage a backyard ingredient and return it to the pot before the soup boils over and ruins the photo he planned to share.
+- If the soup deadline gets urgent, his soup obsession starts pulling player movement toward the current soup obligation.
+- An optional narrator toggle uses the browser's speech-synthesis voice to read gag text, guidance beats, and key soup countdown warnings.
 - A checklist points players toward discoveries without affecting progression.
+- Procedural gag sounds differentiate cables, metal, wood, paper, power bricks, cops, hairspray, synth burps, house creaks, and the jet ending.
+- Ambient comic NPCs include rabbits with justified trust issues, birds with poor navigation, rats that provoke involuntary scavenger chases, gym guys who laugh off insults, clearer dumpster patrols, and Gary the Rummager guarding the Speak & Spell like a landfill dragon with reading software.
+- The neighbourhood layout puts bylaw patrols and gym guys in the middle of objective routes rather than safely off to the side.
 - Completing two starter errands opens the landfill and factory missions.
 - Completing all five missions sends The Scavenger to the airfield for the finale.
 
@@ -112,8 +119,9 @@ The hairspray can is only a background gag. It is not a central mechanic.
    - Dig up a backyard stump with personality.
    - Bring it to the living-room shelf zone.
 
-3. **Dumpster Power Diplomacy**
-   - Scavenge a suspicious power brick from the corner-store dumpster.
+3. **Speak & Spell Salvage Duel**
+   - Lure Gary the rival rummager away from the corner-store dumpster.
+   - Scavenge the antique Speak & Spell before Gary returns to guard it.
    - Bring it back to the synth altar.
 
 4. **Grate Shelf Revelation**
@@ -125,6 +133,8 @@ The hairspray can is only a background gag. It is not a central mechanic.
    - Retrieve rack rails from the old factory.
    - Fit them to the basement rack.
    - Return the resulting mystery cable bundle to the synth altar.
+   - Pick up the Final Adapter that the bundle reveals.
+   - Install the Final Adapter at the private airfield so the ending is reachable without the joke becoming a soft lock.
 
 ## Development Notes
 

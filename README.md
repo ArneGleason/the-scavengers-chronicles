@@ -30,13 +30,20 @@ Open `web/index.html` in a browser.
 - The mission chain has five errands:
   - Sacred Cable Pilgrimage
   - Stump of Destiny
-  - Dumpster Power Diplomacy
+  - Speak & Spell Salvage Duel
   - Grate Shelf Revelation
   - Rack Rail Rescue
 - Completing two starter errands opens the landfill and factory route.
-- Completing all five errands points The Scavenger to the private airfield, where the end-state animation triggers.
+- The final mission now reveals a real Final Adapter at the synth altar, then sends it to the private airfield before the end-state animation triggers.
+- The mission system keeps an active errand selected at all times, while the guidance dock adds directions and gets snidier the longer the player avoids the obvious glowing target.
+- Every minute, the shabby-kitchen soup timer interrupts everything: forage a backyard ingredient, return it to the pot, or watch the soup boil over and ruin its chance at social documentation.
+- A narrator toggle uses browser speech synthesis to read gag text, guidance beats, and urgent soup countdowns in a dry, unhelpfully helpful voice.
 - Optional checklist discoveries point players toward hairspray, newspapers, synths, relics, dumpsters, cops, landfill art, and the jet fence.
 - The hairspray can is a small recurring gag only, not a real mechanic.
+- Procedural gag sounds give different junk, cops, papers, synths, hairspray, house creaks, and the airfield ending their own tiny noises.
+- The bylaw patrol and gym guys now sit across the neighbourhood route as actual obstacles to squeeze past on the way to dumpster objectives.
+- Rabbits, birds, rats, gym guys, Gary the rival rummager, and better-dressed dumpster patrols add small ambient comedy around the map without making the already short game grow delusions of grandeur.
+- The dumpster errand is now guarded by Gary the Rummager, who wants the antique Speak & Spell for himself and must be lured away before The Scavenger can grab it.
 
 ## Design Notes
 
