@@ -1053,7 +1053,7 @@
     }
 
     if (!missionOverlay.hidden || !checklistOverlay.hidden) {
-      if (key === "escape") {
+      if (key === "escape" || (key === "action" && !missionOverlay.hidden)) {
         closeMissionBrowser();
         closeChecklist();
       }
@@ -3096,101 +3096,161 @@
 
   function drawScavenger(now) {
     const p = project(player.x, player.y);
-    const bob = player.isWalking ? Math.sin(player.walkTime * Math.PI * 2) * 2 : 0;
-    const stride = player.isWalking ? Math.sin(player.walkTime * Math.PI * 2) : 0;
+    const step = Math.sin(player.walkTime * Math.PI * 2);
+    const bob = player.isWalking ? Math.abs(step) * -2.2 : Math.sin(now / 680) * 0.5;
+    const stride = player.isWalking ? step : Math.sin(now / 820) * 0.12;
     const dirX = Math.cos(player.heading);
     const dirY = Math.sin(player.heading);
+    const facing = dirX < -0.12 ? -1 : 1;
+    const front = dirY > -0.35;
+    const back = dirY < -0.65;
+    const panic = player.panicUntil > now || player.ratChaseUntil > now;
+    const armSwing = player.isWalking ? Math.sin(player.walkTime * Math.PI * 2 + Math.PI) * 6 : Math.sin(now / 520) * 1.2;
+    const coatSwing = player.isWalking ? Math.sin(player.walkTime * Math.PI * 2) * 2.5 : 0;
 
     ctx.save();
     ctx.translate(p.x, p.y + bob);
-    ctx.fillStyle = "rgba(24, 20, 16, 0.28)";
-    ctx.beginPath();
-    ctx.ellipse(0, 16, 17, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.scale(facing, 1);
+    const localDirX = Math.abs(dirX);
 
-    ctx.strokeStyle = "#2f2a24";
-    ctx.lineWidth = 4;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(-7, 18);
-    ctx.lineTo(-12 - stride * 5, 30);
-    ctx.moveTo(7, 18);
-    ctx.lineTo(13 + stride * 5, 30);
-    ctx.stroke();
+    drawCutoutShadow(21, 7, 18 - bob * 0.4, 0.28);
+    drawCutoutLimb(-7, 15, -12 - stride * 6, 31, 6, "#25282a", "#141414");
+    drawCutoutLimb(7, 15, 13 + stride * 6, 31, 6, "#323333", "#171717");
+    drawCutoutShoe(-13 - stride * 6, 32, -1, "#1b1917");
+    drawCutoutShoe(14 + stride * 6, 32, 1, "#24211e");
 
-    ctx.fillStyle = "#4d382d";
-    roundedRect(-21, -2, 14, 22, 5);
+    drawCutoutLimb(-13, -1, -24 - armSwing * 0.45, 10 + armSwing, 5.5, "#c4936d", "#81563e");
+    drawCutoutLimb(13, -1, 24 + armSwing * 0.45, 10 - armSwing, 5.5, "#d0a079", "#80573f");
+    drawCutoutJoint(-25 - armSwing * 0.45, 10 + armSwing, 3.5, "#c4936d", "#7d523b");
+    drawCutoutJoint(25 + armSwing * 0.45, 10 - armSwing, 3.5, "#d0a079", "#7d523b");
+
+    ctx.fillStyle = "#4f3b30";
+    roundedRect(-20, -3, 15, 24, 5);
     ctx.fill();
     ctx.fillStyle = "#2f3030";
-    roundedRect(-13, -6, 26, 28, 7);
+    ctx.strokeStyle = "#3c3d38";
+    ctx.lineWidth = 1.1;
+    roundedRect(-14, -9, 29, 32, 7);
     ctx.fill();
-    ctx.strokeStyle = "#1e1c19";
-    ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.fillStyle = "#7b5a45";
-    roundedRect(-16, -3, 32, 12, 5);
+    ctx.fillStyle = "#3c3d37";
+    roundedRect(-11, -7, 12, 29, 5);
     ctx.fill();
-    ctx.fillStyle = "#565c49";
-    roundedRect(8, 2, 17, 24, 6);
+    ctx.fillStyle = "#4d342a";
+    ctx.beginPath();
+    ctx.moveTo(1, -7);
+    ctx.lineTo(16, -3 + coatSwing);
+    ctx.lineTo(13, 22);
+    ctx.lineTo(0, 19);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#7b5a45";
+    roundedRect(-17, -5, 35, 13, 5);
+    ctx.fill();
+    ctx.fillStyle = "#c8a36f";
+    ctx.beginPath();
+    ctx.arc(-1, 2, 3, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "#c4946f";
-    ctx.lineWidth = 4;
+    ctx.fillStyle = "#5f6a52";
+    roundedRect(8, 1, 18, 25, 6);
+    ctx.fill();
+    ctx.fillStyle = "#434b3c";
+    roundedRect(11, 5, 12, 12, 3);
+    ctx.fill();
+    ctx.strokeStyle = "#8b6b4f";
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(-13, 2);
-    ctx.lineTo(-22 - stride * 4, 12);
-    ctx.moveTo(13, 2);
-    ctx.lineTo(22 + stride * 4, 12);
+    ctx.moveTo(-12, -8);
+    ctx.lineTo(17, 24);
     ctx.stroke();
 
     ctx.fillStyle = "#c4936d";
     ctx.beginPath();
-    ctx.arc(0, -18, 12, 0, Math.PI * 2);
+    ctx.arc(0, -20, 12, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#44372e";
-    ctx.beginPath();
-    ctx.ellipse(-12, -10, 5, 20, -0.14, 0, Math.PI * 2);
-    ctx.ellipse(12, -10, 5, 20, 0.14, 0, Math.PI * 2);
-    ctx.fill();
+    if (front) {
+      ctx.fillStyle = "#44372e";
+      ctx.beginPath();
+      ctx.ellipse(-13, -12, 6, 21, -0.16, 0, Math.PI * 2);
+      ctx.ellipse(13, -12, 6, 21, 0.16, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = "#44372e";
+      ctx.beginPath();
+      ctx.ellipse(0, -17, 17, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.fillStyle = "#6b5646";
     ctx.beginPath();
-    ctx.ellipse(0, -10, 10, 8, 0, 0, Math.PI);
+    ctx.ellipse(0, -12, 10, 8, 0, 0, Math.PI);
     ctx.fill();
     ctx.fillStyle = "#d6a57c";
     ctx.beginPath();
-    ctx.ellipse(0, -24, 7, 3.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(localDirX * 3, -27, 7, 3.4, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#2d2823";
+    ctx.strokeStyle = "#5a4639";
+    ctx.lineWidth = 1.3;
     ctx.beginPath();
-    ctx.arc(-4, -19, 1.4, 0, Math.PI * 2);
-    ctx.arc(5, -19, 1.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#7d5d45";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, -18);
-    ctx.lineTo(3, -15);
+    ctx.moveTo(-4, -31);
+    ctx.quadraticCurveTo(-1, -35, 2, -31);
+    ctx.moveTo(4, -31);
+    ctx.quadraticCurveTo(7, -34, 9, -30);
     ctx.stroke();
+
+    if (!back) {
+      ctx.fillStyle = "#2d2823";
+      ctx.beginPath();
+      ctx.arc(-4 + localDirX * 2, -21, 1.45, 0, Math.PI * 2);
+      ctx.arc(5 + localDirX * 2, -21, 1.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#7d5d45";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(localDirX * 3, -19);
+      ctx.lineTo(localDirX * 6, -16);
+      ctx.stroke();
+      ctx.strokeStyle = panic ? "#4b251f" : "#744d3a";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (panic) {
+        ctx.moveTo(-5, -14);
+        ctx.lineTo(5, -13);
+      } else {
+        ctx.arc(1, -15, 4, 0.1, Math.PI - 0.1);
+      }
+      ctx.stroke();
+    }
 
     ctx.strokeStyle = "#f2d88a";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(dirX * 10, -16 + dirY * 2);
-    ctx.lineTo(dirX * 20, -16 + dirY * 8);
+    ctx.moveTo(localDirX * 9, -17 + dirY * 2);
+    ctx.lineTo(localDirX * 20, -17 + dirY * 8);
     ctx.stroke();
+
+    ctx.fillStyle = "rgba(226, 178, 98, 0.78)";
+    ctx.beginPath();
+    ctx.arc(localDirX * 21, -17 + dirY * 8, 2.2, 0, Math.PI * 2);
+    ctx.fill();
 
     if (soup.carrying) {
       ctx.strokeStyle = "#5f7d3f";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.moveTo(-21, 7);
-      ctx.lineTo(-31, -9);
+      ctx.moveTo(-22, 7);
+      ctx.lineTo(-33, -8);
       ctx.stroke();
       ctx.fillStyle = "#8fbb4e";
       ctx.beginPath();
       ctx.ellipse(-33, -12, 5, 9, -0.6, 0, Math.PI * 2);
       ctx.ellipse(-27, -8, 4, 7, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#d8c78e";
+      ctx.beginPath();
+      ctx.arc(-30, -17, 2, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -3319,20 +3379,148 @@
     ctx.restore();
   }
 
+  function drawCutoutShadow(width, height, y = 18, alpha = 0.26) {
+    ctx.fillStyle = `rgba(24, 20, 16, ${alpha})`;
+    ctx.beginPath();
+    ctx.ellipse(0, y, width, height, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCutoutLimb(x1, y1, x2, y2, width, fill, shade = "") {
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = fill;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    if (shade) {
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.strokeStyle = shade;
+      ctx.lineWidth = Math.max(1.5, width * 0.42);
+      ctx.beginPath();
+      ctx.moveTo(lerp(x1, x2, 0.52), lerp(y1, y2, 0.52));
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawCutoutJoint(x, y, radius, fill, shade = "") {
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    if (shade) {
+      ctx.save();
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = shade;
+      ctx.beginPath();
+      ctx.arc(x + radius * 0.18, y + radius * 0.18, radius * 0.58, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawCutoutShoe(x, y, facing, fill = "#25201c") {
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.ellipse(x + facing * 3, y, 8, 4, 0.08 * facing, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = "#fff5d7";
+    ctx.beginPath();
+    ctx.ellipse(x + facing * 1, y - 1, 4.5, 1.3, 0.08 * facing, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawCutoutHead(x, y, radius, skin, hair, options = {}) {
+    ctx.fillStyle = skin;
+    ctx.strokeStyle = options.outline || "#2f2924";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    if (options.ears) {
+      ctx.fillStyle = skin;
+      ctx.beginPath();
+      ctx.arc(x - radius + 2, y, 3, 0, Math.PI * 2);
+      ctx.arc(x + radius - 2, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = hair;
+    if (options.hair === "cap") {
+      roundedRect(x - radius - 2, y - radius - 10, radius * 2 + 4, 9, 4);
+      ctx.fill();
+      roundedRect(x - radius * 0.68, y - radius - 17, radius * 1.36, 9, 4);
+      ctx.fill();
+    } else if (options.hair === "tufts") {
+      ctx.beginPath();
+      ctx.ellipse(x - 8, y - radius + 1, 9, 6, -0.35, 0, Math.PI * 2);
+      ctx.ellipse(x + 5, y - radius, 10, 6, 0.22, 0, Math.PI * 2);
+      ctx.ellipse(x + 12, y - radius + 5, 5, 8, 0.15, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (options.hair === "wide") {
+      ctx.beginPath();
+      ctx.ellipse(x, y - radius + 1, radius + 7, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.ellipse(x, y - radius + 2, radius + 1, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = "#1f1a17";
+    ctx.beginPath();
+    ctx.arc(x - 4, y - 2, 1.5, 0, Math.PI * 2);
+    ctx.arc(x + 4, y - 2, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = options.mouthColor || "#5a3129";
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    if (options.expression === "laugh") {
+      ctx.arc(x, y + 3, 5, 0, Math.PI);
+    } else if (options.expression === "scowl") {
+      ctx.moveTo(x - 5, y + 5);
+      ctx.lineTo(x + 5, y + 3);
+    } else {
+      ctx.moveTo(x - 4, y + 5);
+      ctx.lineTo(x + 4, y + 5);
+    }
+    ctx.stroke();
+  }
+
+  function drawCutoutLabel(text, x, y, color = "#fff5d7") {
+    ctx.fillStyle = color;
+    ctx.font = "900 8px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(text, x, y);
+  }
+
   function drawRabbit(rabbit, now) {
     const p = project(rabbit.x, rabbit.y);
     const hop = rabbit.fleeUntil > now ? Math.abs(Math.sin(now / 85 + rabbit.phase)) * 7 : Math.abs(Math.sin(now / 260 + rabbit.phase)) * 2;
+    const kick = Math.sin(now / 95 + rabbit.phase) * (rabbit.fleeUntil > now ? 6 : 2);
     const facing = rabbit.x < player.x ? -1 : 1;
     ctx.save();
     ctx.translate(p.x, p.y - hop);
     ctx.scale(facing, 1);
-    ctx.fillStyle = "rgba(35, 30, 24, 0.2)";
-    ctx.beginPath();
-    ctx.ellipse(0, 13 + hop, 15, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
+    drawCutoutShadow(15, 6, 13 + hop, 0.2);
+    drawCutoutLimb(-8, 6, -18 - kick, 13, 4, "#d7d0bf", "#6b6258");
+    drawCutoutLimb(7, 7, 16 + kick, 13, 4, "#d7d0bf", "#6b6258");
     ctx.fillStyle = "#d7d0bf";
-    ctx.strokeStyle = "#6b6258";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#bfb7a7";
+    ctx.lineWidth = 1.1;
     ctx.beginPath();
     ctx.ellipse(0, 0, 18, 11, -0.08, 0, Math.PI * 2);
     ctx.fill();
@@ -3341,13 +3529,13 @@
     ctx.ellipse(14, -7, 9, 8, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    ctx.strokeStyle = "#d7d0bf";
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#bfb7a7";
+    ctx.fillStyle = "#d7d0bf";
+    ctx.lineWidth = 1.1;
     ctx.beginPath();
-    ctx.moveTo(16, -13);
-    ctx.lineTo(12, -30);
-    ctx.moveTo(21, -13);
-    ctx.lineTo(26, -28);
+    ctx.ellipse(14, -24, 4, 13, -0.25, 0, Math.PI * 2);
+    ctx.ellipse(24, -22, 4, 12, 0.25, 0, Math.PI * 2);
+    ctx.fill();
     ctx.stroke();
     ctx.fillStyle = "#2e2923";
     ctx.beginPath();
@@ -3363,23 +3551,23 @@
   function drawRat(rat, now) {
     const p = project(rat.x, rat.y);
     const wiggle = Math.sin(now / 120 + rat.phase) * 2;
+    const scamper = Math.sin(now / 80 + rat.phase) * 4;
     const facing = rat.x < player.x ? -1 : 1;
     ctx.save();
     ctx.translate(p.x, p.y + wiggle);
     ctx.scale(facing, 1);
-    ctx.fillStyle = "rgba(20, 16, 14, 0.22)";
-    ctx.beginPath();
-    ctx.ellipse(0, 9, 13, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
+    drawCutoutShadow(13, 5, 9, 0.22);
     ctx.strokeStyle = "#8a6a66";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(-10, 2);
     ctx.quadraticCurveTo(-30, -6, -42, 4 + wiggle);
     ctx.stroke();
+    drawCutoutLimb(-7, 6, -14 - scamper, 12, 2.4, "#4a443f", "#26221f");
+    drawCutoutLimb(7, 6, 14 + scamper, 12, 2.4, "#4a443f", "#26221f");
     ctx.fillStyle = "#4a443f";
-    ctx.strokeStyle = "#26221f";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#57504a";
+    ctx.lineWidth = 1.1;
     ctx.beginPath();
     ctx.ellipse(0, 0, 17, 9, 0.1, 0, Math.PI * 2);
     ctx.fill();
@@ -3389,9 +3577,12 @@
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = "#c48a83";
+    ctx.strokeStyle = "#9f726e";
+    ctx.lineWidth = 0.9;
     ctx.beginPath();
     ctx.arc(13, -9, 3, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
     ctx.fillStyle = "#111";
     ctx.beginPath();
     ctx.arc(17, -4, 1.2, 0, Math.PI * 2);
@@ -3421,8 +3612,8 @@
     if (stunned) {
       ctx.rotate(Math.sin(now / 100) * 0.08);
       ctx.fillStyle = "#67727a";
-      ctx.strokeStyle = "#2f3437";
-      ctx.lineWidth = 2;
+    ctx.strokeStyle = "#46535b";
+    ctx.lineWidth = 1.1;
       ctx.beginPath();
       ctx.ellipse(0, 2, 17, 9, 0.2, 0, Math.PI * 2);
       ctx.fill();
@@ -3443,21 +3634,26 @@
     } else {
       const angle = Math.atan2(bird.vy, bird.vx) * 0.35;
       ctx.rotate(angle);
+      ctx.strokeStyle = "#4f5b62";
+      ctx.lineWidth = 1.1;
+      ctx.fillStyle = "#53636c";
+      ctx.beginPath();
+      ctx.ellipse(-16, -2 - flap * 0.35, 18, 6, -0.28, 0, Math.PI * 2);
+      ctx.ellipse(16, -2 + flap * 0.35, 18, 6, 0.28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
       ctx.fillStyle = "#5f6970";
-      ctx.strokeStyle = "#2f3437";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#53616a";
+      ctx.lineWidth = 1.1;
       ctx.beginPath();
       ctx.ellipse(0, 0, 14, 8, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      ctx.strokeStyle = "#5f6970";
-      ctx.lineWidth = 5;
+      ctx.fillStyle = "#7a858c";
       ctx.beginPath();
-      ctx.moveTo(-5, 0);
-      ctx.lineTo(-24, -9 - flap);
-      ctx.moveTo(5, 0);
-      ctx.lineTo(25, -9 + flap);
-      ctx.stroke();
+      ctx.ellipse(-9, -2 - flap * 0.55, 11, 4, -0.35, 0, Math.PI * 2);
+      ctx.ellipse(9, -2 + flap * 0.55, 11, 4, 0.35, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = "#d8b56c";
       ctx.beginPath();
       ctx.moveTo(14, -1);
@@ -3507,55 +3703,39 @@
   function drawBigWanda(now) {
     if (!bigWanda.active && !bigWanda.revealed) return;
     const p = project(bigWanda.x, bigWanda.y);
-    const stride = Math.sin(now / 110 + bigWanda.x) * (bigWanda.state === "chase" ? 6 : 2);
+    const chase = bigWanda.state === "chase";
+    const stride = Math.sin(now / (chase ? 92 : 180) + bigWanda.x) * (chase ? 9 : 3);
+    const armSwing = Math.sin(now / (chase ? 115 : 230) + bigWanda.y) * (chase ? 10 : 3);
+    const bob = chase ? Math.abs(Math.sin(now / 92)) * 2 : Math.sin(now / 430) * 0.7;
     const facing = bigWanda.x < player.x ? 1 : -1;
     ctx.save();
-    ctx.translate(p.x, p.y);
+    ctx.translate(p.x, p.y - bob);
     ctx.scale(facing, 1);
-    ctx.fillStyle = "rgba(24, 18, 17, 0.28)";
-    ctx.beginPath();
-    ctx.ellipse(0, 21, 28, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#2b2021";
-    ctx.lineWidth = 5;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(-10, 20);
-    ctx.lineTo(-18 - stride, 35);
-    ctx.moveTo(10, 20);
-    ctx.lineTo(18 + stride, 35);
-    ctx.stroke();
+
+    drawCutoutShadow(31, 10, 23 + bob, 0.3);
+    drawCutoutLimb(-11, 18, -20 - stride, 36, 7, "#33262b", "#1f171a");
+    drawCutoutLimb(11, 18, 20 + stride, 36, 7, "#33262b", "#1f171a");
+    drawCutoutShoe(-21 - stride, 37, -1, "#24191d");
+    drawCutoutShoe(21 + stride, 37, 1, "#24191d");
+
+    drawCutoutLimb(-22, -5, -39, 8 + armSwing, 8, "#d39a78", "#5f302e");
+    drawCutoutLimb(22, -5, 41, 8 - armSwing, 8, "#d39a78", "#5f302e");
+    drawCutoutJoint(-39, 8 + armSwing, 4.2, "#d39a78", "#5f302e");
+    drawCutoutJoint(41, 8 - armSwing, 4.2, "#d39a78", "#5f302e");
+
     ctx.fillStyle = "#9a4f69";
-    ctx.strokeStyle = "#4a2735";
-    ctx.lineWidth = 2;
-    roundedRect(-24, -14, 48, 40, 10);
+    ctx.strokeStyle = "#7e4358";
+    ctx.lineWidth = 1.2;
+    roundedRect(-27, -18, 54, 45, 9);
     ctx.fill();
     ctx.stroke();
-    ctx.strokeStyle = "#d39a78";
-    ctx.lineWidth = 6;
+    ctx.fillStyle = "#e0b15a";
     ctx.beginPath();
-    ctx.moveTo(-22, -6);
-    ctx.lineTo(-39, 11 + Math.sin(now / 150) * 5);
-    ctx.moveTo(22, -6);
-    ctx.lineTo(42, 7 - Math.sin(now / 150) * 5);
-    ctx.stroke();
-    ctx.fillStyle = "#d39a78";
-    ctx.beginPath();
-    ctx.arc(0, -29, 13, 0, Math.PI * 2);
+    ctx.arc(0, -2, 3, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#4a2634";
-    ctx.beginPath();
-    ctx.ellipse(0, -41, 18, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#2f1f24";
-    ctx.beginPath();
-    ctx.ellipse(-6, -38, 9, 5, 0.4, 0, Math.PI * 2);
-    ctx.ellipse(8, -39, 9, 5, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#fff5d7";
-    ctx.font = "900 8px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("WANDA", 0, 8);
+
+    drawCutoutHead(0, -33, 15, "#d39a78", "#4a2634", { hair: "wide", expression: chase ? "scowl" : "laugh", ears: true });
+    drawCutoutLabel("WANDA", 0, 8);
     if (bigWanda.state === "chase") drawBubble(16, -62, "COME BACK");
     if (bigWanda.state === "intro") drawBubble(10, -62, "OH MY");
     ctx.restore();
@@ -3563,49 +3743,43 @@
 
   function drawGymGuy(guy, now) {
     const p = project(guy.x, guy.y);
-    const stride = Math.sin(now / 120 + guy.phase) * (guy.walkAwayUntil > now ? 5 : 1.5);
+    const laughing = now - guy.lastLaughAt < 1700;
+    const moving = guy.walkAwayUntil > now || guy.path;
+    const stride = Math.sin(now / 115 + guy.phase) * (moving ? 6 : 2);
+    const pump = laughing ? Math.sin(now / 90) * 5 : Math.sin(now / 260 + guy.phase) * 2;
+    const facing = guy.id === "gym-2" && guy.path ? Math.sign((guy.path[guy.target]?.x || guy.x) - guy.x) || 1 : 1;
     ctx.save();
     ctx.translate(p.x, p.y);
-    ctx.fillStyle = "rgba(24, 20, 16, 0.25)";
-    ctx.beginPath();
-    ctx.ellipse(0, 17, 21, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#25201c";
-    ctx.lineWidth = 4;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(-8, 17);
-    ctx.lineTo(-14 - stride, 30);
-    ctx.moveTo(8, 17);
-    ctx.lineTo(14 + stride, 30);
-    ctx.stroke();
+    ctx.scale(facing, 1);
+
+    drawCutoutShadow(23, 8, 19, 0.25);
+    drawCutoutLimb(-8, 17, -16 - stride, 31, 6, "#2b2d32", "#15181c");
+    drawCutoutLimb(8, 17, 16 + stride, 31, 6, "#2b2d32", "#15181c");
+    drawCutoutShoe(-17 - stride, 32, -1, "#171719");
+    drawCutoutShoe(17 + stride, 32, 1, "#171719");
+
+    drawCutoutLimb(-17, -4, -33, 8 + pump, 8, "#d7a37d", "#5d3528");
+    drawCutoutLimb(17, -4, 33, 8 - pump, 8, "#d7a37d", "#5d3528");
+    drawCutoutJoint(-33, 8 + pump, 4.2, "#d7a37d", "#5d3528");
+    drawCutoutJoint(33, 8 - pump, 4.2, "#d7a37d", "#5d3528");
+
     ctx.fillStyle = "#38536b";
-    ctx.strokeStyle = "#1f2d39";
-    ctx.lineWidth = 2;
-    roundedRect(-18, -10, 36, 31, 8);
+    ctx.strokeStyle = "#30475c";
+    ctx.lineWidth = 1.15;
+    roundedRect(-20, -13, 40, 35, 8);
     ctx.fill();
     ctx.stroke();
-    ctx.strokeStyle = "#d7a37d";
-    ctx.lineWidth = 7;
+
+    ctx.fillStyle = "#c8d6e6";
     ctx.beginPath();
-    ctx.moveTo(-17, -4);
-    ctx.lineTo(-32, 10 + Math.sin(now / 260) * 4);
-    ctx.moveTo(17, -4);
-    ctx.lineTo(32, 10 - Math.sin(now / 260) * 4);
-    ctx.stroke();
-    ctx.fillStyle = "#d7a37d";
-    ctx.beginPath();
-    ctx.arc(0, -23, 11, 0, Math.PI * 2);
+    ctx.moveTo(-7, -11);
+    ctx.lineTo(0, -2);
+    ctx.lineTo(7, -11);
+    ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = "#23201d";
-    ctx.beginPath();
-    ctx.ellipse(0, -31, 11, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#fff5d7";
-    ctx.font = "900 8px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("GYM", 0, 8);
-    if (now - guy.lastLaughAt < 1700) {
+    drawCutoutHead(0, -27, 12, "#d7a37d", "#23201d", { hair: "tufts", expression: laughing ? "laugh" : "neutral", ears: true });
+    drawCutoutLabel("GYM", 0, 8);
+    if (laughing) {
       drawBubble(18, -52, "HA");
     }
     ctx.restore();
@@ -3615,50 +3789,35 @@
     const p = project(actor.x, actor.y);
     const item = speakAndSpellItem();
     const guarding = item && isSpeakAndSpellGuarded(item);
-    const rummage = Math.sin(now / 140 + actor.rummageTime) * 4;
+    const rummage = Math.sin(now / 120 + actor.rummageTime) * 6;
+    const lean = guarding ? -0.08 : Math.sin(now / 380 + actor.rummageTime) * 0.05;
     ctx.save();
     ctx.translate(p.x, p.y);
-    ctx.fillStyle = "rgba(24, 20, 16, 0.26)";
-    ctx.beginPath();
-    ctx.ellipse(0, 18, 19, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#2d2520";
-    ctx.lineWidth = 4;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(-7, 17);
-    ctx.lineTo(-12, 30);
-    ctx.moveTo(7, 17);
-    ctx.lineTo(12, 30);
-    ctx.stroke();
+    ctx.rotate(lean);
+
+    drawCutoutShadow(21, 8, 19, 0.26);
+    drawCutoutLimb(-7, 17, -12 - rummage * 0.4, 31, 5.5, "#3b332b", "#211a16");
+    drawCutoutLimb(7, 17, 13 + rummage * 0.2, 31, 5.5, "#3b332b", "#211a16");
+    drawCutoutShoe(-13 - rummage * 0.4, 32, -1, "#211a16");
+    drawCutoutShoe(14 + rummage * 0.2, 32, 1, "#211a16");
+
+    drawCutoutLimb(-14, -3, -29, 9 + rummage, 5.5, "#c4936d", "#5a3525");
+    drawCutoutLimb(14, -3, 30, 9 - rummage, 5.5, "#c4936d", "#5a3525");
+    drawCutoutJoint(-29, 9 + rummage, 3.4, "#c4936d", "#5a3525");
+    drawCutoutJoint(30, 9 - rummage, 3.4, "#c4936d", "#5a3525");
+
     ctx.fillStyle = "#6a5842";
-    ctx.strokeStyle = "#3c2f25";
-    ctx.lineWidth = 2;
-    roundedRect(-15, -10, 30, 32, 7);
+    ctx.strokeStyle = "#564735";
+    ctx.lineWidth = 1.15;
+    roundedRect(-17, -13, 34, 36, 7);
     ctx.fill();
     ctx.stroke();
-    ctx.strokeStyle = "#c4936d";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(-14, -3);
-    ctx.lineTo(-27, 9 + rummage);
-    ctx.moveTo(14, -3);
-    ctx.lineTo(28, 9 - rummage);
-    ctx.stroke();
-    ctx.fillStyle = "#c4936d";
-    ctx.beginPath();
-    ctx.arc(0, -24, 10, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#4a372b";
-    ctx.beginPath();
-    ctx.ellipse(0, -32, 13, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
+
+    drawCutoutHead(0, -27, 11, "#c4936d", "#4a372b", { hair: "cap", expression: guarding ? "scowl" : "neutral", ears: true });
     ctx.fillStyle = "#2e2923";
-    ctx.fillRect(-8, -31, 16, 5);
-    ctx.fillStyle = "#fff5d7";
-    ctx.font = "900 8px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("GARY", 0, 7);
+    roundedRect(-10, -35, 20, 5, 2);
+    ctx.fill();
+    drawCutoutLabel("GARY", 0, 7);
     if (guarding) drawBubble(8, -52, "MINE");
     ctx.restore();
   }
@@ -3666,27 +3825,25 @@
   function drawCop(cop, now) {
     const p = project(cop.x, cop.y);
     const angle = Math.atan2(cop.path[cop.target].y - cop.y, cop.path[cop.target].x - cop.x);
-    const stride = Math.sin(now / 150 + cop.x) * 4;
+    const stride = Math.sin(now / 130 + cop.x) * 5;
+    const arm = Math.sin(now / 210 + cop.y) * 3;
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(angle * 0.18);
-    ctx.fillStyle = "rgba(32, 38, 45, 0.22)";
-    ctx.beginPath();
-    ctx.ellipse(0, 18, 22, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#161d27";
-    ctx.lineWidth = 4;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(-7, 16);
-    ctx.lineTo(-12 - stride, 30);
-    ctx.moveTo(7, 16);
-    ctx.lineTo(12 + stride, 30);
-    ctx.stroke();
+
+    drawCutoutShadow(23, 8, 19, 0.23);
+    drawCutoutLimb(-7, 16, -13 - stride, 31, 5.5, "#17253d", "#101722");
+    drawCutoutLimb(7, 16, 13 + stride, 31, 5.5, "#17253d", "#101722");
+    drawCutoutShoe(-14 - stride, 32, -1, "#101722");
+    drawCutoutShoe(14 + stride, 32, 1, "#101722");
+
+    drawCutoutLimb(-15, -5, -29, 5 + arm, 5.5, "#c89a72", "#56392b");
+    drawCutoutLimb(15, -5, 29, 5 - arm, 5.5, "#c89a72", "#56392b");
+
     ctx.fillStyle = "#263f68";
-    ctx.strokeStyle = "#17253d";
-    ctx.lineWidth = 2;
-    roundedRect(-15, -17, 30, 36, 7);
+    ctx.strokeStyle = "#20375c";
+    ctx.lineWidth = 1.15;
+    roundedRect(-17, -19, 34, 39, 7);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = "#f0c770";
@@ -3697,18 +3854,8 @@
     ctx.lineTo(-6, 0);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = "#c89a72";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(-15, -5);
-    ctx.lineTo(-28, 5 + Math.sin(now / 240) * 3);
-    ctx.moveTo(15, -5);
-    ctx.lineTo(28, 5 - Math.sin(now / 240) * 3);
-    ctx.stroke();
-    ctx.fillStyle = "#c89a72";
-    ctx.beginPath();
-    ctx.arc(0, -24, 10, 0, Math.PI * 2);
-    ctx.fill();
+
+    drawCutoutHead(0, -27, 11, "#c89a72", "#1f2e4a", { hair: "cap", expression: "scowl", ears: true });
     ctx.fillStyle = "#1f2e4a";
     roundedRect(-14, -34, 28, 7, 3);
     ctx.fill();
@@ -3741,10 +3888,7 @@
       roundedRect(23, -9, 18, 7, 3);
       ctx.fill();
     }
-    ctx.fillStyle = "#fff5d7";
-    ctx.font = "900 8px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("BYLAW", 0, 8);
+    drawCutoutLabel("BYLAW", 0, 8);
     ctx.restore();
   }
 

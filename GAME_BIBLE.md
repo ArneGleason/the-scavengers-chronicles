@@ -95,6 +95,7 @@ The hairspray can is only a background gag. It is not a central mechanic.
 - A checklist points players toward discoveries without affecting progression.
 - Procedural gag sounds differentiate cables, metal, wood, paper, power bricks, cops, hairspray, synth burps, house creaks, and the jet ending.
 - Ambient comic NPCs include rabbits with justified trust issues, birds with poor navigation, rats that provoke involuntary scavenger chases, gym guys who laugh off insults, clearer dumpster patrols, and Gary the Rummager guarding the Speak & Spell like a landfill dragon with reading software.
+- Characters use simple flat cutout construction with separate heads, torsos, limbs, shoes, hair, clothing, bags, and props so upgrades stay readable inside the canvas-vector art system.
 - The neighbourhood layout puts bylaw patrols and gym guys in the middle of objective routes rather than safely off to the side.
 - One bylaw officer and one gym guy now roam longer loops so route hazards cover more ground and feel less locally trapped.
 - Completing two starter errands opens the landfill and factory missions, triggers Big Wanda's trailer cutaway, and activates her landfill chase/capture threat.

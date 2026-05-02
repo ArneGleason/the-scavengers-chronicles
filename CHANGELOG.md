@@ -25,6 +25,9 @@ All notable prototype milestones for The Scavenger's Chronicles are tracked here
 - Added a landfill-unlock cinematic that pans to Big Wanda's dump trailer, introduces her unwanted scrap-yard admiration, and turns her into a capture hazard with a comic game-over recovery.
 - Extended one bylaw patrol and one gym-guy route into longer wandering loops so they cover more of the map instead of pacing tiny local circles.
 - Added a 250ms toast/narrator handoff gap so high-priority messages pause briefly before replacing the current line.
+- Upgraded NPC rendering with flat cutout-style body parts, clearer faces/clothing, and more articulated limb animation for Big Wanda, Gary, gym guys, cops, and ambient animals.
+- Upgraded The Scavenger's lead-character rendering with layered clothing, softer cutout articulation, clearer hair/balding details, directional face cues, satchel detail, and richer walking/carrying states.
+- Let Space, Enter, or E dismiss the mission browser so players can return to scavenging without reaching for the mouse.
 
 ## 0.1.0 - First Scavenging Slice
 
