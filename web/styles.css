@@ -418,6 +418,20 @@ body {
   font-weight: 850;
 }
 
+.game-over-overlay {
+  background:
+    linear-gradient(180deg, rgba(55, 37, 44, 0.92), rgba(25, 31, 28, 0.9));
+}
+
+.game-over-overlay .ending-panel {
+  border-color: rgba(230, 140, 126, 0.42);
+  background: linear-gradient(180deg, rgba(75, 45, 49, 0.96), rgba(31, 39, 34, 0.96));
+}
+
+.game-over-overlay h2 {
+  color: #ffd0bd;
+}
+
 .intro-overlay {
   position: fixed;
   inset: 0;

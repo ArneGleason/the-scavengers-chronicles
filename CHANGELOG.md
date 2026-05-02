@@ -22,6 +22,9 @@ All notable prototype milestones for The Scavenger's Chronicles are tracked here
 - Made narration more robust by debouncing rapid speech calls, preserving the active utterance, resuming browser speech after user gestures, and clarifying the narrator button state.
 - Spread bylaw patrols, gym guys, rabbits, birds, and rats across the estate route, dumpster approach, and gate area so hazards are distributed instead of clumped around one crowded choke point.
 - Added a shared five-second ambient text cooldown so low-priority NPC gags and background barks do not interrupt mission, soup, inventory, or player-triggered narration.
+- Added a landfill-unlock cinematic that pans to Big Wanda's dump trailer, introduces her unwanted scrap-yard admiration, and turns her into a capture hazard with a comic game-over recovery.
+- Extended one bylaw patrol and one gym-guy route into longer wandering loops so they cover more of the map instead of pacing tiny local circles.
+- Added a 250ms toast/narrator handoff gap so high-priority messages pause briefly before replacing the current line.
 
 ## 0.1.0 - First Scavenging Slice
 

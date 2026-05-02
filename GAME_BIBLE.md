@@ -74,6 +74,8 @@ The hairspray can is only a background gag. It is not a central mechanic.
 ### Later Zones
 
 - City landfill.
+  - Big Wanda's dump trailer, revealed by a short cutaway when the route first opens.
+  - Big Wanda runs the junkyard, has aggressive admiration for The Scavenger's salvage taste, and becomes a capture hazard.
 - Dangerous old factory.
 - Park dusk events.
 - Private airfield with repair-and-escape endgame.
@@ -94,7 +96,9 @@ The hairspray can is only a background gag. It is not a central mechanic.
 - Procedural gag sounds differentiate cables, metal, wood, paper, power bricks, cops, hairspray, synth burps, house creaks, and the jet ending.
 - Ambient comic NPCs include rabbits with justified trust issues, birds with poor navigation, rats that provoke involuntary scavenger chases, gym guys who laugh off insults, clearer dumpster patrols, and Gary the Rummager guarding the Speak & Spell like a landfill dragon with reading software.
 - The neighbourhood layout puts bylaw patrols and gym guys in the middle of objective routes rather than safely off to the side.
-- Completing two starter errands opens the landfill and factory missions.
+- One bylaw officer and one gym guy now roam longer loops so route hazards cover more ground and feel less locally trapped.
+- Completing two starter errands opens the landfill and factory missions, triggers Big Wanda's trailer cutaway, and activates her landfill chase/capture threat.
+- Toast and narrator delivery use cooldowns plus a brief handoff gap so minor barks do not trample higher-priority instructions.
 - Completing all five missions sends The Scavenger to the airfield for the finale.
 
 ## Prototype Controls

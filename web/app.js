@@ -27,6 +27,8 @@
   const endingClose = document.querySelector("#endingClose");
   const endingCanvas = document.querySelector("#endingCanvas");
   const endingCtx = endingCanvas.getContext("2d");
+  const gameOverOverlay = document.querySelector("#gameOverOverlay");
+  const gameOverClose = document.querySelector("#gameOverClose");
 
   const world = {
     minX: -760,
@@ -53,6 +55,7 @@
     gym: { x: 368, y: 764, r: 92, name: "strip-mall gym" },
     dumpster: { x: 505, y: 944, r: 76, name: "corner-store dumpster" },
     landfill: { x: -520, y: 1190, r: 105, name: "city landfill" },
+    wandaTrailer: { x: -676, y: 1112, r: 86, name: "Big Wanda's dump trailer" },
     factory: { x: -150, y: 1350, r: 96, name: "old factory" },
     airfield: { x: 530, y: -420, r: 118, name: "private airfield" },
   };
@@ -465,7 +468,7 @@
       name: "Officer Clipboard",
       x: 465,
       y: 905,
-      speed: 55,
+      speed: 62,
       target: 1,
       lastScoldAt: 0,
       gadget: "clipboard",
@@ -473,7 +476,9 @@
         { x: 465, y: 905 },
         { x: 620, y: 1035 },
         { x: 445, y: 1135 },
-        { x: 250, y: 1015 },
+        { x: 125, y: 1045 },
+        { x: -130, y: 1185 },
+        { x: 210, y: 990 },
       ],
     },
   ];
@@ -497,7 +502,24 @@
 
   const gymGuys = [
     { id: "gym-1", x: 285, y: 730, homeX: 285, homeY: 730, phase: 0.5, walkAwayUntil: 0, lastLaughAt: 0 },
-    { id: "gym-2", x: 520, y: 845, homeX: 520, homeY: 845, phase: 1.6, walkAwayUntil: 0, lastLaughAt: 0 },
+    {
+      id: "gym-2",
+      x: 520,
+      y: 845,
+      homeX: 520,
+      homeY: 845,
+      phase: 1.6,
+      walkAwayUntil: 0,
+      lastLaughAt: 0,
+      target: 1,
+      routeSpeed: 48,
+      path: [
+        { x: 520, y: 845 },
+        { x: 632, y: 980 },
+        { x: 412, y: 1082 },
+        { x: 238, y: 910 },
+      ],
+    },
   ];
 
   const rummager = {
@@ -511,6 +533,40 @@
     lastTauntAt: 0,
     lastBlockAt: 0,
     rummageTime: 0,
+  };
+
+  const bigWanda = {
+    name: "Big Wanda",
+    x: locations.wandaTrailer.x + 8,
+    y: locations.wandaTrailer.y + 22,
+    trailerX: locations.wandaTrailer.x,
+    trailerY: locations.wandaTrailer.y,
+    active: false,
+    revealed: false,
+    state: "hidden",
+    speed: 112,
+    target: 1,
+    lastLineAt: 0,
+    catchRadius: 44,
+    path: [
+      { x: locations.wandaTrailer.x + 18, y: locations.wandaTrailer.y + 24 },
+      { x: -590, y: 1162 },
+      { x: -470, y: 1215 },
+      { x: -618, y: 1262 },
+    ],
+  };
+
+  const areaCinematic = {
+    active: false,
+    startAt: 0,
+    duration: 6800,
+    fromX: 0,
+    fromY: 0,
+    targetX: locations.wandaTrailer.x + 32,
+    targetY: locations.wandaTrailer.y + 40,
+    line1: false,
+    line2: false,
+    line3: false,
   };
 
   const soupIngredientOptions = [
@@ -546,6 +602,7 @@
   let expandedUnlocked = false;
   let endgameReady = false;
   let dayEnded = false;
+  let gameOver = false;
   let gameStartedAt = 0;
   let hairsprayGagDone = false;
   let lastGateScoldAt = 0;
@@ -558,6 +615,8 @@
   let lastGymTauntAt = 0;
   let ambientTextCooldownUntil = 0;
   const ambientTextCooldownMs = 5000;
+  let lastToastChangeAt = 0;
+  let pendingSayTimer = 0;
 
   const audio = {
     context: null,
@@ -771,6 +830,36 @@
       "Back near the jet, he wonders if takeoff should wait for a better chair.",
       "He pauses at the airfield and considers postponing escape until the patch cables are emotionally ready.",
     ],
+    bigWandaIntro: [
+      "The southern route opens. Down by the landfill, a trailer door bangs like a warning made of plywood.",
+      "Camera cut: the dump trailer wakes up. Something inside has smelled opportunity and old cable dust.",
+      "The landfill unlocks, and so does a new municipal-scale personal problem.",
+    ],
+    bigWandaAdmiration: [
+      'Big Wanda: "There he is, my magnificent little scrap prophet. Come let Wanda catalogue your pockets."',
+      'Big Wanda: "Scavenger, you gorgeous disaster. I got a recliner, a hot plate, and room for your emotional cables."',
+      'Big Wanda: "I admire a man who can look at garbage and see furniture. Get in the trailer, genius."',
+    ],
+    bigWandaWarning: [
+      "Big Wanda now patrols the landfill. If she catches him, his day ends in decorative hubcap courtship.",
+      "Avoid Big Wanda near the dump. Her affection has a catch radius and no respect for unfinished albums.",
+      "New hazard: Big Wanda. Keep distance unless The Scavenger wants matching trailer towels.",
+    ],
+    bigWandaChase: [
+      'Big Wanda calls, "Quit running, antique snack. I made soup with no identifiable base."',
+      'Big Wanda: "I have a trailer, a label maker, and feelings bigger than zoning allows."',
+      'Big Wanda stomps closer, promising to organize his cables by romantic significance.',
+    ],
+    bigWandaCaught: [
+      "Big Wanda got him. The trailer door shuts. Somewhere, a wedding binder opens.",
+      "Game over: The Scavenger has been romantically annexed by landfill management.",
+      "Big Wanda succeeds. His future now contains decorative hubcaps and supervised rummaging.",
+    ],
+    bigWandaReset: [
+      "He escapes the trailer with dignity damaged and shoelaces reclassified as keepsakes.",
+      "The Scavenger flees Big Wanda's porch before she can laminate the relationship.",
+      "He has escaped, barely. Big Wanda returns to the landfill with a measuring tape and hope.",
+    ],
     guidance: {
       1: [
         'Helpful nudge: go {direction} toward {target}. The Scavenger calls this "field research" because "wandering" sounds taxable.',
@@ -948,6 +1037,11 @@
       return;
     }
 
+    if (!gameOverOverlay.hidden) {
+      if (key === "action" || key === "escape") resetFromWandaGameOver();
+      return;
+    }
+
     if (key === "mission") {
       toggleMissionBrowser();
       return;
@@ -1001,6 +1095,7 @@
   checklistClose.addEventListener("click", closeChecklist);
   narratorButton.addEventListener("click", toggleNarrator);
   endingClose.addEventListener("click", closeEndingOverlay);
+  gameOverClose.addEventListener("click", resetFromWandaGameOver);
 
   resize();
   introUnlockTimer = window.setTimeout(unlockIntro, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : 23500);
@@ -1084,6 +1179,8 @@
     expandedUnlocked = true;
     endgameReady = true;
     dayEnded = true;
+    gameOver = false;
+    gameOverOverlay.hidden = true;
     player.x = locations.airfield.x - 40;
     player.y = locations.airfield.y + 80;
     for (const [missionId, state] of Object.entries(missionStates)) {
@@ -1317,11 +1414,27 @@
       return;
     }
 
+    if (gameOver) {
+      clearMovementInput();
+      clearQueuedInputs();
+      updateCamera(dt);
+      updateHud(now);
+      updateAudio(now);
+      return;
+    }
+
     handleInventoryShortcuts();
     updateSoup(now);
+    updateAreaCinematic(now);
     updateCops(dt, now);
     updateComicNpcs(dt, now);
-    updatePlayer(dt, now);
+    updateBigWanda(dt, now);
+    if (areaCinematic.active) {
+      clearMovementInput();
+      player.isWalking = false;
+    } else {
+      updatePlayer(dt, now);
+    }
     maybeHairsprayGag(now);
     ensureActiveMission(now);
     updateGuidance(now);
@@ -1497,7 +1610,7 @@
     const autoSelected = ensureActiveMission();
     const nextMission = autoSelected ? activeMissionDef() : null;
     renderMissionBrowser();
-    if (unlocked.length || openedExpanded) window.setTimeout(openMissionBrowser, 900);
+    if (unlocked.length || openedExpanded) window.setTimeout(openMissionBrowser, openedExpanded ? 8200 : 900);
     say(`${def.completeText}${openedExpanded ? " The shame gate opens toward landfill and factory opportunities, which is how hope becomes a route." : ""}${startedEndgame ? " The private airfield is now the final objective. Go prove the escape plan is at least drawable." : ""}${nextMission ? ` Next compulsion auto-selected: ${nextMission.title}.` : ""}`, openedExpanded || startedEndgame || nextMission ? 6.4 : 5);
     return true;
   }
@@ -1687,16 +1800,7 @@
 
   function updateCops(dt, now) {
     for (const cop of cops) {
-      const target = cop.path[cop.target];
-      const dx = target.x - cop.x;
-      const dy = target.y - cop.y;
-      const mag = Math.hypot(dx, dy) || 1;
-      if (mag < 10) {
-        cop.target = (cop.target + 1) % cop.path.length;
-      } else {
-        cop.x += (dx / mag) * cop.speed * dt;
-        cop.y += (dy / mag) * cop.speed * dt;
-      }
+      movePatrol(cop, cop.path, cop.speed, dt);
 
       if (distance(player, cop) < 58) {
         const awayX = player.x - cop.x;
@@ -1853,11 +1957,57 @@
     moveToward(rummager, rummager.guardX, rummager.guardY, returnSpeed, dt);
   }
 
+  function updateBigWanda(dt, now) {
+    if (!bigWanda.active || dayEnded || gameOver) return;
+
+    if (areaCinematic.active) {
+      bigWanda.state = "intro";
+      moveToward(bigWanda, locations.wandaTrailer.x + 58, locations.wandaTrailer.y + 42, 54, dt);
+      return;
+    }
+
+    if (distance(player, bigWanda) < bigWanda.catchRadius) {
+      triggerWandaGameOver();
+      return;
+    }
+
+    const playerNearLandfill = player.y > world.southGateY - 40 || distance(player, locations.landfill) < 560;
+    if (playerNearLandfill && distance(player, bigWanda) < 620) {
+      bigWanda.state = "chase";
+      moveToward(bigWanda, player.x, player.y, bigWanda.speed, dt);
+      if (now - bigWanda.lastLineAt > 7600) {
+        if (sayAmbient(quip("bigWandaChase", quipPools.bigWandaChase), 4.2)) {
+          bigWanda.lastLineAt = now;
+          playWandaSound();
+        }
+      }
+      return;
+    }
+
+    bigWanda.state = "patrol";
+    movePatrol(bigWanda, bigWanda.path, 58, dt);
+  }
+
   function moveToward(actor, x, y, speed, dt) {
     const dx = x - actor.x;
     const dy = y - actor.y;
     const mag = Math.hypot(dx, dy);
     if (mag < 2) return;
+    actor.x += (dx / mag) * speed * dt;
+    actor.y += (dy / mag) * speed * dt;
+  }
+
+  function movePatrol(actor, path, speed, dt) {
+    if (!path || path.length < 2) return;
+    if (actor.target === undefined) actor.target = 0;
+    const target = path[actor.target] || path[0];
+    const dx = target.x - actor.x;
+    const dy = target.y - actor.y;
+    const mag = Math.hypot(dx, dy) || 1;
+    if (mag < 10) {
+      actor.target = (actor.target + 1) % path.length;
+      return;
+    }
     actor.x += (dx / mag) * speed * dt;
     actor.y += (dy / mag) * speed * dt;
   }
@@ -1893,8 +2043,12 @@
         guy.x += (awayX / mag) * 52 * dt;
         guy.y += (awayY / mag) * 52 * dt;
       } else {
-        guy.x += (guy.homeX + Math.sin(now / 950 + guy.phase) * 14 - guy.x) * dt * 1.2;
-        guy.y += (guy.homeY + Math.cos(now / 1040 + guy.phase) * 10 - guy.y) * dt * 1.2;
+        if (guy.path) {
+          movePatrol(guy, guy.path, guy.routeSpeed || 42, dt);
+        } else {
+          guy.x += (guy.homeX + Math.sin(now / 950 + guy.phase) * 14 - guy.x) * dt * 1.2;
+          guy.y += (guy.homeY + Math.cos(now / 1040 + guy.phase) * 10 - guy.y) * dt * 1.2;
+        }
       }
     }
   }
@@ -1912,13 +2066,80 @@
   }
 
   function updateCamera(dt) {
-    camera.x += (player.x - camera.x) * Math.min(1, dt * 4);
-    camera.y += (player.y - camera.y) * Math.min(1, dt * 4);
+    let targetX = player.x;
+    let targetY = player.y;
+    if (areaCinematic.active) {
+      const progress = clamp((performance.now() - areaCinematic.startAt) / areaCinematic.duration, 0, 1);
+      const eased = easeInOut(progress);
+      targetX = lerp(areaCinematic.fromX, areaCinematic.targetX, eased);
+      targetY = lerp(areaCinematic.fromY, areaCinematic.targetY, eased);
+    } else if (gameOver) {
+      targetX = bigWanda.x;
+      targetY = bigWanda.y;
+    }
+    camera.x += (targetX - camera.x) * Math.min(1, dt * 4);
+    camera.y += (targetY - camera.y) * Math.min(1, dt * 4);
+  }
+
+  function startBigWandaCinematic(now = performance.now()) {
+    if (bigWanda.revealed) return;
+    bigWanda.revealed = true;
+    bigWanda.active = true;
+    bigWanda.state = "intro";
+    bigWanda.x = locations.wandaTrailer.x + 8;
+    bigWanda.y = locations.wandaTrailer.y + 22;
+    bigWanda.target = 1;
+    bigWanda.lastLineAt = 0;
+
+    areaCinematic.active = true;
+    areaCinematic.startAt = now + 500;
+    areaCinematic.fromX = camera.x;
+    areaCinematic.fromY = camera.y;
+    areaCinematic.targetX = locations.wandaTrailer.x + 24;
+    areaCinematic.targetY = locations.wandaTrailer.y + 62;
+    areaCinematic.line1 = false;
+    areaCinematic.line2 = false;
+    areaCinematic.line3 = false;
+
+    closeMissionBrowser();
+    closeChecklist();
+    clearMovementInput();
+    playGateRattleSound();
+  }
+
+  function updateAreaCinematic(now) {
+    if (!areaCinematic.active) return;
+    const elapsed = now - areaCinematic.startAt;
+    if (elapsed < 0) return;
+
+    if (!areaCinematic.line1 && elapsed > 650) {
+      areaCinematic.line1 = true;
+      playGateRattleSound();
+      say(quip("bigWandaIntro", quipPools.bigWandaIntro), 4.2);
+    }
+
+    if (!areaCinematic.line2 && elapsed > 2850) {
+      areaCinematic.line2 = true;
+      playWandaSound();
+      say(quip("bigWandaAdmiration", quipPools.bigWandaAdmiration), 5.2);
+    }
+
+    if (!areaCinematic.line3 && elapsed > 5450) {
+      areaCinematic.line3 = true;
+      playGuidanceNudgeSound(3);
+      say(quip("bigWandaWarning", quipPools.bigWandaWarning), 4.8);
+    }
+
+    if (elapsed > areaCinematic.duration) {
+      areaCinematic.active = false;
+      bigWanda.state = "patrol";
+      protectTextFocus();
+    }
   }
 
   function updateHud(now) {
     const active = activeMissionDef();
-    modeLabel.textContent = endgameReady && !dayEnded ? "Airfield Plan" : "Scavenging";
+    modeLabel.textContent = gameOver ? "Trailered" : areaCinematic.active ? "Landfill Cutaway" : bigWanda.active && !dayEnded ? "Wanda Alert" : endgameReady && !dayEnded ? "Airfield Plan" : "Scavenging";
     placeLabel.textContent = placeName();
     missionLabel.textContent = active ? active.title : endgameReady ? "Private Airfield Escape" : "No active mission";
     missionDockTitle.textContent = active ? active.title : endgameReady ? "Private Airfield Escape" : "Errands Complete";
@@ -1986,9 +2207,28 @@
 
   function say(text, duration = 3, options = {}) {
     const now = performance.now();
+    const gap = options.noGap ? 0 : 250;
+    const activeDifferentToast = !toast.hidden && toastUntil > now && toast.textContent !== String(text);
+    const tooSoonAfterChange = now - lastToastChangeAt < gap;
+    if (gap && (activeDifferentToast || tooSoonAfterChange)) {
+      window.clearTimeout(pendingSayTimer);
+      toast.hidden = true;
+      toastUntil = now + gap;
+      pendingSayTimer = window.setTimeout(() => {
+        showSay(text, duration, options);
+      }, gap);
+      return;
+    }
+    showSay(text, duration, options);
+  }
+
+  function showSay(text, duration = 3, options = {}) {
+    const now = performance.now();
+    window.clearTimeout(pendingSayTimer);
     toast.textContent = text;
     toast.hidden = false;
     toastUntil = now + duration * 1000;
+    lastToastChangeAt = now;
     if (!options.skipAmbientCooldown) protectTextFocus(now);
     narrate(text);
   }
@@ -2144,10 +2384,21 @@
   function currentGuideText(now = performance.now()) {
     if (!gameStarted) return "Read the intro";
     const context = nearbyInteractionGuide();
+    const wandaText = wandaGuideText();
     const soupText = soupGuideText(now);
     const missionText = missionGuideText();
     const navText = navigationGuideText(targetInfo(), now);
-    return [context, soupText, missionText, navText].filter(Boolean).join(" ");
+    return [context, wandaText, soupText, missionText, navText].filter(Boolean).join(" ");
+  }
+
+  function wandaGuideText() {
+    if (gameOver) return "Big Wanda got him. Press E or click Flee The Trailer to try escaping again.";
+    if (areaCinematic.active) return "Landfill cutaway in progress: Big Wanda is entering the relationship without a permit.";
+    if (!bigWanda.active || dayEnded) return "";
+    const wandaDistance = distance(player, bigWanda);
+    if (wandaDistance < 180) return "BIG WANDA ALERT: run. She is close enough to start discussing curtains.";
+    if (player.y > world.southGateY - 40 && wandaDistance < 520) return "Big Wanda patrols the landfill route. Keep moving and do not accept trailer hospitality.";
+    return "";
   }
 
   function soupHudText(now = performance.now()) {
@@ -2345,6 +2596,7 @@
     if (expandedUnlocked || completedStarterMissionCount() < 2) return false;
     expandedUnlocked = true;
     unlockMissions(expandedMissionIds);
+    startBigWandaCinematic(performance.now());
     return true;
   }
 
@@ -2434,6 +2686,40 @@
     say(quip("finale", quipPools.finale), 5);
   }
 
+  function triggerWandaGameOver() {
+    if (gameOver || dayEnded) return;
+    gameOver = true;
+    areaCinematic.active = false;
+    closeMissionBrowser();
+    closeChecklist();
+    clearMovementInput();
+    bigWanda.state = "caught";
+    player.x = bigWanda.x + 18;
+    player.y = bigWanda.y + 12;
+    playWandaCatchSound();
+    gameOverOverlay.hidden = false;
+    gameOverClose.focus();
+    say(quip("bigWandaCaught", quipPools.bigWandaCaught), 5.4);
+  }
+
+  function resetFromWandaGameOver() {
+    gameOver = false;
+    gameOverOverlay.hidden = true;
+    bigWanda.active = true;
+    bigWanda.state = "patrol";
+    bigWanda.x = locations.wandaTrailer.x + 18;
+    bigWanda.y = locations.wandaTrailer.y + 24;
+    bigWanda.target = 1;
+    player.x = 118;
+    player.y = world.southGateY - 64;
+    player.panicUntil = 0;
+    player.ratChaseUntil = 0;
+    player.ratChaseTarget = "";
+    clearMovementInput();
+    resetGuidanceTarget(performance.now());
+    say(quip("bigWandaReset", quipPools.bigWandaReset), 4.2);
+  }
+
   function showEndingOverlay() {
     endingOverlay.hidden = false;
     endingClose.focus();
@@ -2474,6 +2760,7 @@
     drawSoupTarget(now);
     drawPrompts(now);
     drawDusk(width, height);
+    drawCinematicOverlay(width, height, now);
   }
 
   function drawBackground(width, height) {
@@ -2483,6 +2770,20 @@
     gradient.addColorStop(1, "#5f735d");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
+  }
+
+  function drawCinematicOverlay(width, height, now) {
+    if (!areaCinematic.active) return;
+    const pulse = 0.5 + Math.sin(now / 220) * 0.5;
+    ctx.save();
+    ctx.fillStyle = "rgba(18, 18, 16, 0.72)";
+    ctx.fillRect(0, 0, width, 58);
+    ctx.fillRect(0, height - 58, width, 58);
+    ctx.fillStyle = `rgba(255, 213, 125, ${0.62 + pulse * 0.2})`;
+    ctx.font = "900 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("LANDFILL ROUTE OPEN", width / 2, height - 24);
+    ctx.restore();
   }
 
   function drawWorld(now) {
@@ -2502,6 +2803,7 @@
     for (const rat of rats) drawRat(rat, now);
     for (const guy of gymGuys) drawGymGuy(guy, now);
     drawRummager(rummager, now);
+    drawBigWanda(now);
     for (const cop of cops) drawCop(cop, now);
     drawScavenger(now);
     for (const bird of birds) drawBird(bird, now);
@@ -2597,6 +2899,7 @@
     ctx.save();
     ctx.globalAlpha = alpha;
     drawIsoRect(locations.landfill.x, locations.landfill.y, 320, 220, "#76695b", "#504943");
+    drawWandaTrailer(locations.wandaTrailer.x, locations.wandaTrailer.y);
     drawTrashPile(-540, 1180);
     drawAppliance(-440, 1238);
     drawStump(-610, 1128, 0.65);
@@ -2604,6 +2907,7 @@
     drawFactory(-150, 1350);
     drawCableCoil(-54, 1372, 20, "#7e8991");
     drawWorldLabel(-520, 1058, expandedUnlocked ? "City landfill" : "Locked landfill route");
+    drawWorldLabel(locations.wandaTrailer.x, locations.wandaTrailer.y - 96, expandedUnlocked ? "Big Wanda's trailer" : "Suspicious trailer");
     drawWorldLabel(-150, 1236, expandedUnlocked ? "Old factory" : "Locked factory route");
     ctx.restore();
 
@@ -3162,6 +3466,98 @@
       ctx.closePath();
       ctx.fill();
     }
+    ctx.restore();
+  }
+
+  function drawWandaTrailer(x, y) {
+    drawIsoRect(x, y, 145, 78, "#915c65", "#4a3238");
+    const p = project(x, y);
+    ctx.save();
+    ctx.fillStyle = "#d8c783";
+    ctx.strokeStyle = "#4a3238";
+    ctx.lineWidth = 2;
+    roundedRect(p.x - 58, p.y - 42, 35, 28, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#3a2e32";
+    roundedRect(p.x + 13, p.y - 36, 34, 52, 4);
+    ctx.fill();
+    ctx.fillStyle = "#f2ca78";
+    ctx.beginPath();
+    ctx.arc(p.x + 38, p.y - 7, 2.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff5d7";
+    ctx.font = "900 9px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("WANDA", p.x - 6, p.y - 50);
+    ctx.strokeStyle = "#62504a";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(p.x - 72, p.y + 28);
+    ctx.lineTo(p.x + 74, p.y + 28);
+    ctx.stroke();
+    ctx.fillStyle = "#2f3437";
+    ctx.beginPath();
+    ctx.arc(p.x - 48, p.y + 29, 9, 0, Math.PI * 2);
+    ctx.arc(p.x + 52, p.y + 29, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawBigWanda(now) {
+    if (!bigWanda.active && !bigWanda.revealed) return;
+    const p = project(bigWanda.x, bigWanda.y);
+    const stride = Math.sin(now / 110 + bigWanda.x) * (bigWanda.state === "chase" ? 6 : 2);
+    const facing = bigWanda.x < player.x ? 1 : -1;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.scale(facing, 1);
+    ctx.fillStyle = "rgba(24, 18, 17, 0.28)";
+    ctx.beginPath();
+    ctx.ellipse(0, 21, 28, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#2b2021";
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-10, 20);
+    ctx.lineTo(-18 - stride, 35);
+    ctx.moveTo(10, 20);
+    ctx.lineTo(18 + stride, 35);
+    ctx.stroke();
+    ctx.fillStyle = "#9a4f69";
+    ctx.strokeStyle = "#4a2735";
+    ctx.lineWidth = 2;
+    roundedRect(-24, -14, 48, 40, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = "#d39a78";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(-22, -6);
+    ctx.lineTo(-39, 11 + Math.sin(now / 150) * 5);
+    ctx.moveTo(22, -6);
+    ctx.lineTo(42, 7 - Math.sin(now / 150) * 5);
+    ctx.stroke();
+    ctx.fillStyle = "#d39a78";
+    ctx.beginPath();
+    ctx.arc(0, -29, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#4a2634";
+    ctx.beginPath();
+    ctx.ellipse(0, -41, 18, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#2f1f24";
+    ctx.beginPath();
+    ctx.ellipse(-6, -38, 9, 5, 0.4, 0, Math.PI * 2);
+    ctx.ellipse(8, -39, 9, 5, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff5d7";
+    ctx.font = "900 8px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("WANDA", 0, 8);
+    if (bigWanda.state === "chase") drawBubble(16, -62, "COME BACK");
+    if (bigWanda.state === "intro") drawBubble(10, -62, "OH MY");
     ctx.restore();
   }
 
@@ -4110,6 +4506,15 @@
     return Math.max(min, Math.min(max, value));
   }
 
+  function lerp(start, end, t) {
+    return start + (end - start) * t;
+  }
+
+  function easeInOut(t) {
+    const clamped = clamp(t, 0, 1);
+    return clamped < 0.5 ? 2 * clamped * clamped : 1 - ((-2 * clamped + 2) ** 2) / 2;
+  }
+
   function distance(a, b) {
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
@@ -4398,6 +4803,18 @@
   function playRummagerBlockSound() {
     playTone({ frequency: 118, duration: 0.12, type: "square", gain: 0.035, slide: -30 });
     playNoise({ duration: 0.1, gain: 0.026, filter: 700, filterType: "lowpass", delay: 0.04 });
+  }
+
+  function playWandaSound() {
+    playTone({ frequency: 190, duration: 0.11, type: "triangle", gain: 0.045, slide: 80 });
+    playTone({ frequency: 255, duration: 0.1, type: "sawtooth", gain: 0.032, slide: 60, delay: 0.09 });
+    playNoise({ duration: 0.14, gain: 0.02, filter: 900, filterType: "bandpass", delay: 0.04 });
+  }
+
+  function playWandaCatchSound() {
+    playTone({ frequency: 92, duration: 0.2, type: "sawtooth", gain: 0.045, slide: -30 });
+    playTone({ frequency: 210, duration: 0.08, type: "square", gain: 0.026, delay: 0.15 });
+    playNoise({ duration: 0.26, gain: 0.035, filter: 520, filterType: "lowpass", delay: 0.06 });
   }
 
   function playSoupAlarmSound() {

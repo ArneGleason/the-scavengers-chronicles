@@ -33,7 +33,7 @@ Open `web/index.html` in a browser.
   - Speak & Spell Salvage Duel
   - Grate Shelf Revelation
   - Rack Rail Rescue
-- Completing two starter errands opens the landfill and factory route.
+- Completing two starter errands opens the landfill and factory route with a short camera cutaway to Big Wanda's dump trailer.
 - The final mission now reveals a real Final Adapter at the synth altar, then sends it to the private airfield before the end-state animation triggers.
 - The mission system keeps an active errand selected at all times, while the guidance dock adds directions and gets snidier the longer the player avoids the obvious glowing target.
 - Every minute, the shabby-kitchen soup timer interrupts everything: forage a backyard ingredient, return it to the pot, or watch the soup boil over and ruin its chance at social documentation.
@@ -44,6 +44,8 @@ Open `web/index.html` in a browser.
 - The bylaw patrol and gym guys now sit across the neighbourhood route as actual obstacles to squeeze past on the way to dumpster objectives.
 - Rabbits, birds, rats, gym guys, Gary the rival rummager, and better-dressed dumpster patrols add small ambient comedy around the map without making the already short game grow delusions of grandeur.
 - The dumpster errand is now guarded by Gary the Rummager, who wants the antique Speak & Spell for himself and must be lured away before The Scavenger can grab it.
+- Big Wanda runs the landfill from her trailer, admires The Scavenger much too operationally, and becomes a capture hazard after the southern route opens.
+- Text and narration now use focus cooldowns and a tiny handoff pause so minor NPC gags do not constantly trample mission or soup instructions.
 
 ## Design Notes
 
