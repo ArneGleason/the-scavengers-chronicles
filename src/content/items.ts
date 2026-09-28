@@ -4,7 +4,7 @@
  */
 export type ItemId = "dinCable" | "powerBrick" | "cableBundle" | "speakAndSpell" | "newspaperBundle" | "personalityStump";
 export type CarryKind = "satchel" | "heavy";
-export type Surface = "carpet" | "linoleum" | "hardwood" | "concrete" | "grass" | "dirt" | "stairs";
+export type Surface = "carpet" | "linoleum" | "hardwood" | "concrete" | "grass" | "dirt" | "stairs" | "asphalt";
 
 export interface ItemDef {
   id: ItemId;

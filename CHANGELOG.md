@@ -2,6 +2,17 @@
 
 All notable prototype milestones for The Scavenger's Chronicles are tracked here.
 
+## 0.4.0 - The Route and the Starter Errands (in progress)
+
+- Added the Route: a laneway behind Bill's back gate with hydro poles, ivy, bins and graffiti; a municipal parking lot; the back of a corner store with its dumpster; a boxing gym; and a streetcar street with shopfronts along the north edge.
+- Added the three v0.2 starter errands with their original text: Sacred Cable Pilgrimage, Stump of Destiny, and Speak & Spell Salvage Duel.
+- Delivered items install in the house: the cable on the synth altar, the Speak & Spell on the CRT, the stump in the taped-out shelf zone.
+- Added Gary the Rummager: guards the dumpster, follows on a leash, drifts back slowly, can be distracted by a dropped Power Brick, and blocks the Speak & Spell while he's guarding it.
+- Added an objective card, a salvage-gold objective marker, delivery prompts, and speech balloons for more than one speaker.
+- Added a raccoon on the bins and a streetcar that passes every 45 seconds with its bell.
+- `M` now cycles errands and `N` mutes.
+- Tests for the mission chain and Gary's brain, plus end-to-end checks that deliver the cable and win the Gary duel.
+
 ## 0.3.0 - 3D Walking Toy (in progress)
 
 - Started the 3D rebuild: Three.js r186 with WebGPU and a WebGL2 fallback, Rapier physics, TypeScript and Vite.

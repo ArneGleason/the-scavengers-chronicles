@@ -11,6 +11,7 @@ The audit and planning pass that led here: [The Scavenger Goes 3D](https://claud
 | [art-bible.md](art-bible.md) | Look, line, colour, palettes, print texture, camera, lettering, readability | v0 |
 | [characters/bill.md](characters/bill.md) | Bill: who he is, voice, look, palette, expressions, gaits, sound | v0 |
 | [prompts/bill.md](prompts/bill.md) | Image-model prompts for Bill's sheets and the Phase 0 style frames; turnaround-to-3D spec | v0 |
+| [areas/the-route.md](areas/the-route.md) | The Route: inspiration, layout, the three starter errands, Gary's rules, ambient life | v0, built as greybox |
 | [maquettes/bill-maquette-v0.html](maquettes/bill-maquette-v0.html) | Bill built from primitives under the real renderer (three.js r186, toon ramp, ink pass): poses, expressions, game zoom. [Live page](https://claude.ai/artifact/Rnmx5EQGARTef27vSA3Gg4) | v0 |
 | [technical-design.md](technical-design.md) | Stack, layout, runtime, content and zone formats, render pipeline, camera, controller, animation, NPCs, testing, the walking-toy milestone | v0 |
 | [audio-design.md](audio-design.md) | Buses, adaptive music, the masterpiece, voices, foley, ambience, formats | v0 |

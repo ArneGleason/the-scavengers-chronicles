@@ -16,6 +16,7 @@ const SURF: Record<Surface, { bp: number; q: number; dec: number; thump: number;
   grass: { bp: 3600, q: 0.6, dec: 0.09, thump: 70, gain: 0.35 },
   dirt: { bp: 1000, q: 0.8, dec: 0.085, thump: 80, gain: 0.5 },
   stairs: { bp: 480, q: 3.5, dec: 0.09, thump: 120, gain: 0.8 },
+  asphalt: { bp: 1700, q: 0.9, dec: 0.05, thump: 100, gain: 0.6 },
 };
 
 const NOTE = (n: number) => 440 * 2 ** ((n - 69) / 12);
@@ -145,6 +146,32 @@ export class GameAudio {
     const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1000; bp.Q.value = 5;
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
     o.connect(bp).connect(g).connect(this.buses.sfx); o.start(t); o.stop(t + 0.4);
+  }
+
+  /** Mission complete: a little synth fanfare in D, the key of the score. */
+  jingle() {
+    if (!this.ctx) return;
+    const t = this.now;
+    [62, 66, 69, 74].forEach((n, i) => this.tone("sfx", t + i * 0.09, "square", NOTE(n), NOTE(n), 0.22, 0.12));
+    for (const n of [62, 66, 69, 74]) this.tone("sfx", t + 0.4, "triangle", NOTE(n), NOTE(n), 0.9, 0.12, 0.02);
+  }
+
+  /** The streetcar's two-tone bell, from across the lot. */
+  streetcarBell() {
+    if (!this.ctx) return;
+    const t = this.now;
+    for (const k of [0, 0.28]) {
+      this.tone("amb", t + k, "sine", 1480, 1480, 0.5, 0.35, 0.002);
+      this.tone("amb", t + k, "sine", 2210, 2210, 0.35, 0.15, 0.002);
+    }
+    this.noiseBurst("amb", t, 2.5, "lowpass", 180, 0.7, 0.35); // rumble
+  }
+
+  /** Raccoon chitter: fast little squeaks. */
+  chitter() {
+    if (!this.ctx) return;
+    const t = this.now;
+    for (let i = 0; i < 6; i++) this.tone("sfx", t + i * 0.055, "square", 2400 + this.rand() * 900, 1800, 0.04, 0.05);
   }
 
   land(speed: number) {

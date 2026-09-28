@@ -21,6 +21,10 @@ const SHOTS = [
   ["backyard-walk", "at=0,0,9&walk=1&zoom=game"],
   ["behind-house", "at=-8,0,-8&face=45&zoom=game"],
   ["phone", "at=2.4,0,2.2&face=200", { width: 390, height: 844 }],
+  ["route-gate", "at=0.5,0,16.8&face=90&debug=1"],
+  ["route-dumpster", "at=24.5,0,17.4&face=0&skip=cablePilgrimage"],
+  ["route-lot", "at=17.5,0,6&face=90"],
+  ["route-street", "at=-2,0,-5.8&face=90"],
 ];
 
 const filter = process.argv[2];
@@ -41,8 +45,9 @@ for (const [name, hash, viewport] of SHOTS) {
   page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") errors.push(`${m.type()}: ${m.text()}`); });
   page.on("pageerror", (e) => errors.push(String(e)));
   try {
+    const crashed = new Promise((_, reject) => page.on("pageerror", (e) => reject(e)));
     await page.goto(`${base}${process.env.Q ?? ""}#${hash}`);
-    await page.waitForFunction(() => window.__scav?.ready && window.__scav.frames > 90, null, { timeout: 90000 });
+    await Promise.race([page.waitForFunction(() => window.__scav?.ready && window.__scav.frames > 90, null, { timeout: 90000 }), crashed]);
     await page.screenshot({ path: `shots/${name}.png` });
     const backend = await page.evaluate(() => window.__scav.backend);
     console.log(`ok   ${name} (${backend})${errors.length ? `  [${errors.length} console errors]` : ""}`);
