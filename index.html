@@ -1,13 +1,85 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>The Scavenger's Chronicles</title>
-    <meta http-equiv="refresh" content="0; url=web/">
-    <link rel="canonical" href="web/">
+    <link rel="icon" href="data:," />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Shantell+Sans:wght@500;700&family=Courier+Prime:wght@400;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=swap"
+    />
+    <style>
+      :root {
+        --ink: #1e1a18;
+        --paper: #efe9dc;
+        --caption: #f9f5b0;
+        --salvage: #f2b632;
+      }
+      html, body { margin: 0; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); }
+      body { font-family: "Atkinson Hyperlegible Next", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+      #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+      #hud { position: fixed; inset: 0; pointer-events: none; }
+      [hidden] { display: none !important; }
+
+      .balloon {
+        position: absolute; left: 0; top: 0; max-width: min(340px, 70vw);
+        background: #fff; border: 2.5px solid var(--ink); border-radius: 22px; padding: 10px 16px 11px;
+        font: 700 16px/1.25 "Shantell Sans", "Comic Sans MS", sans-serif; font-variation-settings: "BNCE" 25, "INFM" 30;
+        --tail: 30px;
+      }
+      .balloon::after, .balloon::before {
+        content: ""; position: absolute; top: 100%; left: var(--tail); border-style: solid;
+      }
+      .balloon::before { border-width: 16px 10px 0 4px; border-color: var(--ink) transparent transparent; margin-top: 0; }
+      .balloon::after { border-width: 11px 7px 0 2px; border-color: #fff transparent transparent; margin-left: 2px; margin-top: -1px; }
+
+      .caption {
+        position: absolute; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+        max-width: min(620px, calc(100vw - 32px)); background: var(--caption); border: 2px solid var(--ink);
+        box-shadow: 3px 3px 0 var(--ink); padding: 9px 14px; font: 400 16px/1.35 "Courier Prime", "Courier New", monospace;
+      }
+      .prompt {
+        position: absolute; left: 0; top: 0; white-space: nowrap; background: var(--ink); color: #fff7e3;
+        border-radius: 999px; padding: 4px 11px 5px; font: 700 13px/1.2 "Shantell Sans", sans-serif;
+        box-shadow: 0 0 0 2px var(--salvage);
+      }
+      .satchel {
+        position: absolute; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        display: grid; grid-template-columns: auto auto auto auto; align-items: center; gap: 6px 8px;
+        background: rgba(239, 233, 220, 0.92); border: 2px solid var(--ink); border-radius: 10px; padding: 7px 10px;
+        font: 700 11px/1.1 "Atkinson Hyperlegible Next", sans-serif; text-transform: uppercase; letter-spacing: 0.06em;
+      }
+      .satchel .slots { display: flex; gap: 5px; }
+      .slot { width: 64px; height: 38px; border: 1.5px solid var(--ink); border-radius: 6px; background: #fffaf0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+      .slot.empty { background: repeating-linear-gradient(45deg, #efe6d2 0 4px, #f7f1e4 4px 8px); }
+      .slot i { width: 14px; height: 10px; border: 2px solid; border-radius: 3px; }
+      .slot span { font-size: 9px; letter-spacing: 0.02em; text-transform: none; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .help {
+        position: absolute; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); display: grid; grid-template-columns: auto auto; gap: 4px 12px;
+        background: rgba(239, 233, 220, 0.92); border: 2px solid var(--ink); border-radius: 10px; padding: 9px 12px; font-size: 13px;
+        transition: opacity 0.6s;
+      }
+      .help b { grid-column: 1 / -1; font-family: "Shantell Sans", sans-serif; font-size: 15px; }
+      .help.faded { opacity: 0.35; }
+      kbd { font: 700 11px/1 "Atkinson Hyperlegible Next", sans-serif; border: 1.5px solid var(--ink); border-bottom-width: 3px; border-radius: 4px; padding: 1px 5px; background: #fff; }
+      .debug { position: absolute; left: 16px; top: 16px; font: 12px/1.4 ui-monospace, Menlo, monospace; background: rgba(30,26,24,.8); color: #f4efe4; padding: 6px 9px; border-radius: 6px; white-space: pre; }
+      #loading { position: fixed; inset: 0; display: grid; place-items: center; font: 700 22px "Shantell Sans", sans-serif; }
+      @media (max-width: 640px) {
+        .help { display: none; }
+        .satchel { left: 12px; right: 12px; grid-template-columns: auto auto; justify-content: center; }
+        .satchel .label { display: none; }
+        .slot { width: 52px; }
+      }
+    </style>
   </head>
   <body>
-    <p><a href="web/">Play The Scavenger's Chronicles</a></p>
+    <canvas id="game" aria-label="The Scavenger's Chronicles: Bill's house"></canvas>
+    <div id="hud"></div>
+    <div id="loading">Bill is looking for the right cable&hellip;</div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

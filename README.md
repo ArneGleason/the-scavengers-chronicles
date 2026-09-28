@@ -54,17 +54,36 @@ The character art uses a simple cutout construction approach: separate heads, to
 - `242` JavaScript functions, including world drawing helpers, NPC renderers, mission logic, procedural audio, and the ending scene.
 - Current repo size is about `1.9 MB`, including screenshots.
 
-## Run Locally
+## The 3D Rebuild (in progress)
 
-Open [web/index.html](web/index.html) in a browser.
+The game is being rebuilt as a comic-book isometric 3D game that still runs straight from a URL. The design documents are in [docs/design/](docs/design/README.md). The first playable piece is the **walking toy**: Bill shuffling around his 1955 house, basement and backyard, picking up junk. It exists to prove that walking and carrying feel good before any missions are built.
 
-Or serve the repo root:
+It is built with Three.js r186 (WebGPU, with a WebGL2 fallback), Rapier physics, TypeScript and Vite. It needs Node 22 or newer.
 
 ```bash
-python3 -m http.server 8000
+npm install
+npm run dev
 ```
 
-Then visit [http://localhost:8000/web/](http://localhost:8000/web/).
+Then open [http://localhost:5173/](http://localhost:5173/). Controls: `WASD` shuffle, `Shift` hurry, `E` pick up, `R` drop, `Z` zoom, `T` feel-tuning panel, `M` mute, `` ` `` debug readout.
+
+| Command | What it does |
+|---|---|
+| `npm test` | Unit tests for inventory, targeting, gait and springs |
+| `npm run typecheck` | TypeScript check |
+| `node tools/e2e.mjs` | Plays the pickup, drop, carry and full-satchel flows in headless Chrome |
+| `node tools/shots.mjs` | Screenshots of each room into `shots/` |
+| `npm run build` | Static build into `dist/` |
+
+## Run the 2D Prototype Locally
+
+The v0.2 canvas game now lives in [public/classic/](public/classic/index.html) and is served at `/classic/` (the old `/web/` address redirects there). Open [public/classic/index.html](public/classic/index.html) in a browser, or serve the folder:
+
+```bash
+python3 -m http.server 8000 --directory public
+```
+
+Then visit [http://localhost:8000/classic/](http://localhost:8000/classic/).
 
 ## Project Notes
 

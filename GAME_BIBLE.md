@@ -40,6 +40,8 @@ The game is an isometric mission-based scavenging game with simple controls, car
 
 The player character is an odd aging obsessive with long side hair, thinning top hair, and heroic resistance to finishing anything. He keeps an old hairspray can around and sometimes uses it as if follicle engineering remains a solvable problem.
 
+His name is **Bill**. He wears dark sunglasses indoors, a red plaid flannel shirt and a charcoal sweater vest, eats soup from an enamel bowl labelled BILL ONLY, and lives with Aximandra, a tabby cat who "gets him." The same Bill appears in the Mega Vegas Elvis comics, where he runs a legal department against Rob. Full character bible: [docs/design/characters/bill.md](docs/design/characters/bill.md). Reference: [docs/design/reference/bill-soup-kitchen.jpg](docs/design/reference/bill-soup-kitchen.jpg).
+
 The hairspray can is only a background gag. It is not a central mechanic.
 
 ### Obsessions
@@ -140,6 +142,32 @@ The hairspray can is only a background gag. It is not a central mechanic.
    - Return the resulting mystery cable bundle to the synth altar.
    - Pick up the Final Adapter that the bundle reveals.
    - Install the Final Adapter at the private airfield so the ending is reachable without the joke becoming a soft lock.
+
+## 3D Rebuild Direction
+
+Decided on 2026-09-28. The design documents are in [docs/design/](docs/design/README.md).
+
+- A ligne claire comic look in 3D, with a fixed isometric camera and dollhouse cutaways, built on Three.js and running in the browser.
+- The 2D prototype moves to `/classic` and stays playable.
+- Three eras: his late mother's 1955 house, his taste frozen in 1986, and the 2026 world outside.
+- Carrying is physical: junk rides on Bill's body and changes how he walks.
+- The soup becomes three or four scripted episodes instead of a once-a-minute timer.
+- The masterpiece finally plays at the end: eight bars arranged from the sounds of what he delivered.
+- The private airfield moves to the far edge of the map, so the last errand is a long walk out of town.
+- The jet escape goes to **Las Vegas**. Mega Vegas Elvis is a light touch: comic stacks, the fridge photo and magnet, the ELVIS LIVES ashtray, Bill's lip curl, and then the finale.
+- Every cutscene and comic panel renders in-engine in the game's own look.
+- Bill lives with **Aximandra**, a tabby who knows the soup will boil over before he does. She rides to the airfield in the satchel.
+
+### Finale beats (draft)
+
+Played as an in-engine cutscene.
+
+1. At the airfield, Bill fits the Final Adapter into the jet's panel. Aximandra's head pops out of the satchel.
+2. In the cockpit, sunglasses on, he patches the basement synth rig into the jet's PA with the Final Adapter. No one asks why this works.
+3. The masterpiece plays while the jet taxis. Panels cut on the beat: the stump kick, the Speak & Spell spelling "B-I-L-L", the soup bass (a sob if the last soup was ruined).
+4. The jet lifts off. Eight bars end. Silence. Aximandra meows once.
+5. Vegas at night. A marquee reads TONIGHT: MEGA VEGAS ELVIS. The poster's face is Bill's. Bill, with a grievance face: "That's my face."
+6. End card: **Masterpiece Completed (Eight Bars). Escape Achieved. Litigation Pending.**
 
 ## Development Notes
 
