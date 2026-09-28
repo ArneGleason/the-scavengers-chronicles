@@ -34,7 +34,7 @@ v0, 28 September 2026. It covers how the 3D rebuild is built, run and shipped. V
 
 ```
 /                      README, GAME_BIBLE.md, CHANGELOG.md
-/classic/              the v0.2 canvas game, unchanged, still playable
+/public/classic/       the v0.2 canvas game, unchanged, served at /classic/ (/web/ redirects)
 /src/                  the 3D game (layout below)
 /public/assets/        processed GLB, KTX2 and audio (build output of tools/)
 /assets-src/           source images, Blender files, generation manifests
@@ -355,6 +355,18 @@ public/assets ─(tools/contact-sheet: headless render under the game's pipeline
 | Visual | Playwright | Fixed camera shots of each zone and of Bill's poses, on WebGPU and forced WebGL2, compared against approved images |
 | Performance | Playwright plus a budget check | Frame time on a scripted walk; bundle size and first-load bytes under budget |
 | Content lint | Script | Every quip key referenced exists; every mission point exists in a zone file |
+
+## Lessons from the walking toy (28 Sep 2026)
+
+- **One three.js build.** `vite.config.ts` aliases `three` to `three/webgpu`, so add-ons that import `three` don't drag in the WebGL renderer.
+- **Ink.** Uses `toonOutlinePass` with a patched hull material that extrudes in pixels along an `inkNormal` attribute.
+  - `render/ink.ts` averages normals across hard edges so box corners stay closed.
+  - Lines thinner than about 1.5 px vanish under antialiasing, so the width is fixed at about 2.8 px at 1080p and scales with viewport height, not zoom.
+  - Materials carry an `ink` weight: characters 1.0, interactables 1.15, environment 0.6–0.8.
+- **Bundle.** 1.9 MB gzipped to first play. Over half is Rapier's compat build, which inlines its WebAssembly as base64. Switching to the plain `@dimforge/rapier3d` build with a separate `.wasm` file should save about 1 MB raw and let the browser compile it while it streams.
+- **The basement cutaway.** Soil in front of the house would hide the basement from a 32° camera. So in basement mode the ground floor and the outdoors are hidden, and the basement reads as a cross-section on paper.
+- **Headless testing.** Headless Chrome has no WebGPU, so `tools/shots.mjs` and `tools/e2e.mjs` exercise the WebGL2 fallback. WebGPU has to be checked in a real browser.
+- **Feel numbers.** The starting values are in `FEEL` (`actors/player.ts`), `ANIM` (`actors/bill/animator.ts`) and `CAM` (`render/cameraRig.ts`). All are live-tunable with `T`.
 
 ## Porting map from v0.2
 

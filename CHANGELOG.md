@@ -2,6 +2,18 @@
 
 All notable prototype milestones for The Scavenger's Chronicles are tracked here.
 
+## 0.3.0 - 3D Walking Toy (in progress)
+
+- Started the 3D rebuild: Three.js r186 with WebGPU and a WebGL2 fallback, Rapier physics, TypeScript and Vite.
+- Moved the 2D prototype to `/classic/`; `/web/` redirects there.
+- Added a greybox estate: 1955 kitchen and living room, back hall with the antique vault, stairs down to the 1986 basement synth altar, and a fenced backyard with the dig patch.
+- Added Bill as a primitive-built character with a shuffle, a hurry with skids, lean into turns, springy hair and satchel, squash and stretch, idle fidgets and five expressions.
+- Added a comic render pass: toon banding with tinted shadows and pixel-constant ink outlines.
+- Added dollhouse cutaways: walls between Bill and the camera drop to stubs, the roof lifts when he goes inside, and the basement is shown as a cross-section.
+- Added carrying: a four-slot satchel for small finds and two hands for the stump, with pickup arcs, drop thunks, hit-stop and v0.2 narration lines.
+- Added synthesised audio: surface-aware footsteps and shuffle scuff, pickup notes, skid squeak, a kazoo honk for a full satchel, Bill's gibberish voice, and music that changes at the basement stairs.
+- Added a feel-tuning panel, unit tests, headless interaction checks and a screenshot tool.
+
 ## 0.2.0 - Graphics and Final Adapter Pass
 
 - Added a real Final Adapter leg to the last mission so the adapter joke resolves as a playable objective.
