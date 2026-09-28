@@ -294,6 +294,7 @@ async function boot() {
     gfx.render();
     frames++;
     w.__scav.frames = frames;
+    w.__scav.pos = [player.pos.x, player.pos.y, player.pos.z];
   }
   const _c = new THREE.Color();
 
@@ -323,8 +324,8 @@ async function boot() {
   // ---------- go ----------
   const loop = new FixedLoop(step, render);
   let frames = 0;
-  const w = window as unknown as { __scav: { ready: boolean; frames: number; backend: string } };
-  w.__scav = { ready: false, frames: 0, backend: gfx.backend };
+  const w = window as unknown as { __scav: { ready: boolean; frames: number; backend: string; pos: number[] } };
+  w.__scav = { ready: false, frames: 0, backend: gfx.backend, pos: [0, 0, 0] };
   cam.snap(pos.copy(player.pos));
   await gfx.renderer.compileAsync(scene, cam.camera);
   document.getElementById("loading")?.remove();

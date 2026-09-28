@@ -9,11 +9,12 @@ import type { Physics } from "./physics";
 import { P } from "../content/palette";
 import { canvasTex, flat, toon } from "../render/comicMaterial";
 import type { ItemId } from "../content/items";
+import { BASEMENT_Y, STAIRS, addStairColliders } from "./stairs";
+
+export { BASEMENT_Y, STAIRS };
 
 export const HOUSE = { x0: -6, x1: 6, z0: -5, z1: 5 };
 export const WALL_H = 2.6;
-export const BASEMENT_Y = -2.6;
-export const STAIRS = { xTop: 4.6, xBottom: 0.6, z0: -4.5, z1: -2.9, steps: 14 };
 
 export interface Estate {
   builder: StaticBuilder;
@@ -120,9 +121,9 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
   const run = (STAIRS.xTop - STAIRS.xBottom) / STAIRS.steps, rise = -BASEMENT_Y / STAIRS.steps;
   for (let i = 0; i < STAIRS.steps - 1; i++) {
     const x1 = STAIRS.xTop - i * run, x0 = x1 - run, top = -(i + 1) * rise;
-    b.box([x0, BASEMENT_Y, STAIRS.z0], [x1, top, STAIRS.z1], i % 2 ? P.walnut : "#7a5038", "basement", { ink: 0.6 });
+    b.box([x0, BASEMENT_Y, STAIRS.z0], [x1, top, STAIRS.z1], i % 2 ? P.walnut : "#7a5038", "basement", { ink: 0.6, collide: false });
   }
-  phys.ramp(STAIRS.xTop + 0.05, 0.0, STAIRS.xBottom - 0.02, BASEMENT_Y, STAIRS.z0, STAIRS.z1);
+  addStairColliders(phys);
   // railings around the stairwell at ground level
   const rail = (x0: number, x1: number, z0: number, z1: number) => {
     b.box([x0, 0.92, z0], [x1, 1.0, z1], P.walnut, "ground", { collide: false });

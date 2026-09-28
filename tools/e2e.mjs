@@ -69,6 +69,19 @@ async function open(hash) {
   await page.close();
 }
 
+{
+  // down the stairs to the basement and back up again (world +X is screen right + down)
+  const page = await open("at=0.1,-2.6,-3.7&face=90");
+  await page.keyboard.down("KeyD");
+  await page.keyboard.down("KeyS");
+  await page.waitForTimeout(7000);
+  await page.keyboard.up("KeyD");
+  await page.keyboard.up("KeyS");
+  const [x, y] = await page.evaluate(() => window.__scav.pos);
+  check(y > -0.1 && x > 4.4, `climbs the basement stairs back up to the hall (ended at x ${x.toFixed(2)}, y ${y.toFixed(2)})`);
+  await page.close();
+}
+
 await browser.close();
 await server.close();
 console.log(failures ? `${failures} failure(s)` : "all interaction checks passed");

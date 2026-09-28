@@ -30,6 +30,9 @@ export class Player {
   readonly body: RAPIER.RigidBody;
   readonly collider: RAPIER.Collider;
   private kcc: RAPIER.KinematicCharacterController;
+  private hit: RAPIER.CharacterCollision;
+  /** Up-component of the ground normal under him last step (1 = flat). */
+  private groundNy = 1;
   /** Feet position (current and previous fixed step, for render interpolation). */
   readonly pos = new THREE.Vector3();
   readonly prevPos = new THREE.Vector3();
@@ -64,11 +67,12 @@ export class Player {
     k.enableAutostep(0.3, 0.15, true);
     k.enableSnapToGround(0.3);
     k.setMaxSlopeClimbAngle(45 * DEG);
-    k.setMinSlopeSlideAngle(30 * DEG);
+    k.setMinSlopeSlideAngle(50 * DEG); // above the climb limit: he should never slide off the stairs
     k.setApplyImpulsesToDynamicBodies(true);
     k.setCharacterMass(75);
     k.setSlideEnabled(true);
     this.kcc = k;
+    this.hit = new phys.R.CharacterCollision();
     this.pos.copy(spawn);
     this.prevPos.copy(spawn);
   }
@@ -153,7 +157,10 @@ export class Player {
 
     // vertical: gravity, with a small downward bias while grounded so snap-to-ground engages
     this.vy = this.grounded ? -0.5 : Math.max(-20, this.vy - 19.6 * dt);
-    const desired = { x: this.vel.x * dt, y: this.vy * dt, z: this.vel.y * dt };
+    // The controller projects his step onto slopes, which slows him on the stairs; scale it back
+    // up so he keeps his walking pace along the slope (1 / cos of the slope angle).
+    const slopeBoost = this.groundNy > 0.5 && this.groundNy < 0.985 ? 1 / this.groundNy : 1;
+    const desired = { x: this.vel.x * dt * slopeBoost, y: this.vy * dt, z: this.vel.y * dt * slopeBoost };
     this.kcc.computeColliderMovement(this.collider, desired);
     const mv = this.kcc.computedMovement();
     const wasGrounded = this.grounded;
@@ -161,14 +168,24 @@ export class Player {
     if (this.grounded && !wasGrounded && this.vy < -3) this.onLand?.(-this.vy);
     const t = this.body.translation();
     this.body.setNextKinematicTranslation({ x: t.x + mv.x, y: t.y + mv.y, z: t.z + mv.z });
-    // walls stop him: keep velocity honest so he doesn't moonwalk against them
-    if (dt > 0) {
-      const ax = mv.x / dt, az = mv.z / dt;
-      if (Math.hypot(ax, az) < Math.hypot(this.vel.x, this.vel.y) - 0.05) {
-        this.vel.x = ax;
-        this.vel.y = az;
+    // Walls stop him: cancel only the part of his velocity that pushes into a wall, so he
+    // slides along it instead of moonwalking. Slopes and stairs (normals pointing up) are
+    // left alone; the controller already walks him up those.
+    let groundNy = this.grounded ? 1 : 0;
+    for (let i = 0; i < this.kcc.numComputedCollisions(); i++) {
+      const c = this.kcc.computedCollision(i, this.hit);
+      if (!c) continue;
+      const n = c.normal1; // outward from the obstacle, toward Bill
+      if (n.y > 0.5) groundNy = Math.min(groundNy || 1, n.y);
+      if (Math.abs(n.y) > 0.5) continue;
+      const hl = Math.hypot(n.x, n.z) || 1, hx = n.x / hl, hz = n.z / hl;
+      const into = this.vel.x * hx + this.vel.y * hz;
+      if (into < 0) {
+        this.vel.x -= into * hx;
+        this.vel.y -= into * hz;
       }
     }
+    this.groundNy = groundNy;
     this.pos.set(t.x + mv.x, t.y + mv.y - FOOT_OFFSET, t.z + mv.z);
 
     this.idleTime = mag > 0.1 || speed > 0.1 ? 0 : this.idleTime + dt;
