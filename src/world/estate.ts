@@ -10,6 +10,7 @@ import { P } from "../content/palette";
 import { canvasTex, flat, toon } from "../render/comicMaterial";
 import type { ItemId } from "../content/items";
 import { BASEMENT_Y, STAIRS, addStairColliders } from "./stairs";
+import { SITE, WALKABLE } from "./site";
 
 export { BASEMENT_Y, STAIRS };
 
@@ -79,7 +80,7 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
   const ledMat = flat(P.led);
 
   /* ---------- ground outside: soil blocks with grass tops, a hole where the house sits ---------- */
-  const W = { x0: -14, x1: 14, z0: -11, z1: 17 };
+  const W = SITE;
   const ground = (x0: number, x1: number, z0: number, z1: number) => {
     b.box([x0, -3, z0], [x1, -0.1, z1], P.soil, "outdoors", { collide: false, ink: 0.6 });
     b.box([x0, -0.1, z0], [x1, 0, z1], grass, "outdoors", { tile: 1.6 });
@@ -89,10 +90,11 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
   ground(W.x0, HOUSE.x0, HOUSE.z0, HOUSE.z1);
   ground(HOUSE.x1, W.x1, HOUSE.z0, HOUSE.z1);
   // invisible world edge so he can't shuffle off the diorama
-  phys.box([W.x0 + 1.4, 0, W.z0 + 1.4], [W.x1 - 1.4, 3, W.z0 + 1.5]);
-  phys.box([W.x0 + 1.4, 0, W.z1 - 1.5], [W.x1 - 1.4, 3, W.z1 - 1.4]);
-  phys.box([W.x0 + 1.4, 0, W.z0 + 1.4], [W.x0 + 1.5, 3, W.z1 - 1.4]);
-  phys.box([W.x1 - 1.5, 0, W.z0 + 1.4], [W.x1 - 1.4, 3, W.z1 - 1.4]);
+  const E = WALKABLE;
+  phys.box([E.x0, 0, E.z0 - 0.1], [E.x1, 3, E.z0]);
+  phys.box([E.x0, 0, E.z1], [E.x1, 3, E.z1 + 0.1]);
+  phys.box([E.x0 - 0.1, 0, E.z0], [E.x0, 3, E.z1]);
+  phys.box([E.x1, 0, E.z0], [E.x1 + 0.1, 3, E.z1]);
 
   /* ---------- ground floor slabs (top at y = 0) ---------- */
   const slab = (x0: number, x1: number, z0: number, z1: number, mat: THREE.Material, tile: number) =>
@@ -205,6 +207,17 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
   // newspaper towers along the front wall
   for (const [x, z, n] of [[-0.6, 4.55, 9], [-0.1, 4.6, 6], [0.4, 4.55, 11], [3.6, 4.6, 7]] as const) newspapers(b, news, x, 0, z, n, "ground");
 
+  // the future shelf zone, taped out on the carpet (the stump will live here)
+  const tape = "#e7d9a0";
+  b.box([3.55, 0.013, 0.25], [4.65, 0.018, 0.31], tape, "ground", { collide: false, ink: 0 });
+  b.box([3.55, 0.013, 1.19], [4.65, 0.018, 1.25], tape, "ground", { collide: false, ink: 0 });
+  b.box([3.55, 0.013, 0.25], [3.61, 0.018, 1.25], tape, "ground", { collide: false, ink: 0 });
+  b.box([4.59, 0.013, 0.25], [4.65, 0.018, 1.25], tape, "ground", { collide: false, ink: 0 });
+  const tapeLabel = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.16), toon("#fff", { map: canvasTex(256, 48, (g) => {
+    g.fillStyle = tape; g.fillRect(0, 0, 256, 48); g.fillStyle = "#1e1a18"; g.font = "700 26px 'Courier New', monospace"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("FUTURE SHELF", 128, 26);
+  }), ink: 0 }));
+  tapeLabel.rotation.x = -Math.PI / 2; tapeLabel.position.set(4.1, 0.02, 1.42); tapeLabel.userData.tag = "ground"; scene.add(tapeLabel);
+
   /* ---------- back hall + antique vault ---------- */
   b.box([-5.85, 0, -4.9], [-1.6, 2.0, -4.45], P.walnut, "ground");
   for (const y of [0.5, 1.0, 1.5]) b.box([-5.8, y, -4.44], [-1.65, y + 0.05, -4.4], "#5a3826", "ground", { collide: false, ink: 0.5 });
@@ -270,7 +283,16 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
     b.box([mnx, 0.78, mnz], [mxx, 0.86, mxz], P.fence, "outdoors", { collide: false, ink: 0.5 });
     phys.box([mnx, 0, mnz], [mxx, 1.1, mxz]);
   };
-  fence(-11, 15, 11, 15);
+  // the back fence has a gate onto the laneway
+  fence(-11, 15, -1.3, 15);
+  fence(1.3, 15, 11, 15);
+  for (let i = 0; i < 6; i++) {
+    // the gate itself, swung open into the yard
+    const a = 1.25, t = (i + 0.5) / 6, x = 1.3 - Math.cos(a) * 2.5 * t, z = 15 - Math.sin(a) * 2.5 * t;
+    b.box([x - 0.05, 0, z - 0.05], [x + 0.05, 1.0, z + 0.05], P.fence, "outdoors", { collide: false, ink: 0.5 });
+  }
+  b.geo(new THREE.BoxGeometry(2.5, 0.08, 0.06), P.fence, "outdoors", [1.3 - Math.cos(1.25) * 1.25, 0.4, 15 - Math.sin(1.25) * 1.25], [0, 1.25, 0], undefined, 0.5);
+  b.geo(new THREE.BoxGeometry(2.5, 0.08, 0.06), P.fence, "outdoors", [1.3 - Math.cos(1.25) * 1.25, 0.82, 15 - Math.sin(1.25) * 1.25], [0, 1.25, 0], undefined, 0.5);
   fence(-11, 5.2, -11, 15);
   fence(11, 5.2, 11, 15);
 
@@ -284,7 +306,6 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
     spawn: new THREE.Vector3(2.4, 0, 2.2),
     itemSpawns: [
       { id: "powerBrick", at: new THREE.Vector3(-4.4, 0.2, 3.7) },
-      { id: "speakAndSpell", at: new THREE.Vector3(3.0, 0.2, 3.9) },
       { id: "newspaperBundle", at: new THREE.Vector3(-2.6, 0.2, -2.3) },
       { id: "dinCable", at: new THREE.Vector3(-2.0, BASEMENT_Y + 0.2, 0.8) },
       { id: "cableBundle", at: new THREE.Vector3(3.6, BASEMENT_Y + 0.2, 2.2) },

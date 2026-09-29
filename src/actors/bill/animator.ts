@@ -12,6 +12,10 @@ export interface Motion {
   skidding: boolean;
   idleTime: number;
   satchelCount: number;
+  /** Riding the skateboard: feet planted, arms out, wobbling. */
+  surfing?: boolean;
+  /** Heaving in a tug-of-war: feet braced, hands out front. */
+  tugging?: boolean;
 }
 
 export const ANIM = {
@@ -38,6 +42,8 @@ export class BillAnimator {
   private exprOverride: Expression | null = null;
   private nextElvis = 16;
   private fidgetClock = 0;
+  private noseUntil = 0;
+  private noseFrom = 0;
 
   constructor(private rig: BillRig) {}
 
@@ -45,6 +51,12 @@ export class BillAnimator {
   flash(e: Expression, seconds: number, now: number) {
     this.exprOverride = e;
     this.exprUntil = now + seconds;
+  }
+
+  /** The nasal audit: finger to nose, a thorough rummage, a flick. */
+  pickNose(now: number) {
+    this.noseFrom = now;
+    this.noseUntil = now + 2.2;
   }
 
   /** Squash (s < 1) or stretch (s > 1) impulse: pickups, heavy drops, landings. */
@@ -108,7 +120,31 @@ export class BillAnimator {
     }
     mp.carry = heavyW;
 
-    const pose: Pose = blendPose(ip, mp, this.moveW);
+    let pose: Pose = blendPose(ip, mp, this.moveW);
+
+    if (m.surfing) {
+      // feet planted on the board, arms out like a man who has never surfed
+      const sp = basePose();
+      sp.lf = [0.17, 0, 0.16, 0]; sp.rf = [-0.15, 0, -0.14, 0];
+      sp.lh = [0.55, 0.22, 0.05 + 0.06 * Math.sin(t * 7)]; sp.rh = [-0.55, 0.28, -0.02 - 0.06 * Math.sin(t * 7)];
+      sp.le = [0.9, 0.6, -0.2]; sp.re = [-0.9, 0.6, -0.2];
+      sp.py = -0.08; sp.lean = 0.12; sp.roll = 0.09 * Math.sin(t * 6); sp.hp = -0.1;
+      pose = sp;
+    }
+    if (m.tugging) {
+      const tp = basePose();
+      tp.lf = [0.15, 0, 0.22, 0]; tp.rf = [-0.14, 0, -0.16, 0];
+      tp.lh = [0.12, 0.02, 0.42]; tp.rh = [-0.12, 0.02, 0.42];
+      tp.le = [0.6, -0.3, 0.1]; tp.re = [-0.6, -0.3, 0.1];
+      tp.py = -0.1; tp.hp = -0.2 + 0.05 * Math.sin(t * 22);
+      pose = tp;
+    }
+    // the nasal audit overrides the right hand
+    if (t < this.noseUntil) {
+      const k = t - this.noseFrom, dur = this.noseUntil - this.noseFrom;
+      pose.nose = smoothstep(0, 0.35, k) * (1 - smoothstep(dur - 0.25, dur, k));
+      pose.hp += 0.08 * pose.nose + 0.03 * Math.sin(t * 18) * pose.nose;
+    }
 
     // --- lean into turns and acceleration (applied to the whole body around the feet) ---
     const tl = clamp(-m.yawRate * m.speed * ANIM.turnLean, -ANIM.maxTurnLean, ANIM.maxTurnLean);

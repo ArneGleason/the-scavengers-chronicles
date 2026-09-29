@@ -65,7 +65,7 @@ npm install
 npm run dev
 ```
 
-Then open [http://localhost:5173/](http://localhost:5173/). Controls: `WASD` shuffle, `Shift` hurry, `E` pick up, `R` drop, `Z` zoom, `T` feel-tuning panel, `M` mute, `` ` `` debug readout.
+Then open [http://localhost:5173/](http://localhost:5173/). Controls: `WASD` shuffle, `Shift` hurry, `Space` toot dash, `E` grab (and mash it in challenges), `R` drop, `Z` zoom, `T` feel-tuning panel, `N` mute, `` ` `` debug readout.
 
 | Command | What it does |
 |---|---|

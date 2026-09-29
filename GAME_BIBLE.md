@@ -4,7 +4,7 @@ Living world and mechanics bible for a browser-playable isometric scavenging com
 
 ## Core Pitch
 
-It is 2026. The Scavenger lives in a preserved retro estate, surrounded by antiques, newspapers, synthesizers, old cables, cracked wood, metal grates, broken appliances, and projects that are absolutely about to become brilliant.
+It is 2026. The Scavenger lives in a 1955 house he has never updated and never stopped filling: heaps of antiques, newspapers, synthesizers, old cables, cracked wood, metal grates, broken appliances, and projects that are absolutely about to become brilliant. He calls himself an archivist. The modern world will eventually realise these things were the best they could ever be.
 
 He is emotionally stuck at 14. He believes the right cable, the right synthesizer, the right rack rail, or the right piece of salvaged wood will finally unlock the masterpiece he has been preparing to compose for forty years. No music has been written. Preparation, however, is world-class.
 
@@ -150,6 +150,7 @@ Decided on 2026-09-28. The design documents are in [docs/design/](docs/design/RE
 - A ligne claire comic look in 3D, with a fixed isometric camera and dollhouse cutaways, built on Three.js and running in the browser.
 - The 2D prototype moves to `/classic` and stays playable.
 - Three eras: his late mother's 1955 house, his taste frozen in 1986, and the 2026 world outside.
+- The house is a hoarder shambles, not a museum piece. Its furniture and appliances are 1950s because Bill never replaces anything, and the heaps are his archive. A stored object vindicates him for one second, then causes a much bigger problem.
 - Carrying is physical: junk rides on Bill's body and changes how he walks.
 - The soup becomes three or four scripted episodes instead of a once-a-minute timer.
 - The masterpiece finally plays at the end: eight bars arranged from the sounds of what he delivered.
@@ -158,6 +159,10 @@ Decided on 2026-09-28. The design documents are in [docs/design/](docs/design/RE
 - Every cutscene and comic panel renders in-engine in the game's own look.
 - Bill lives with **Aximandra**, a tabby who knows the soup will boil over before he does. She rides to the airfield in the satchel.
 
+### The Route (built as greybox)
+
+Bill's back gate opens onto a Toronto-style laneway. Along the lane are a parking lot, the back of a corner variety store with the dumpster Gary guards, and a boxing gym. A streetcar street with shopfronts runs along the north edge. Layout, errands and Gary's rules: [docs/design/areas/the-route.md](docs/design/areas/the-route.md).
+
 ### Finale beats (draft)
 
 Played as an in-engine cutscene.
@@ -165,7 +170,7 @@ Played as an in-engine cutscene.
 1. At the airfield, Bill fits the Final Adapter into the jet's panel. Aximandra's head pops out of the satchel.
 2. In the cockpit, sunglasses on, he patches the basement synth rig into the jet's PA with the Final Adapter. No one asks why this works.
 3. The masterpiece plays while the jet taxis. Panels cut on the beat: the stump kick, the Speak & Spell spelling "B-I-L-L", the soup bass (a sob if the last soup was ruined).
-4. The jet lifts off. Eight bars end. Silence. Aximandra meows once.
+4. The jet lifts off. The eight bars are surprisingly good; everyone braces for more. They end. Silence. Aximandra meows once. Bill: "I'm still working on the bridge." (Proposed: the jet hits a tiny bump, THWACK, freeze-frame.)
 5. Vegas at night. A marquee reads TONIGHT: MEGA VEGAS ELVIS. The poster's face is Bill's. Bill, with a grievance face: "That's my face."
 6. End card: **Masterpiece Completed (Eight Bars). Escape Achieved. Litigation Pending.**
 

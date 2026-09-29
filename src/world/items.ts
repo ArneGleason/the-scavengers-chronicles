@@ -7,7 +7,7 @@ import { toon, canvasTex, flat, blobTexture } from "../render/comicMaterial";
 import { ensureInkNormals } from "../render/ink";
 import { clamp, smoothstep } from "../core/math";
 
-type State = "world" | "flying" | "satchel" | "hands";
+type State = "world" | "flying" | "satchel" | "hands" | "installed";
 
 export interface WorldItem {
   id: ItemId;
@@ -18,7 +18,7 @@ export interface WorldItem {
   body: RAPIER.RigidBody | null;
   state: State;
   mats: THREE.MeshToonNodeMaterial[];
-  flight?: { from: THREE.Vector3; t: number; dur: number; to: "satchel" | "hands" };
+  flight?: { from: THREE.Vector3; t: number; dur: number; to: "satchel" | "hands" | "install"; dest?: THREE.Vector3; rotY?: number };
 }
 
 const cutTex = canvasTex(128, 128, (g, w) => {
@@ -139,12 +139,17 @@ export class Items {
     return it;
   }
 
-  spawnJunk(kind: "box" | "crate" | "bucket", at: THREE.Vector3) {
+  /** Loose junk with physics; `vel` launches it (a geyser of archive, a fridge avalanche). */
+  spawnJunk(kind: "box" | "crate" | "bucket", at: THREE.Vector3, vel?: THREE.Vector3) {
     const { g, half, mass } = junkModel(kind);
     ensureInkNormals(g);
     g.position.copy(at);
     this.scene.add(g);
-    this.phys.dynamicBox(g, half, mass, at);
+    const body = this.phys.dynamicBox(g, half, mass, at);
+    if (vel) {
+      body.setLinvel({ x: vel.x, y: vel.y, z: vel.z }, true);
+      body.setAngvel({ x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8, z: (Math.random() - 0.5) * 8 }, true);
+    }
     this.junk.push(g);
     const sh = new THREE.Mesh(this.shadowGeo, this.shadowMat);
     sh.rotation.x = -Math.PI / 2;
@@ -171,6 +176,19 @@ export class Items {
   }
 
   /**
+   * Deliver: the item leaves the satchel or Bill's hands and arcs to its place in the house,
+   * where it stays for good ("the house keeps score").
+   */
+  beginInstall(it: WorldItem, from: THREE.Vector3, dest: THREE.Vector3, rotY = 0) {
+    if (it.state === "hands") this.scene.attach(it.obj);
+    it.obj.visible = true;
+    it.obj.scale.setScalar(1);
+    it.obj.quaternion.identity();
+    it.state = "flying";
+    it.flight = { from: from.clone(), t: 0, dur: 0.6, to: "install", dest: dest.clone(), rotY };
+  }
+
+  /**
    * Advance flights. `satchel` is where small finds disappear; `carry` is the hands anchor.
    * Returns items that just arrived.
    */
@@ -181,16 +199,21 @@ export class Items {
         const f = it.flight;
         f.t += dt / f.dur;
         const k = clamp(f.t, 0, 1);
-        const dest = f.to === "hands" ? carry.getWorldPosition(_v) : satchel;
+        const dest = f.to === "hands" ? carry.getWorldPosition(_v) : f.to === "install" ? f.dest! : satchel;
         // hop, then arc (ease-in) to the destination
         const e = k * k;
         it.obj.position.lerpVectors(f.from, dest, e);
-        it.obj.position.y += Math.sin(Math.PI * Math.min(1, k * 1.2)) * 0.45 * (1 - k);
+        it.obj.position.y += Math.sin(Math.PI * Math.min(1, k * 1.2)) * (f.to === "install" ? 0.9 : 0.45) * (1 - k);
+        if (f.to === "install") it.obj.rotation.y = (f.rotY ?? 0) * k + (1 - k) * 4 * k;
         const s = f.to === "satchel" ? 1 - 0.75 * smoothstep(0.55, 1, k) : 1;
         it.obj.scale.setScalar(s);
         if (k >= 1) {
           it.flight = undefined;
-          if (f.to === "hands") {
+          if (f.to === "install") {
+            it.state = "installed";
+            it.obj.position.copy(f.dest!);
+            it.obj.rotation.set(0, f.rotY ?? 0, 0);
+          } else if (f.to === "hands") {
             it.state = "hands";
             carry.add(it.obj);
             it.obj.position.set(0, 0, 0);
@@ -213,6 +236,20 @@ export class Items {
       sh.position.set(o.position.x, o.position.y - (sh.userData.lift as number) + 0.01, o.position.z);
     }
     return arrived;
+  }
+
+  /** Take an item out of physics so something else (a tug-of-war, the ground) can hold it. */
+  hold(it: WorldItem) {
+    if (it.body) { this.phys.remove(it.body); it.body = null; }
+  }
+
+  /** Put an item back in the world at a spot and let physics have it again. */
+  settle(it: WorldItem, at: THREE.Vector3) {
+    this.hold(it);
+    it.obj.position.copy(at);
+    it.obj.quaternion.identity();
+    it.state = "world";
+    it.body = this.phys.dynamicBox(it.obj, it.half, ITEMS[it.id].mass, at);
   }
 
   /** Put an item back into the world in front of Bill. */

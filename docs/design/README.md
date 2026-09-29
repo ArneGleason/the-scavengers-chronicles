@@ -11,6 +11,10 @@ The audit and planning pass that led here: [The Scavenger Goes 3D](https://claud
 | [art-bible.md](art-bible.md) | Look, line, colour, palettes, print texture, camera, lettering, readability | v0 |
 | [characters/bill.md](characters/bill.md) | Bill: who he is, voice, look, palette, expressions, gaits, sound | v0 |
 | [prompts/bill.md](prompts/bill.md) | Image-model prompts for Bill's sheets and the Phase 0 style frames; turnaround-to-3D spec | v0 |
+| [comedy.md](comedy.md) | The comedy direction: the gag clock, easy guided play, Bill's comedy verbs, world gags, and an action challenge at every plot beat. Outranks earlier pacing assumptions | v0, first pass built |
+| [gags.md](gags.md) | The gag catalogue: what's built, what's next, what waits on other systems, mini-games against the plot beats, and canon from the brainstorm | Living |
+| [briefs/gag-brainstorm.md](briefs/gag-brainstorm.md) | A self-contained brief for brainstorming gags with an outside partner (ChatGPT): story, cast, rules, verbs, what's built, and the answer format | v0 |
+| [areas/the-route.md](areas/the-route.md) | The Route: inspiration, layout, the three starter errands, Gary's rules, ambient life | v0, built as greybox |
 | [maquettes/bill-maquette-v0.html](maquettes/bill-maquette-v0.html) | Bill built from primitives under the real renderer (three.js r186, toon ramp, ink pass): poses, expressions, game zoom. [Live page](https://claude.ai/artifact/Rnmx5EQGARTef27vSA3Gg4) | v0 |
 | [technical-design.md](technical-design.md) | Stack, layout, runtime, content and zone formats, render pipeline, camera, controller, animation, NPCs, testing, the walking-toy milestone | v0 |
 | [audio-design.md](audio-design.md) | Buses, adaptive music, the masterpiece, voices, foley, ambience, formats | v0 |
@@ -35,6 +39,8 @@ The audit and planning pass that led here: [The Scavenger Goes 3D](https://claud
 | 2026-09-28 | Mega Vegas Elvis as a light touch; the jet escape goes to Las Vegas (finale beats in `GAME_BIBLE.md`) |
 | 2026-09-28 | Every cutscene and comic panel renders in-engine in the game's own look |
 | 2026-09-28 | The cat is **Aximandra** |
+| 2026-09-29 | The house is a hoarder shambles, not a pristine period home; Bill calls himself an archivist (`gags.md`, "Canon from the brainstorm") |
+| 2026-09-29 | A ridiculously slapstick, crude interactive comedy: easy to play, guided along one main plot, a silly action challenge at each key beat, and a gag every 10–15 seconds (`comedy.md`) |
 
 ## Open
 

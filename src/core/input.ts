@@ -3,16 +3,18 @@
  * the controller rotates it by the camera yaw. Button presses are latched until a
  * fixed simulation step consumes them, so a quick tap between steps is never lost.
  */
-export type Button = "interact" | "drop" | "debug" | "tune" | "mute" | "zoom";
+export type Button = "interact" | "drop" | "debug" | "tune" | "mute" | "zoom" | "mission" | "toot";
 
 const KEYMAP: Record<string, Button> = {
   KeyE: "interact",
-  Space: "interact",
+  Space: "toot",
+  KeyF: "toot",
   Enter: "interact",
   KeyR: "drop",
   Backquote: "debug",
   KeyT: "tune",
-  KeyM: "mute",
+  KeyN: "mute",
+  KeyM: "mission",
   KeyZ: "zoom",
 };
 
@@ -94,6 +96,8 @@ export class Input {
         [0, "interact"],
         [1, "drop"],
         [8, "debug"],
+        [3, "toot"],
+        [5, "toot"],
       ];
       for (const [i, b] of edges) {
         if (btn(i) && !this.padPrev[i]) {
