@@ -3,7 +3,9 @@
  * End-to-end check of the game's interactions in headless Chrome: pickups and drops, the stairs,
  * deliveries, the two action challenges (Stump Wrestle, Dumpster Duel), the toot dash, the rake,
  * the skateboard, and luring Gary.
- *   node tools/e2e.mjs
+ *   node tools/e2e.mjs           -> every check
+ *   node tools/e2e.mjs photo     -> only the blocks whose opening comment mentions "photo"
+ *   node tools/e2e.mjs photo,duel -> blocks mentioning either
  */
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
@@ -16,6 +18,8 @@ await server.listen();
 const base = server.resolvedUrls.local[0];
 const browser = await chromium.launch({ executablePath: CHROME, headless: true, args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
 
+const only = process.argv[2];
+const want = (what) => !only || only.split(",").some((w) => what.toLowerCase().includes(w.trim().toLowerCase()));
 let failures = 0;
 const check = (ok, msg) => { console.log(`${ok ? "pass" : "FAIL"} ${msg}`); if (!ok) failures++; };
 /** Steer Bill to (x, z) by holding the right keys (camera yaw 45°: D+S is +X, S+A is +Z). */
@@ -62,7 +66,7 @@ async function open(hash) {
   return page;
 }
 
-{
+if (want('the power brick sits on the kitchen floor at (-4.4, 0, 3.7); stand beside it, facing it')) {
   // the power brick sits on the kitchen floor at (-4.4, 0, 3.7); stand beside it, facing it
   const page = await open("at=-3.6,0,3.7&face=270");
   await page.keyboard.press("KeyE");
@@ -76,7 +80,7 @@ async function open(hash) {
   check((await slots(page)).length === 0, "R drops it back out of the satchel");
   await page.close();
 }
-{
+if (want('Stump Wrestle: E at the rooted stump starts the challenge; mashing uproots it into his hands')) {
   // Stump Wrestle: E at the rooted stump starts the challenge; mashing uproots it into his hands
   const page = await open("at=-3.0,0,9.6&face=0&zoom=close");
   await page.keyboard.press("KeyE");
@@ -99,7 +103,7 @@ async function open(hash) {
   check(!(await slots(page)).includes("Stump"), "E with nothing in reach puts the stump down");
   await page.close();
 }
-{
+if (want('four satchel items already carried; the power brick on the kitchen floor should be refused')) {
   // four satchel items already carried; the power brick on the kitchen floor should be refused
   const page = await open("at=-3.6,0,3.7&face=270&give=dinCable,cableBundle,newspaperBundle,speakAndSpell");
   await page.waitForTimeout(800);
@@ -111,7 +115,7 @@ async function open(hash) {
   await page.close();
 }
 
-{
+if (want('down the stairs to the basement and back up again (world +X is screen right + down)')) {
   // down the stairs to the basement and back up again (world +X is screen right + down)
   const page = await open("at=0.1,-2.6,-3.7&face=90");
   await page.keyboard.down("KeyD");
@@ -124,7 +128,7 @@ async function open(hash) {
   await page.close();
 }
 
-{
+if (want('Errand 1: carrying the DIN cable at the synth altar, E delivers it')) {
   // Errand 1: carrying the DIN cable at the synth altar, E delivers it
   const page = await open("at=-2.3,-2.6,-3.55&face=180&give=dinCable");
   await page.waitForTimeout(700);
@@ -136,7 +140,7 @@ async function open(hash) {
   await page.screenshot({ path: "shots/e2e-deliver.png" });
   await page.close();
 }
-{
+if (want('Hoard Dive: the DIN cable is buried in the basement hoard; E starts the dig, mashing finds it')) {
   // Hoard Dive: the DIN cable is buried in the basement hoard; E starts the dig, mashing finds it
   const page = await open("at=-2.0,-2.6,1.75&face=180&zoom=close");
   const s0 = await scav(page);
@@ -154,11 +158,11 @@ async function open(hash) {
   check(!s1.challenge && !s1.buried && s1.inv.includes("dinCable"), `mashing digs out the DIN cable into the satchel (${s1.inv})`);
   await page.close();
 }
-for (const [name, hash, wait, slap, extra] of [
+for (const [name, hash, wait, slap, extra] of want("poke props toaster fridge adapters") ? [
   ["toaster", "at=-4.85,0,2.3&face=270&zoom=close", 3400, "stagger"],
   ["fridge", "at=-4.6,0,4.5&face=270&zoom=close", 1900, "buttflop", (a, b) => b.pos[0] - a.pos[0] > 0.8],
   ["adapters", "at=8.6,0,16.95&face=180&zoom=close", 2100, "faceplant"],
-]) {
+] : []) {
   // the props you can poke: each one ends with Bill on the floor
   const page = await open(hash);
   const a = await scav(page);
@@ -169,7 +173,7 @@ for (const [name, hash, wait, slap, extra] of [
   check(a.poke === name && b.slap === slap && (!extra || extra(a, b)), `E at the ${name} plays its gag (poke ${a.poke}, ${b.slap})`);
   await page.close();
 }
-{
+if (want('the masterpiece: E, R, then E again, and the third note always goes wrong')) {
   // the masterpiece: E, R, then E again, and the third note always goes wrong
   const page = await open("at=2.1,0,3.7&face=0&zoom=close");
   const a = await scav(page);
@@ -184,7 +188,7 @@ for (const [name, hash, wait, slap, extra] of [
   check(a.poke === "synth" && b.jam.active && c.jam.step === 3 && !d.jam.active && d.jam.takes === 1, `E at a keyboard plays a three-note take that ends on a wrong note (step ${c.jam.step}, takes ${d.jam.takes})`);
   await page.close();
 }
-{
+if (want('the soup: an ingredient in his pocket, a distillation at the stove, a photo to every contact')) {
   // the soup: an ingredient in his pocket, a distillation at the stove, a photo to every contact
   const page = await open("at=-4.75,0,0.6&face=270&zoom=close&soup=2");
   const a = await scav(page);
@@ -197,7 +201,7 @@ for (const [name, hash, wait, slap, extra] of [
   check(a.poke === "stove" && b.soup.distilled === 1 && b.soup.pocket === 1 && replies >= 2, `a distillation adds an ingredient and sends the photo (distilled ${b.soup.distilled}, ${replies} replies)`);
   await page.close();
 }
-{
+if (want('walking up to an ingredient collects it')) {
   // walking up to an ingredient collects it
   const page = await open("at=-6.5,0,8.6&face=270&zoom=close");
   await walkTo(page, -7.2, 8.6, { timeout: 3000, near: 0.2 });
@@ -205,7 +209,34 @@ for (const [name, hash, wait, slap, extra] of [
   check((await scav(page)).soup.pocket === 1, "walking up to the backyard dandelion puts it in his pocket");
   await page.close();
 }
-{
+if (want("photo: delivering the cable ends with a commemorative photo card")) {
+  // photo: delivering the cable ends with a commemorative photo card
+  const page = await open("at=-2.3,-2.6,-3.55&face=180&give=dinCable");
+  await page.waitForTimeout(700);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(1900);
+  await page.screenshot({ path: "shots/e2e-photo-pose.png" });
+  await page.waitForTimeout(3300);
+  await page.screenshot({ path: "shots/e2e-photo-card.png" });
+  const a = await scav(page);
+  const replies = await page.$$eval(".photocard li", (els) => els.length);
+  check(a.card && a.album.includes("cablePilgrimage") && a.photoOk && replies >= 2, `a delivery ends in a photo card with a real frame from the game (${a.album}, ok ${a.photoOk}, ${replies} replies)`);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(400);
+  check(!(await scav(page)).card, "E puts the photo card away");
+  await page.close();
+}
+if (want("order: an errand done early is done")) {
+  // order: an errand done early is done; delivering the Speak & Spell before its turn completes it
+  const page = await open("at=-2.3,-2.6,-3.55&face=180&give=speakAndSpell");
+  await page.waitForTimeout(700);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(1500);
+  const s = await scav(page);
+  check(s.stages.dumpsterDiplomacy === "complete" && s.active === "cablePilgrimage", `the Speak & Spell delivered early completes its errand, and the cable is still next (${s.stages.dumpsterDiplomacy}, ${s.active})`);
+  await page.close();
+}
+if (want('Dumpster Duel, won: Gary goes in the bin, the Speak & Spell goes in the satchel')) {
   // Dumpster Duel, won: Gary goes in the bin, the Speak & Spell goes in the satchel
   const page = await open("at=25.1,0,14.05&face=180&skip=cablePilgrimage,stumpProphecy&zoom=game");
   await page.waitForTimeout(600);
@@ -223,7 +254,7 @@ for (const [name, hash, wait, slap, extra] of [
   check(!s1.challenge && s1.gary === "binned" && s1.stages.dumpsterDiplomacy === "deliver", `mashing wins the duel and bins Gary (gary ${s1.gary}, stage ${s1.stages.dumpsterDiplomacy})`);
   await page.close();
 }
-{
+if (want('Dumpster Duel, lost: no mashing, Bill gets flung and the prize goes back on the heap')) {
   // Dumpster Duel, lost: no mashing, Bill gets flung and the prize goes back on the heap
   const page = await open("at=25.1,0,14.05&face=180&skip=cablePilgrimage,stumpProphecy&zoom=game");
   await page.waitForTimeout(600);
@@ -234,7 +265,7 @@ for (const [name, hash, wait, slap, extra] of [
   check(!s.challenge && s.stages.dumpsterDiplomacy === "find" && s.pos[2] > 15.2, `losing the duel flings Bill into the lane (z ${s.pos[2].toFixed(2)}) and Gary keeps the prize`);
   await page.close();
 }
-{
+if (want('the toot dash: a soup charge, a burst forward; the cloud makes Gary gag, and the prize is free')) {
   // the toot dash: a soup charge, a burst forward; the cloud makes Gary gag, and the prize is free
   const page = await open("at=25.1,0,15.3&face=0&skip=cablePilgrimage,stumpProphecy&zoom=game");
   await page.waitForTimeout(600);
@@ -252,7 +283,7 @@ for (const [name, hash, wait, slap, extra] of [
   check((await scav(page)).stages.dumpsterDiplomacy === "deliver", "while Gary gags, E just takes the Speak & Spell");
   await page.close();
 }
-{
+if (want('the rake on the path home from the dig patch')) {
   // the rake on the path home from the dig patch
   const page = await open("at=-3.25,0,7.3&face=0&zoom=close");
   // world +Z is screen down-left (S+A); stop the moment the rake fires and catch the smack
@@ -266,7 +297,7 @@ for (const [name, hash, wait, slap, extra] of [
   check(s.hits.rake === 1, `stepping on the rake smacks him in the face (hits ${s.hits.rake}, ${s.slap})`);
   await page.close();
 }
-{
+if (want('the skateboard in the lane: he rides it east, then it shoots out from under him')) {
   // the skateboard in the lane: he rides it east, then it shoots out from under him
   const page = await open("at=3.6,0,17.6&face=90&zoom=game");
   await page.keyboard.down("KeyD"); await page.keyboard.down("KeyS");
@@ -280,7 +311,7 @@ for (const [name, hash, wait, slap, extra] of [
   await page.close();
 }
 const DONE3 = "skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy";
-{
+if (want('errand 4: grab the grate and Big Wanda gives chase; shuffle away and she catches him and throws him out')) {
   // errand 4: grab the grate and Big Wanda gives chase; shuffle away and she catches him and throws him out
   const page = await open(`at=54.5,0,8.3&face=180&zoom=game&${DONE3}`);
   await page.waitForTimeout(500);
@@ -301,7 +332,7 @@ const DONE3 = "skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy";
   check(!b.inv.includes("rustyGrate") && b.pos[2] > 16, `she catches a shuffling Bill, keeps the grate, and throws him into the lane (z ${b.pos[2].toFixed(1)})`);
   await page.close();
 }
-{
+if (want('hurrying out of the gate with the grate: she gives up')) {
   // hurrying out of the gate with the grate: she gives up
   const page = await open(`at=48,0,13.2&face=0&zoom=game&${DONE3}&give=rustyGrate`);
   await page.waitForTimeout(800);
@@ -311,7 +342,7 @@ const DONE3 = "skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy";
   check(s.inv.includes("rustyGrate") && s.wanda !== "chase", `a hurrying Bill gets out of the gate with the grate (Wanda ${s.wanda})`);
   await page.close();
 }
-{
+if (want('the workbench: deliver the grate, hammer it into a shelf, pick the shelf up')) {
   // the workbench: deliver the grate, hammer it into a shelf, pick the shelf up
   const page = await open(`at=7.8,0,7.75&face=0&zoom=close&${DONE3}&give=rustyGrate`);
   await page.waitForTimeout(800);
@@ -320,16 +351,16 @@ const DONE3 = "skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy";
   check((await scav(page)).challenge?.kind === "hammer", "delivering the grate to the workbench starts the hammering");
   await mash(page, 1.5);
   await page.screenshot({ path: "shots/e2e-hammer.png" });
-  await mash(page, 2.5);
-  await page.waitForTimeout(2200);
-  const a = await scav(page);
-  await page.keyboard.press("KeyE");
-  await page.waitForTimeout(1200);
+  // mash until the shelf is done (headless frames are slow, so don't count presses)
+  const t0 = Date.now();
+  while (Date.now() - t0 < 10000 && (await scav(page)).challenge) await mash(page, 0.5);
+  await page.waitForTimeout(1500);
+  if (!(await scav(page)).inv.includes("grateShelf")) { await page.keyboard.press("KeyE"); await page.waitForTimeout(1200); }
   const b = await scav(page);
-  check(a.stages.grateShelf === "complete" && a.stages.grateVault === "find" && b.inv.includes("grateShelf"), `the grate becomes a shelf on the bench, and he picks it up (${b.inv})`);
+  check(b.stages.grateShelf === "complete" && b.stages.grateVault === "deliver" && b.inv.includes("grateShelf"), `the grate becomes a shelf on the bench, and he picks it up (${b.inv})`);
   await page.close();
 }
-{
+if (want('the vault: the shelf goes on top of the antique vault')) {
   // the vault: the shelf goes on top of the antique vault
   const page = await open(`at=-3.7,0,-3.6&face=180&zoom=close&${DONE3},grateShelf&give=grateShelf`);
   await page.waitForTimeout(900);
@@ -339,7 +370,7 @@ const DONE3 = "skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy";
   check((await scav(page)).stages.grateVault === "complete", "delivering the shelf to the vault completes the Grate Shelf Revelation");
   await page.close();
 }
-{
+if (want('the old way still works: lure Gary down the lane and beat him back to the prize')) {
   // the old way still works: lure Gary down the lane and beat him back to the prize
   const page = await open("at=25.1,0,14.05&face=180&skip=cablePilgrimage,stumpProphecy&zoom=game");
   await page.waitForTimeout(600);
