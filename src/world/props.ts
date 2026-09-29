@@ -10,12 +10,15 @@ import { ensureInkNormals } from "../render/ink";
 import type { Physics } from "./physics";
 import { BASEMENT_Y } from "./stairs";
 import { P } from "../content/palette";
+import { INGREDIENTS, type IngredientId } from "../content/soup";
 
 export const HOARD_AT = new THREE.Vector3(-2.0, BASEMENT_Y, 0.8);
 export const TOASTER_AT = new THREE.Vector3(-5.6, 0.92, 2.3);
 /** Where Bill stands to open the fridge, and where the fridge's door is. */
 export const FRIDGE_AT = new THREE.Vector3(-5.1, 0, 4.52);
 export const ADAPTER_BOX_AT = new THREE.Vector3(8.6, 0, 16.2);
+/** Where Bill stands at the backyard workbench (the bench itself is just past him, toward +Z). */
+export const WORKBENCH_AT = new THREE.Vector3(7.8, 0, 7.8);
 
 const newsTex = canvasTex(64, 48, (g, w, h) => {
   g.fillStyle = "#ece2c8"; g.fillRect(0, 0, w, h);
@@ -35,6 +38,7 @@ export interface Props {
   toaster: THREE.Group;
   toast: THREE.Mesh[];
   adapterBox: THREE.Group;
+  bench: THREE.Group;
 }
 
 export function buildProps(scene: THREE.Scene, phys: Physics): Props {
@@ -107,7 +111,42 @@ export function buildProps(scene: THREE.Scene, phys: Physics): Props {
   tagged(adapterBox, "outdoors", scene);
   phys.box([ADAPTER_BOX_AT.x - 0.28, 0, ADAPTER_BOX_AT.z - 0.23], [ADAPTER_BOX_AT.x + 0.28, 0.4, ADAPTER_BOX_AT.z + 0.23]);
 
-  return { hoard, toaster, toast, adapterBox };
+  /* ---------- the backyard workbench: salvage transformation, outdoors ---------- */
+  const bench = new THREE.Group();
+  const wood = toon(P.walnut, { ink: 0.9 }), steel = toon("#7d858a", { ink: 0.8 });
+  const top = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.08, 0.7), wood);
+  top.position.y = 0.89;
+  bench.add(top);
+  for (const x of [-0.72, 0.72]) for (const z of [-0.28, 0.28]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.85, 0.07), wood);
+    leg.position.set(x, 0.425, z);
+    bench.add(leg);
+  }
+  const vise = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.14, 0.2), steel);
+  vise.position.set(-0.66, 1.0, -0.2);
+  const hammerHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.34, 8), toon("#c79a62", { ink: 0.8 }));
+  hammerHandle.rotation.z = Math.PI / 2;
+  hammerHandle.position.set(0.5, 0.95, -0.22);
+  const hammerHead = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.13), steel);
+  hammerHead.position.set(0.68, 0.95, -0.22);
+  bench.add(vise, hammerHandle, hammerHead);
+  const benchSign = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.3), toon("#fff", {
+    map: canvasTex(320, 88, (g, w, h) => {
+      g.fillStyle = "#e9dcc0"; g.fillRect(0, 0, w, h);
+      g.fillStyle = P.ink; g.font = "700 30px 'Comic Sans MS', 'Shantell Sans', cursive"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText("SALVAGE TRANSFORMATION", w / 2, h / 2, w - 12);
+    }),
+    ink: 0.3,
+  }));
+  benchSign.position.set(0, 1.35, 0.36);
+  const stake = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.3, 0.04), wood);
+  stake.position.set(0, 0.65, 0.34);
+  bench.add(stake, benchSign);
+  bench.position.set(WORKBENCH_AT.x, 0, WORKBENCH_AT.z + 0.95);
+  tagged(bench, "outdoors", scene);
+  phys.box([WORKBENCH_AT.x - 0.8, 0, WORKBENCH_AT.z + 0.6], [WORKBENCH_AT.x + 0.8, 0.93, WORKBENCH_AT.z + 1.3]);
+
+  return { hoard, toaster, toast, adapterBox, bench };
 }
 
 /**
@@ -170,5 +209,61 @@ export class PaperTrain {
   stop() {
     this.t = -1;
     for (const s of this.sheets) s.visible = false;
+  }
+}
+
+/** Soup ingredients waiting around the estate and the Route; he collects one by walking up to it. */
+export class Pantry {
+  private items = new Map<IngredientId, { obj: THREE.Group; base: THREE.Vector3; mat: THREE.MeshToonNodeMaterial }>();
+
+  constructor(private scene: THREE.Scene) {
+    for (const [id, d] of Object.entries(INGREDIENTS) as [IngredientId, (typeof INGREDIENTS)[IngredientId]][]) {
+      const mat = toon(d.color, { ink: 1 });
+      const obj = new THREE.Group();
+      const geo =
+        d.shape === "cube" ? new THREE.BoxGeometry(0.12, 0.12, 0.12)
+        : d.shape === "stick" ? new THREE.ConeGeometry(0.05, 0.26, 10)
+        : d.shape === "leaf" ? new THREE.IcosahedronGeometry(0.09, 0)
+        : new THREE.SphereGeometry(0.09, 12, 9);
+      const m = new THREE.Mesh(geo, mat);
+      if (d.shape === "stick") m.rotation.z = Math.PI / 2;
+      if (d.shape === "leaf") {
+        // a little bunch: three leaves on stalks
+        for (let i = 0; i < 3; i++) {
+          const leaf = new THREE.Mesh(new THREE.IcosahedronGeometry(0.06, 0), mat);
+          leaf.position.set(Math.cos(i * 2.1) * 0.07, 0.07, Math.sin(i * 2.1) * 0.07);
+          obj.add(leaf);
+        }
+      }
+      obj.add(m);
+      const base = new THREE.Vector3(...d.at);
+      obj.position.copy(base);
+      obj.userData.tag = base.y < -1 ? "basement" : "ground";
+      ensureInkNormals(obj);
+      scene.add(obj);
+      this.items.set(id, { obj, base, mat });
+    }
+  }
+
+  /** Bob, spin and glint; returns the ingredient he just walked up to, if any. */
+  update(dt: number, t: number, bill: THREE.Vector3): IngredientId | null {
+    let got: IngredientId | null = null;
+    for (const [id, it] of this.items) {
+      it.obj.rotation.y += dt * 1.5;
+      it.obj.position.y = it.base.y + 0.12 + Math.sin(t * 3 + it.base.x) * 0.04;
+      const g = 0.25 + 0.2 * Math.sin(t * 5 + it.base.z);
+      it.mat.emissive.setRGB(0.95 * g, 0.71 * g, 0.2 * g);
+      if (!got && Math.abs(bill.y - it.base.y) < 1.3 && Math.hypot(bill.x - it.base.x, bill.z - it.base.z) < 0.85) got = id;
+    }
+    if (got) {
+      this.scene.remove(this.items.get(got)!.obj);
+      this.items.delete(got);
+    }
+    return got;
+  }
+
+  /** Where an uncollected ingredient is (for a debug hook or a hint). */
+  where(id: IngredientId) {
+    return this.items.get(id)?.base ?? null;
   }
 }

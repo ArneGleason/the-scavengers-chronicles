@@ -27,6 +27,16 @@ The backlog of gags and mini-games, and what's built. Rules and pacing live in [
 | **Newspaper train** | Gag clock, indoors, moving | A newspaper sticks to his shoe and grows into a conga line of sheets behind him until he notices (FLAP-FLAP!). "I was going to file those." | Gag-clock pool |
 | **Satchel blurt** | Gag clock, satchel not empty | His bag plays one synth note at the wrong moment (BWAAMP!). "That wasn't me." | Gag-clock pool |
 
+Second pass (29 September 2026, from playtest feedback):
+
+| Gag | Where / trigger | What happens |
+|---|---|---|
+| **The masterpiece, performed** | Any of his keyboards, E | TAKE {n}. E, R, E: two notes back and forth, and the third always comes out wrong (BLORRNK?) however right the key was. He blames the gear: "It needs more parameters. More dynamics." |
+| **The Ten Distillations** | The stove, with an ingredient | PLOP, STIR, KLIK: a photo of the soup to all 214 contacts, and the replies ("Dentist's office: Please remove us from this list."). After ten he eats it. |
+| **The cat fight** | The Dumpster Duel | A boiling dust cloud, SLAP! and HSSS!, and insults both ways ("Forty years and not one song!" / "Cease and desist, dumpster man.") |
+| **Big Wanda** | Her junkyard | Waves and admires from a respectful distance; chases him once he has the grate; stops to applaud a toot; if she catches him, CATALOGUED!, and he's thrown back over the fence |
+| **SHELF-IFY!** | The backyard workbench | Mash to hammer the grate into a shelf; every few seconds, the thumb (YEOWCH!) |
+
 Earlier, from `comedy.md`: the Stump Wrestle, the Dumpster Duel, the toot dash, the rake, the skateboard, bird poop, the comb-over gust, the nose audit, the burp, the trip and the raccoon faint.
 
 ## Next

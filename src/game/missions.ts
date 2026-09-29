@@ -14,7 +14,7 @@ export interface MissionState {
 }
 
 export const newMissionState = (): MissionState => ({
-  stages: { cablePilgrimage: "find", stumpProphecy: "locked", dumpsterDiplomacy: "locked" },
+  stages: { cablePilgrimage: "find", stumpProphecy: "locked", dumpsterDiplomacy: "locked", grateShelf: "locked", grateVault: "locked" },
   active: "cablePilgrimage",
 });
 

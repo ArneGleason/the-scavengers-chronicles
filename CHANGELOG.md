@@ -2,6 +2,19 @@
 
 All notable prototype milestones for The Scavenger's Chronicles are tracked here.
 
+## 0.6.0 - Soup, Synth and Big Wanda's Junkyard (in progress)
+
+- Added the soup's ten distillations. The soup is on the stove from the start, and twelve ingredients lie around the house and the Route; walk into one to collect it. Each distillation at the stove adds an ingredient, and Bill photographs it and sends it to all 214 contacts, whose replies come in on his phone. After the tenth he eats it ("SOUP FIRST. EVERYTHING ELSE LATER.") and the toot gauge grows to five for good.
+- Added playing the masterpiece: press E at any of his keyboards, then E, R, E. The third note always comes out wrong, and he blames the gear.
+- Added errand 4, Grate Shelf Revelation:
+  - Big Wanda's Junkyard at the east end of the lane, with Big Wanda and her trailer.
+  - She chases him once he takes the rusty grate. Hurrying or a toot gets him away; if she catches him she keeps the grate and throws him back over the fence.
+  - The grate is hammered into a shelf at a new backyard workbench (SHELF-IFY!, mind the thumb), then installed on the antique vault.
+- The Dumpster Duel is now a cat fight: a dust cloud, flying SLAP!s, and insults traded both ways.
+- The shuffle sound is one quieter scrape per step instead of a constant drone.
+- The toot meter is labelled "Toots"; a soup card shows the distillations.
+- The street runs further east, with a pawn shop, a dollar store and a vacuum repair.
+
 ## 0.5.0 - Slapstick (in progress)
 
 - Set the comedy direction (`docs/design/comedy.md`): an easy, guided game with a silly action challenge at every key plot beat, and a gag at least every 10–15 seconds.

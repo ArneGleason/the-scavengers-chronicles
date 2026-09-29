@@ -44,7 +44,7 @@ Every zone's stems share **96 BPM, D minor, 16-bar loops**, so layers and zone c
 | Estate | 1955 | Lounge organ and brushed drums, via the kitchen radio | Bill's synth drone near the basement door |
 | Basement | 1986 | Synth arpeggios, drum machine | More instruments come alive as the altar fills |
 | The Route | 2026 | Bland strip-mall background music | Gym thump near the gym; patrol snare |
-| Landfill | 2026 | Junk percussion: bins, springs, hubcaps | Big Wanda's tuba when she's near |
+| Big Wanda's Junkyard | 2026 | Junk percussion: bins, springs, hubcaps | Big Wanda's tuba when she's near |
 | Factory | — | Industrial drones and drips | Metallic hits |
 | Airfield | Vegas | A lounge swell building toward the finale | — |
 
@@ -122,7 +122,7 @@ The finale plays the song Bill never wrote, arranged from what the player actual
 | Estate | Fridge hum, wall clock, the kitchen radio, the cat purring nearby |
 | Basement | Power-supply hum, LED buzz, tape hiss, a dripping pipe |
 | The Route | Distant traffic, gym music through glass, a shop door chime, bylaw radio chatter |
-| Landfill | Gulls, wind, reversing-truck beeps, wind chimes made of junk at Big Wanda's trailer |
+| Big Wanda's Junkyard | Gulls, wind, reversing-truck beeps, wind chimes made of junk at Big Wanda's trailer |
 | Factory | Creaks, drips, pigeons in the rafters, wind through broken windows |
 | Airfield | Wind, a distant jet whine, a flag snapping, cicadas at dusk |
 

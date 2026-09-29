@@ -90,6 +90,7 @@ export class Player {
     this.pos.copy(p);
     this.prevPos.copy(p);
     this.vel.x = this.vel.y = 0;
+    this.vy = 0;
     this.facing = this.prevFacing = facing;
   }
 

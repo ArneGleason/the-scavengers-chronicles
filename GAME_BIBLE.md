@@ -75,7 +75,7 @@ The hairspray can is only a background gag. It is not a central mechanic.
 
 ### Later Zones
 
-- City landfill.
+- Big Wanda's Junkyard (once the city landfill; renamed on 29 September 2026).
   - Big Wanda's dump trailer, revealed by a short cutaway when the route first opens.
   - Big Wanda runs the junkyard, has aggressive admiration for The Scavenger's salvage taste, and becomes a capture hazard.
 - Dangerous old factory.
@@ -132,7 +132,7 @@ The hairspray can is only a background gag. It is not a central mechanic.
    - Bring it back to the synth altar.
 
 4. **Grate Shelf Revelation**
-   - Retrieve a rusty floor grate from the landfill.
+   - Retrieve a rusty floor grate from Big Wanda's Junkyard.
    - Turn it into a shelf at the workbench.
    - Install the shelf in the antique vault.
 

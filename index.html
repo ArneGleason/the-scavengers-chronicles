@@ -100,11 +100,58 @@
       .challenge .mash { font: 400 26px/1 Bangers, Impact, sans-serif; letter-spacing: 0.05em; transition: transform 0.05s; }
       .challenge .mash.big { transform: scale(1.18) rotate(-3deg); }
       .challenge .mash kbd { font-size: 18px; padding: 1px 7px; }
+      .jam {
+        position: absolute; left: 50%; top: calc(16% + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
+        display: grid; justify-items: center; gap: 6px; background: #1e1a18; color: #fff7e3;
+        border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--salvage); padding: 10px 22px 12px;
+      }
+      .jam b { font: 400 30px/1 Bangers, Impact, sans-serif; letter-spacing: 0.06em; color: var(--salvage); }
+      .jam .notes { display: flex; gap: 14px; }
+      .jam .notes i { font: 400 34px/1 Bangers, sans-serif; font-style: normal; opacity: 0.25; transition: transform 0.08s, opacity 0.08s; }
+      .jam .notes i.on { opacity: 1; transform: scale(1.25) rotate(-6deg); color: #8fd0f0; }
+      .jam .notes i.sour { color: #b5d94a; transform: scale(1.4) rotate(14deg) skewX(-18deg); }
+      .jam .press { font: 400 20px/1 Bangers, Impact, sans-serif; letter-spacing: 0.05em; }
+      .jam .press kbd { font-size: 16px; padding: 1px 8px; color: var(--ink); }
+      .soup {
+        position: absolute; left: 16px; bottom: calc(126px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: auto auto; align-items: center; gap: 3px 8px;
+        background: rgba(239, 233, 220, 0.92); border: 2px solid var(--ink); border-radius: 10px; padding: 5px 9px;
+        font: 700 11px/1 "Atkinson Hyperlegible Next", sans-serif; text-transform: uppercase; letter-spacing: 0.06em;
+      }
+      .soup div { display: flex; gap: 3px; }
+      .soup div i { width: 9px; height: 12px; border: 1.5px solid var(--ink); border-radius: 3px 3px 5px 5px; background: #fffaf0; }
+      .soup div i.on { background: #c8703f; }
+      .soup small { grid-column: 1 / -1; font-size: 10px; letter-spacing: 0.02em; text-transform: none; opacity: 0.85; }
+      .phone {
+        position: absolute; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: 210px;
+        background: #1e1a18; border: 3px solid var(--ink); border-radius: 22px; padding: 12px 9px 16px; box-shadow: 4px 4px 0 rgba(30, 26, 24, 0.5);
+        animation: phone-up 0.25s ease-out;
+      }
+      @keyframes phone-up { from { transform: translateY(40px) rotate(4deg); opacity: 0; } }
+      .phone .screen { background: #f4f1e6; border-radius: 12px; padding: 8px 9px 9px; display: grid; gap: 5px; font: 400 12px/1.25 "Atkinson Hyperlegible Next", sans-serif; }
+      .phone small { font: 700 9px/1 "Atkinson Hyperlegible Next", sans-serif; letter-spacing: 0.12em; opacity: 0.6; }
+      .phone b { font: 700 14px/1.1 "Shantell Sans", sans-serif; }
+      .phone .photo { height: 70px; border-radius: 8px; background: #5f7f79; display: grid; place-items: center; }
+      .phone .photo i { width: 74px; height: 44px; border-radius: 50%; border: 3px solid #f4f1e6; background: radial-gradient(circle at 40% 40%, #e39a55, #b4502c 70%); }
+      .phone .send { display: grid; gap: 3px; font-size: 11px; }
+      .phone .send em { height: 5px; border-radius: 3px; background: #d8d0bd; overflow: hidden; }
+      .phone .send em i { display: block; height: 100%; width: 0; background: #2aa6a1; }
+      .phone.sending .send em i { animation: send 0.8s linear forwards; }
+      .phone.sent .send em i { width: 100%; }
+      @keyframes send { to { width: 100%; } }
+      .phone ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+      .phone li { background: #fff; border: 1.5px solid #d0c7b2; border-radius: 10px 10px 10px 3px; padding: 4px 7px; animation: reply 0.2s ease-out; }
+      .phone li b { font: 700 11px/1 "Atkinson Hyperlegible Next", sans-serif; display: block; margin-bottom: 1px; }
+      @keyframes reply { from { transform: scale(0.6); opacity: 0; } }
+      .flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+      .flash.go { animation: flash 0.4s ease-out; }
+      @keyframes flash { 0% { opacity: 0.95; } 100% { opacity: 0; } }
       #loading { position: fixed; inset: 0; display: grid; place-items: center; font: 700 22px "Shantell Sans", sans-serif; }
       @media (max-width: 640px) {
         .help { display: none; }
         .gas { left: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
         .challenge b { font-size: 28px; }
+        .soup { left: 12px; bottom: calc(118px + env(safe-area-inset-bottom, 0px)); }
+        .phone { right: 12px; bottom: auto; top: calc(96px + env(safe-area-inset-top, 0px)); width: 180px; }
         .objective { font-size: 12px; }
         .satchel { left: 12px; right: 12px; grid-template-columns: auto auto; justify-content: center; }
         .satchel .label { display: none; }

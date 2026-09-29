@@ -91,6 +91,22 @@ function makeModel(id: ItemId): { g: THREE.Group; half: [number, number, number]
       }
       return { g, half: [0.2, 0.135, 0.2], mats };
     }
+    case "rustyGrate":
+    case "grateShelf": {
+      // a heavy floor grate: a frame and a grid of bars, rust everywhere
+      const rust = m(def.color), dark = m("#5e4636", { ink: 0.8 });
+      for (const z of [-0.29, 0.29]) add(new THREE.BoxGeometry(0.9, 0.05, 0.04), rust, [0, 0, z]);
+      for (const x of [-0.43, 0.43]) add(new THREE.BoxGeometry(0.04, 0.05, 0.6), rust, [x, 0, 0]);
+      for (let i = 1; i < 8; i++) add(new THREE.BoxGeometry(0.025, 0.04, 0.56), dark, [-0.45 + i * 0.1125, 0, 0]);
+      for (const z of [-0.1, 0.1]) add(new THREE.BoxGeometry(0.86, 0.035, 0.025), dark, [0, 0.005, z]);
+      if (id === "grateShelf") {
+        // two chrome brackets and a price tag: now it's mid-century
+        const chrome = m("#c9ced1");
+        for (const x of [-0.3, 0.3]) { add(new THREE.BoxGeometry(0.04, 0.2, 0.04), chrome, [x, -0.12, -0.26]); add(new THREE.BoxGeometry(0.04, 0.04, 0.3), chrome, [x, -0.2, -0.12]); }
+        add(new THREE.BoxGeometry(0.1, 0.06, 0.005), m(def.accent), [0.36, -0.04, 0.31], [0, 0, 0.3]);
+      }
+      return { g, half: [0.45, 0.03, 0.3], mats };
+    }
   }
 }
 
@@ -113,7 +129,7 @@ function junkModel(kind: "box" | "crate" | "bucket"): { g: THREE.Group; half: [n
   return { g, half: [0.16, 0.16, 0.16], mass: 1.5 };
 }
 
-const HANDS_OFFSET: Partial<Record<ItemId, number>> = { personalityStump: 0.158 };
+const HANDS_OFFSET: Partial<Record<ItemId, number>> = { personalityStump: 0.158, rustyGrate: 0.3, grateShelf: 0.3 };
 
 export class Items {
   readonly list: WorldItem[] = [];

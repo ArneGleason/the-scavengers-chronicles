@@ -31,6 +31,9 @@ const SHOTS = [
   ["gag-nose", "at=2.4,0,2.2&face=200&zoom=close&gag=nose", null, 1900],
   ["gag-burp", "at=2.4,0,2.2&face=200&zoom=close&gag=burp", null, 1500],
   ["stump-rooted", "at=-3.0,0,9.5&face=0&zoom=close"],
+  ["junkyard", "at=48,0,17&face=160&skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy"],
+  ["junkyard-wanda", "at=53,0,6&face=90&zoom=game&skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy", null, 2500],
+  ["workbench", "at=7.8,0,7.6&face=20&zoom=close"],
 ];
 
 const filter = process.argv[2];

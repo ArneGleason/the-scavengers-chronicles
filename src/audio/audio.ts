@@ -27,7 +27,6 @@ export class GameAudio {
   private buses = {} as Record<Bus, GainNode>;
   private master!: GainNode;
   private noise!: AudioBuffer;
-  private scuff?: { src: AudioBufferSourceNode; bp: BiquadFilterNode; g: GainNode };
   private music?: { ground: GainNode; basement: GainNode };
   muted = false;
   private rand = rng(7);
@@ -49,7 +48,6 @@ export class GameAudio {
     this.noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const d = this.noise.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    this.startScuff();
     this.startMusic();
     document.addEventListener("visibilitychange", () => { if (!document.hidden) void ctx.resume(); });
   }
@@ -89,22 +87,25 @@ export class GameAudio {
     if (hurry) this.noiseBurst("foley", t + 0.012, 0.03, "highpass", 3500, 0.7, g * 0.35); // the slap
   }
 
-  private startScuff() {
-    const ctx = this.ctx!;
-    const src = ctx.createBufferSource(); src.buffer = this.noise; src.loop = true;
-    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1200; bp.Q.value = 0.9;
-    const g = ctx.createGain(); g.gain.value = 0;
+  /**
+   * One shuffle scrape: the loafer dragging forward through its swing. Called once per step
+   * while shuffling, so it rises and falls with each foot instead of droning.
+   */
+  scrape(surface: Surface, speed: number) {
+    if (!this.ctx) return;
+    const ctx = this.ctx, sf = SURF[surface], t = this.now + 0.04, dur = 0.2 + 0.12 * this.rand();
+    const k = Math.min(1, speed / 1.6) * sf.gain * (0.6 + 0.4 * this.rand());
+    const src = ctx.createBufferSource(); src.buffer = this.noise; src.playbackRate.value = this.vary(3);
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.3;
+    bp.frequency.setValueAtTime(sf.bp * 0.7, t);
+    bp.frequency.linearRampToValueAtTime(sf.bp * 1.15, t + dur * 0.6);
+    bp.frequency.linearRampToValueAtTime(sf.bp * 0.8, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.09 * k, t + dur * 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     src.connect(bp).connect(g).connect(this.buses.foley);
-    src.start();
-    this.scuff = { src, bp, g };
-  }
-
-  /** The shuffle: a continuous scuff that follows speed while he isn't hurrying. */
-  shuffle(speed: number, hurry: boolean, surface: Surface) {
-    if (!this.scuff || !this.ctx) return;
-    const level = hurry ? 0 : Math.min(1, speed / 1.3) * SURF[surface].gain * 0.22;
-    this.scuff.g.gain.setTargetAtTime(level, this.now, 0.06);
-    this.scuff.bp.frequency.setTargetAtTime(SURF[surface].bp * (0.8 + 0.3 * Math.min(1, speed)), this.now, 0.1);
+    src.start(t, this.rand() * 1.5, dur + 0.05);
   }
 
   pickup(index: number) {
@@ -322,6 +323,82 @@ export class GameAudio {
     if (!this.ctx) return;
     const t = this.now;
     for (let i = 0; i < 3; i++) this.noiseBurst("foley", t + i * 0.04 + this.rand() * 0.02, 0.05, "bandpass", 2800 + this.rand() * 2000, 1.5, 0.25 * k);
+  }
+
+  /** The phone's fake shutter: a click and a little mechanical whirr. */
+  shutter() {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.noiseBurst("ui", t, 0.03, "highpass", 3000, 0.7, 0.6);
+    this.noiseBurst("ui", t + 0.06, 0.05, "bandpass", 1800, 2, 0.4);
+  }
+
+  /** A reply arriving on the phone. */
+  bloop(i = 0) {
+    if (!this.ctx) return;
+    const t = this.now, f = NOTE(79 + (i % 3) * 3);
+    this.tone("ui", t, "sine", f, f * 1.5, 0.12, 0.25, 0.004);
+  }
+
+  /** The soup, bubbling to itself. */
+  blub() {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.tone("amb", t, "sine", 160 + this.rand() * 80, 420 + this.rand() * 160, 0.07, 0.12, 0.004);
+  }
+
+  /** A long, committed slurp. */
+  slurp() {
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = this.now, dur = 1.2;
+    const src = ctx.createBufferSource(); src.buffer = this.noise;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 5;
+    bp.frequency.setValueAtTime(500, t); bp.frequency.exponentialRampToValueAtTime(2400, t + dur * 0.8); bp.frequency.exponentialRampToValueAtTime(900, t + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.7, t + 0.1); g.gain.setValueAtTime(0.7, t + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(bp).connect(g).connect(this.buses.sfx); src.start(t, 0, dur + 0.05);
+  }
+
+  /** A hammer on a steel grate: a bright ping. */
+  tink() {
+    if (!this.ctx) return;
+    const t = this.now, v = this.vary(2);
+    this.tone("sfx", t, "sine", 1900 * v, 1850 * v, 0.18, 0.3, 0.001);
+    this.tone("sfx", t, "sine", 2870 * v, 2800 * v, 0.12, 0.15, 0.001);
+    this.noiseBurst("sfx", t, 0.03, "highpass", 3500, 0.7, 0.4);
+  }
+
+  /** A cat-fight slap. */
+  slap() {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.noiseBurst("sfx", t, 0.05, "highpass", 1800 + this.rand() * 1500, 0.8, 0.55);
+    this.tone("sfx", t, "sine", 420, 180, 0.05, 0.25, 0.001);
+  }
+
+  /**
+   * One note on Bill's 1986 poly synth: two detuned saws through a plucky low-pass. `sour`
+   * is the third note of every take: a semitone off, wobbling, and sagging like old tape.
+   */
+  synthNote(midi: number, sour = false) {
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = this.now, dur = sour ? 1.6 : 0.9;
+    const f = NOTE(midi + (sour ? 1 : 0));
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = sour ? 9 : 4;
+    lp.frequency.setValueAtTime(500, t); lp.frequency.exponentialRampToValueAtTime(sour ? 1800 : 3200, t + 0.03); lp.frequency.exponentialRampToValueAtTime(700, t + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    lp.connect(g).connect(this.buses.sfx);
+    for (const d of sour ? [0.97, 1.012] : [0.996, 1.004]) {
+      const o = ctx.createOscillator(); o.type = "sawtooth";
+      o.frequency.setValueAtTime(f * d, t);
+      if (sour) {
+        // the droop, then a seasick wobble
+        o.frequency.exponentialRampToValueAtTime(f * d * 0.955, t + 0.35);
+        o.frequency.exponentialRampToValueAtTime(f * d * 0.9, t + dur);
+        const lfo = ctx.createOscillator(); lfo.frequency.value = 6.5;
+        const lg = ctx.createGain(); lg.gain.value = f * 0.03; lfo.connect(lg).connect(o.frequency); lfo.start(t); lfo.stop(t + dur + 0.05);
+      }
+      o.connect(lp); o.start(t); o.stop(t + dur + 0.05);
+    }
   }
 
   /** The victory sting after a challenge: a trombone-ish "ta-daa". Or a sad one. */
