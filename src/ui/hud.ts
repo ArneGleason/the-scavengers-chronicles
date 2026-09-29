@@ -25,13 +25,18 @@ export class Hud {
   private marker = el("div", "marker");
   private gas = el("div", "gas");
   private challengeEl = el("div", "challenge");
+  private jamEl = el("div", "jam");
+  private soupEl = el("div", "soup");
+  private phoneEl = el("div", "phone");
+  private flashEl = el("div", "flash");
+  private lastSoup = "";
   private lastGas = "";
   private captionUntil = 0;
   private captionQueue: { text: string; seconds: number }[] = [];
   showDebug = false;
 
   constructor(private root: HTMLElement) {
-    root.append(this.caption, this.prompt, this.satchel, this.help, this.debug, this.objective, this.marker, this.gas, this.challengeEl);
+    root.append(this.caption, this.prompt, this.satchel, this.help, this.debug, this.objective, this.marker, this.gas, this.challengeEl, this.jamEl, this.soupEl, this.phoneEl, this.flashEl);
     this.help.innerHTML = `<b>How to Bill</b>
       <span><kbd>WASD</kbd> shuffle</span><span><kbd>Shift</kbd> hurry</span>
       <span><kbd>Space</kbd> toot dash</span><span><kbd>E</kbd> grab / mash</span>
@@ -39,7 +44,9 @@ export class Hud {
       <span><kbd>T</kbd> tune feel</span><span><kbd>N</kbd> mute</span>`;
     this.marker.innerHTML = `<span>&#9660;</span>`;
     this.challengeEl.innerHTML = `<b></b><div class="meter"><i></i><em></em></div><span class="mash">MASH <kbd>E</kbd>!</span>`;
-    for (const e of [this.caption, this.prompt, this.debug, this.objective, this.marker, this.challengeEl]) e.hidden = true;
+    this.jamEl.innerHTML = `<b></b><div class="notes"><i>&#9834;</i><i>&#9834;</i><i>&#9834;</i></div><span class="press">PRESS <kbd></kbd></span>`;
+    this.phoneEl.innerHTML = `<div class="screen"><small>SOUP UPDATE</small><b></b><div class="photo"><i></i></div><div class="send"><span></span><em><i></i></em></div><ul></ul></div>`;
+    for (const e of [this.caption, this.prompt, this.debug, this.objective, this.marker, this.challengeEl, this.jamEl, this.phoneEl, this.flashEl]) e.hidden = true;
   }
 
   private balloon(speaker: string) {
@@ -147,7 +154,7 @@ export class Hud {
       const f = i < charges ? 1 : i === charges ? refill : 0;
       return `<i class="${f >= 1 ? "full" : ""}" style="--f:${(f * 100).toFixed(0)}%"></i>`;
     }).join("");
-    this.gas.innerHTML = `<span>Soup</span>${beans}<kbd>Space</kbd>`;
+    this.gas.innerHTML = `<span>Toots</span>${beans}<kbd>Space</kbd>`;
   }
 
   /** The action-challenge panel: a title, a tug meter (0..1, 0.5 is even), and a mash prompt. */
@@ -160,6 +167,66 @@ export class Hud {
     const shake = c.jolt > 0 ? Math.sin(c.now * 70) * 6 * c.jolt : 0;
     this.challengeEl.style.transform = `translateX(calc(-50% + ${shake.toFixed(1)}px))`;
     this.challengeEl.querySelector(".mash")!.classList.toggle("big", Math.sin(c.now * 18) > 0);
+  }
+
+  /** The synth take: which of the three notes have played, and the key to press next. */
+  setJam(j: { take: number; played: number; sour: boolean; next: string | null } | null) {
+    this.jamEl.hidden = !j;
+    if (!j) return;
+    this.jamEl.querySelector("b")!.textContent = `TAKE ${j.take}`;
+    this.jamEl.querySelectorAll(".notes i").forEach((n, i) => {
+      n.classList.toggle("on", i < j.played);
+      n.classList.toggle("sour", j.sour && i === 2);
+    });
+    const press = this.jamEl.querySelector(".press") as HTMLElement;
+    press.style.visibility = j.next ? "visible" : "hidden";
+    press.querySelector("kbd")!.textContent = j.next ?? "";
+  }
+
+  /** The soup card: ten distillations as pips, and ingredients in his pocket. */
+  setSoup(s: { distilled: number; of: number; pocket: number; ready: boolean; eaten: boolean }) {
+    const key = JSON.stringify(s);
+    if (key === this.lastSoup) return;
+    this.lastSoup = key;
+    const pips = Array.from({ length: s.of }, (_, i) => `<i class="${i < s.distilled ? "on" : ""}"></i>`).join("");
+    const status = s.eaten ? "Eaten. Magnificent." : s.ready ? "Ready! Eat it at the stove" : s.pocket ? `${s.pocket} ingredient${s.pocket > 1 ? "s" : ""}: to the stove` : "Find an ingredient";
+    this.soupEl.innerHTML = `<span>Soup</span><div>${pips}</div><small>${s.distilled}/${s.of} distillations · ${status}</small>`;
+  }
+
+  /** The phone: a soup photo going out to everyone, and the replies coming back. */
+  phoneShow(title: string, sending: string) {
+    this.phoneEl.hidden = false;
+    this.phoneEl.classList.remove("sent");
+    this.phoneEl.querySelector("b")!.textContent = title;
+    this.phoneEl.querySelector(".send span")!.textContent = sending;
+    this.phoneEl.querySelector("ul")!.innerHTML = "";
+    void this.phoneEl.offsetWidth; // restart the progress-bar animation
+    this.phoneEl.classList.add("sending");
+  }
+
+  phoneSent(text: string) {
+    this.phoneEl.classList.remove("sending");
+    this.phoneEl.classList.add("sent");
+    this.phoneEl.querySelector(".send span")!.textContent = text;
+  }
+
+  phoneReply(from: string, text: string) {
+    const li = document.createElement("li");
+    li.innerHTML = `<b>${esc(from)}</b> ${esc(text)}`;
+    this.phoneEl.querySelector("ul")!.append(li);
+  }
+
+  phoneHide() {
+    this.phoneEl.hidden = true;
+  }
+
+  /** A camera flash over the whole screen. */
+  flash() {
+    this.flashEl.hidden = false;
+    this.flashEl.classList.remove("go");
+    void this.flashEl.offsetWidth;
+    this.flashEl.classList.add("go");
+    setTimeout(() => (this.flashEl.hidden = true), 450);
   }
 
   hideHelp() {

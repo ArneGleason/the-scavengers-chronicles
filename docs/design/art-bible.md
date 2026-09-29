@@ -58,7 +58,7 @@ Mega Vegas Elvis stays inside the world: comic covers on the stacks, the fridge 
   | Estate | Mint-teal |
   | Basement | Deep blue-violet, with orange bounce from the synth LEDs |
   | The Route | Cool slate |
-  | Landfill | Olive |
+  | Big Wanda's Junkyard | Olive |
   | Factory | Umber |
   | Airfield | Violet dusk |
 

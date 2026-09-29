@@ -170,6 +170,42 @@ for (const [name, hash, wait, slap, extra] of [
   await page.close();
 }
 {
+  // the masterpiece: E, R, then E again, and the third note always goes wrong
+  const page = await open("at=2.1,0,3.7&face=0&zoom=close");
+  const a = await scav(page);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(500);
+  const b = await scav(page);
+  for (const k of ["KeyE", "KeyR", "KeyE"]) { await page.keyboard.press(k); await page.waitForTimeout(450); }
+  await page.screenshot({ path: "shots/e2e-jam.png" });
+  const c = await scav(page);
+  await page.waitForTimeout(3300);
+  const d = await scav(page);
+  check(a.poke === "synth" && b.jam.active && c.jam.step === 3 && !d.jam.active && d.jam.takes === 1, `E at a keyboard plays a three-note take that ends on a wrong note (step ${c.jam.step}, takes ${d.jam.takes})`);
+  await page.close();
+}
+{
+  // the soup: an ingredient in his pocket, a distillation at the stove, a photo to every contact
+  const page = await open("at=-4.75,0,0.6&face=270&zoom=close&soup=2");
+  const a = await scav(page);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(4600);
+  await page.screenshot({ path: "shots/e2e-soup-phone.png" });
+  const replies = await page.$$eval(".phone li", (els) => els.length);
+  await page.waitForTimeout(1500);
+  const b = await scav(page);
+  check(a.poke === "stove" && b.soup.distilled === 1 && b.soup.pocket === 1 && replies >= 2, `a distillation adds an ingredient and sends the photo (distilled ${b.soup.distilled}, ${replies} replies)`);
+  await page.close();
+}
+{
+  // walking up to an ingredient collects it
+  const page = await open("at=-6.5,0,8.6&face=270&zoom=close");
+  await walkTo(page, -7.2, 8.6, { timeout: 3000, near: 0.2 });
+  await page.waitForTimeout(300);
+  check((await scav(page)).soup.pocket === 1, "walking up to the backyard dandelion puts it in his pocket");
+  await page.close();
+}
+{
   // Dumpster Duel, won: Gary goes in the bin, the Speak & Spell goes in the satchel
   const page = await open("at=25.1,0,14.05&face=180&skip=cablePilgrimage,stumpProphecy&zoom=game");
   await page.waitForTimeout(600);
@@ -178,7 +214,9 @@ for (const [name, hash, wait, slap, extra] of [
   const s0 = await scav(page);
   check(s0.challenge?.kind === "duel" && s0.gary === "tug", "E at the guarded Speak & Spell starts the Dumpster Duel");
   await page.screenshot({ path: "shots/e2e-duel.png" });
-  await mash(page, 2.4);
+  await mash(page, 1.0);
+  await page.screenshot({ path: "shots/e2e-catfight.png" });
+  await mash(page, 1.4);
   await page.waitForTimeout(900);
   await page.screenshot({ path: "shots/e2e-duel-won.png" });
   const s1 = await scav(page);
@@ -239,6 +277,66 @@ for (const [name, hash, wait, slap, extra] of [
   await page.waitForTimeout(2600);
   const s = await scav(page);
   check(s.hits.board === 1 && s.pos[0] > 7.5 && !s.ride, `stepping on the skateboard rides him down the lane until he wipes out (x ${s.pos[0].toFixed(1)})`);
+  await page.close();
+}
+const DONE3 = "skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy";
+{
+  // errand 4: grab the grate and Big Wanda gives chase; shuffle away and she catches him and throws him out
+  const page = await open(`at=54.5,0,8.3&face=180&zoom=game&${DONE3}`);
+  await page.waitForTimeout(500);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(1200);
+  const a = await scav(page);
+  check(a.inv.includes("rustyGrate") && a.wanda === "chase", `picking up the grate sets Big Wanda chasing (${a.wanda})`);
+  await page.screenshot({ path: "shots/e2e-wanda-chase.png" });
+  // shuffle toward the gate: too slow with a grate in his hands
+  await page.keyboard.down("KeyW");
+  const t0 = Date.now();
+  while (Date.now() - t0 < 12000 && !(await scav(page)).tossed) await page.waitForTimeout(100);
+  await page.keyboard.up("KeyW");
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: "shots/e2e-wanda-toss.png" });
+  await page.waitForTimeout(1800);
+  const b = await scav(page);
+  check(!b.inv.includes("rustyGrate") && b.pos[2] > 16, `she catches a shuffling Bill, keeps the grate, and throws him into the lane (z ${b.pos[2].toFixed(1)})`);
+  await page.close();
+}
+{
+  // hurrying out of the gate with the grate: she gives up
+  const page = await open(`at=48,0,13.2&face=0&zoom=game&${DONE3}&give=rustyGrate`);
+  await page.waitForTimeout(800);
+  await walkTo(page, 48, 17.6, { hurry: true, timeout: 6000 });
+  await page.waitForTimeout(2500);
+  const s = await scav(page);
+  check(s.inv.includes("rustyGrate") && s.wanda !== "chase", `a hurrying Bill gets out of the gate with the grate (Wanda ${s.wanda})`);
+  await page.close();
+}
+{
+  // the workbench: deliver the grate, hammer it into a shelf, pick the shelf up
+  const page = await open(`at=7.8,0,7.75&face=0&zoom=close&${DONE3}&give=rustyGrate`);
+  await page.waitForTimeout(800);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(700);
+  check((await scav(page)).challenge?.kind === "hammer", "delivering the grate to the workbench starts the hammering");
+  await mash(page, 1.5);
+  await page.screenshot({ path: "shots/e2e-hammer.png" });
+  await mash(page, 2.5);
+  await page.waitForTimeout(2200);
+  const a = await scav(page);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(1200);
+  const b = await scav(page);
+  check(a.stages.grateShelf === "complete" && a.stages.grateVault === "find" && b.inv.includes("grateShelf"), `the grate becomes a shelf on the bench, and he picks it up (${b.inv})`);
+  await page.close();
+}
+{
+  // the vault: the shelf goes on top of the antique vault
+  const page = await open(`at=-3.7,0,-3.6&face=180&zoom=close&${DONE3},grateShelf&give=grateShelf`);
+  await page.waitForTimeout(900);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: "shots/e2e-vault.png" });
+  check((await scav(page)).stages.grateVault === "complete", "delivering the shelf to the vault completes the Grate Shelf Revelation");
   await page.close();
 }
 {

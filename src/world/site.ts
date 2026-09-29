@@ -1,8 +1,8 @@
-/** The whole walkable site: Bill's estate plus the Route (laneway, lot, corner store, gym). */
-export const SITE = { x0: -14, x1: 41, z0: -17, z1: 25 };
+/** The whole walkable site: Bill's estate plus the Route (laneway, lot, corner store, gym) and Big Wanda's Junkyard. */
+export const SITE = { x0: -14, x1: 64, z0: -17, z1: 25 };
 
 /** Where Bill can actually walk (the rest is scenery at the diorama's edge). */
-export const WALKABLE = { x0: -12.6, x1: 39.6, z0: -9.6, z1: 23.2 };
+export const WALKABLE = { x0: -12.6, x1: 62.6, z0: -9.6, z1: 23.2 };
 
 export interface Rect {
   x0: number;

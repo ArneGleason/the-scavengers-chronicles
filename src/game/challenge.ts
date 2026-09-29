@@ -20,6 +20,8 @@ export interface TugConfig {
 export const STUMP_WRESTLE: TugConfig = { start: 0.05, gain: 0.1, pull: 0.12, surgeEvery: 0, surge: 0, canLose: false };
 /** The hoard fights back: every couple of seconds a newspaper avalanche buries him a little. */
 export const HOARD_DIVE: TugConfig = { start: 0, gain: 0.065, pull: 0.04, surgeEvery: 2.2, surge: 0.12, canLose: false };
+/** Hammering the grate into a shelf: the thumb gets hit every few seconds. Can't be lost. */
+export const HAMMER_TIME: TugConfig = { start: 0, gain: 0.07, pull: 0.035, surgeEvery: 2.4, surge: 0.1, canLose: false };
 export const DUMPSTER_DUEL: TugConfig = { start: 0.5, gain: 0.08, pull: 0.17, surgeEvery: 1.4, surge: 0.07, canLose: true };
 
 export type TugState = "running" | "won" | "lost";

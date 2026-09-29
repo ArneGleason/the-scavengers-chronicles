@@ -68,7 +68,7 @@ The jokes land on Bill's **logic and obsessions**: hoarder reasoning, legal gran
 
 - **Aximandra.** Bill's tabby cat, the only one who "gets him" (per the note on the fridge). Her ears go flat a few seconds before every soup disaster, and nobody heeds the warning: she's a Cassandra. She sits on exactly the item Bill needs, and she rides to the airfield in the satchel.
 - **Gary the Rummager.** A hunched rival scavenger in an olive parka who guards the corner-store dumpster "like a landfill dragon with reading software". He shadows Bill, gets distracted by a humming power brick, and fights Bill for an antique Speak & Spell.
-- **Big Wanda.** Runs the city landfill. She has aggressive admiration for Bill's salvage taste and wants to capture him; it's a chase.
+- **Big Wanda.** Runs Big Wanda's Junkyard. She has aggressive admiration for Bill's salvage taste and wants to capture him; it's a chase.
 - **Bylaw officers.** Patrol the laneway and the lot with flashlights. Bill answers scolding with legal threats.
 - **The gym guys.** From the boxing gym on the lane. They laugh off Bill's insults.
 - **Rob.** Bill's friend from *Whiskey Runner Rob* and the *Mega Vegas Elvis* comics. Rob keeps promising Bill a bigger part. Running canon: "Bill begins to suspect Rob may have oversold his role." A possible cameo riding a cruiser bike with a parrot dome.
@@ -92,7 +92,7 @@ The jokes land on Bill's **logic and obsessions**: hoarder reasoning, legal gran
   - The back of a corner variety store, with its dumpster and a cardboard heap.
   - A boxing gym.
   - A main street with a streetcar every 45 seconds and shopfronts: video rentals, laundromat, barber, fruit and veg, café, bakery, hardware, records.
-- **Later zones:** the city landfill (Big Wanda), a dangerous old factory, a park at dusk, and a private airfield at the far edge of town.
+- **Later zones:** Big Wanda's Junkyard, a dangerous old factory, a park at dusk, and a private airfield at the far edge of town.
 
 ## The plot, in order
 
@@ -102,7 +102,7 @@ The jokes land on Bill's **logic and obsessions**: hoarder reasoning, legal gran
 | 2 | Stump of Destiny | Uproot a backyard stump "with personality" and install it indoors as the start of a furniture movement | *Stump Wrestle* (built): mash to uproot it, and it pops free and he goes over backwards |
 | 3 | Speak & Spell Salvage Duel | Win an antique Speak & Spell from Gary at the corner-store dumpster | *Dumpster Duel* (built): a tug-of-war with Gary. Win and Gary goes head-first into the dumpster; lose and Bill is flung into the lane |
 | — | Soup episodes (3–4, scripted) | The soup is about to boil over and ruin the photo he planned to share; he must forage an ingredient and get back. Near the end his legs walk him toward the pot while his torso resists | *Soup Sprint* (planned) |
-| 4 | Grate Shelf Revelation | Retrieve a rusty floor grate from the landfill, turn it into a shelf at the workbench, install it in the antique vault | *Wanda Chase* (planned). The grate is long and clangs in doorways. |
+| 4 | Grate Shelf Revelation | Retrieve a rusty floor grate from Big Wanda's Junkyard, turn it into a shelf at the workbench, install it in the antique vault | *Wanda Chase* (planned). The grate is long and clangs in doorways. |
 | 5 | Rack Rail Rescue | Retrieve rack rails from the old factory, fit them to the basement rack; a mystery cable bundle reveals the Final Adapter | Nothing yet |
 | — | The Route in general | Bylaw patrols and the gym guys sit right on the paths between errands | *Stealth Shuffle* past flashlight cones; *Insult Volley* with the gym guys (both planned) |
 | 6 | Finale | At the airfield Bill fits the Final Adapter into a private jet and patches his synth rig into the PA. The masterpiece plays as the jet taxis, cut on the beat: the stump kick, the Speak & Spell spelling "B-I-L-L". Silence. Aximandra meows once. Vegas at night: the marquee's Mega Vegas Elvis has Bill's face. "That's my face." End card: *Masterpiece Completed (Eight Bars). Escape Achieved. Litigation Pending.* | *Takeoff* (planned): mash to get the jet moving while the masterpiece plays |
@@ -139,7 +139,7 @@ Keep ideas inside these verbs, or make them passive (they just happen to Bill):
 ## What I want from you
 
 1. **Collateral gags by location.**
-   - Five to ten per place: the kitchen, the living room, the basement, the backyard, the laneway, the parking lot, the corner store and its yard, the boxing gym, the main street and its shops, the landfill, the factory, the park at dusk, and the airfield.
+   - Five to ten per place: the kitchen, the living room, the basement, the backyard, the laneway, the parking lot, the corner store and its yard, the boxing gym, the main street and its shops, Big Wanda's Junkyard, the factory, the park at dusk, and the airfield.
    - Mix passive world gags, traversal toys like the skateboard, and things the player can poke.
 2. **Gags triggered by what he's carrying.** The stump, a long grate that won't fit through doors, a precious Speak & Spell cradled like a baby, a full rattling satchel, the cat in the satchel.
 3. **More toot gags.** What else a soup-powered fart can do: to NPCs, to objects, to Bill himself (misfires, a double charge, the wrong moment).

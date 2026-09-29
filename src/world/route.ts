@@ -17,7 +17,7 @@ import type { Physics } from "./physics";
 import { P } from "../content/palette";
 import { canvasTex, toon } from "../render/comicMaterial";
 import type { ItemId } from "../content/items";
-import type { Rect } from "./site";
+import { SITE, type Rect } from "./site";
 
 export const LANE = { z0: 15.6, z1: 19.6 };
 export const LOT: Rect = { x0: 12.5, x1: 21.5, z0: -5.2, z1: 15.5 };
@@ -92,6 +92,8 @@ const brickTex = canvasTex(64, 64, (g) => {
   for (let y = 0; y < 64; y += 8) { g.fillRect(0, y + 7, 64, 1); for (let x = (y / 8) % 2 ? 8 : 0; x < 64; x += 16) g.fillRect(x, y, 1, 8); }
 }, { nearest: true, repeat: true });
 
+const EAST = SITE.x1;
+
 export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surfaces: Surfaces): Route {
   const b = new StaticBuilder(scene, phys);
   const roofs: Route["roofs"] = [];
@@ -99,15 +101,15 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   const brick = toon("#fff", { map: brickTex, ink: 0.8 });
 
   /* ---------- paving ---------- */
-  b.box([-14, -0.1, LANE.z0], [41, 0.006, LANE.z1], asphalt, "outdoors", { collide: false, tile: 2 });
+  b.box([-14, -0.1, LANE.z0], [EAST, 0.006, LANE.z1], asphalt, "outdoors", { collide: false, tile: 2 });
   b.box([LOT.x0, -0.1, LOT.z0], [LOT.x1, 0.006, LOT.z1], asphalt, "outdoors", { collide: false, tile: 2 });
-  b.box([STORE.x0, -0.1, STORE.z1], [41, 0.008, LANE.z0], P.concrete, "outdoors", { collide: false, ink: 0.4 });
-  b.box([STREET.x0, -0.1, STREET.z0], [41, 0.006, STREET.z1], asphalt, "outdoors", { collide: false, tile: 2 });
-  b.box([STREET.x0, -0.1, STREET.z1], [41, 0.03, -5.1], P.concrete, "outdoors", { collide: false, ink: 0.5 }); // sidewalk
-  surfaces.add({ x0: -14, x1: 41, z0: LANE.z0, z1: LANE.z1, y0: -0.5, y1: 2, surface: "asphalt" });
+  b.box([STORE.x0, -0.1, STORE.z1], [EAST, 0.008, LANE.z0], P.concrete, "outdoors", { collide: false, ink: 0.4 });
+  b.box([STREET.x0, -0.1, STREET.z0], [EAST, 0.006, STREET.z1], asphalt, "outdoors", { collide: false, tile: 2 });
+  b.box([STREET.x0, -0.1, STREET.z1], [EAST, 0.03, -5.1], P.concrete, "outdoors", { collide: false, ink: 0.5 }); // sidewalk
+  surfaces.add({ x0: -14, x1: EAST, z0: LANE.z0, z1: LANE.z1, y0: -0.5, y1: 2, surface: "asphalt" });
   surfaces.add({ x0: LOT.x0, x1: LOT.x1, z0: LOT.z0, z1: LOT.z1, y0: -0.5, y1: 2, surface: "asphalt" });
-  surfaces.add({ x0: STORE.x0, x1: 41, z0: STORE.z1, z1: LANE.z0, y0: -0.5, y1: 2, surface: "concrete" });
-  surfaces.add({ x0: STREET.x0, x1: 41, z0: STREET.z1, z1: -5.1, y0: -0.5, y1: 2, surface: "concrete" });
+  surfaces.add({ x0: STORE.x0, x1: EAST, z0: STORE.z1, z1: LANE.z0, y0: -0.5, y1: 2, surface: "concrete" });
+  surfaces.add({ x0: STREET.x0, x1: EAST, z0: STREET.z1, z1: -5.1, y0: -0.5, y1: 2, surface: "concrete" });
   // oil stains and a drain grate in the lane
   for (const [x, z, r] of [[6, 17.2, 0.7], [18.5, 18.1, 0.5], [30, 16.8, 0.9], [-7, 18.4, 0.6]] as const) {
     b.geo(new THREE.CircleGeometry(r, 14), "#2a2e33", "outdoors", [x, 0.008, z], [-Math.PI / 2, 0, 0], [1, 0.7, 1], 0.2);
@@ -208,14 +210,14 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   const garageDoor = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.1), toon("#fff", { map: graffitiTex("#b9b3a6", 11), ink: 0.4 }));
   garageDoor.position.set(-12.6, 1.05, 15.31); scene.add(garageDoor); tagOutdoors(garageDoor);
   // low back fences of the next street's yards, on the camera side of the lane
-  for (let x = -14; x < 41; x += 5.5) {
+  for (let x = -14; x < EAST; x += 5.5) {
     const len = 4.6;
     b.box([x, 0, 20.1], [x + len, 1.15, 20.2], "#a88a64", "outdoors", { collide: false, ink: 0.6 });
     for (let k = 0; k <= 4; k++) b.box([x + (k * len) / 4 - 0.05, 0, 20.05], [x + (k * len) / 4 + 0.05, 1.3, 20.25], "#8d7050", "outdoors", { collide: false, ink: 0.5 });
   }
-  phys.box([-14, 0, 20.0], [41, 1.2, 20.3]);
+  phys.box([-14, 0, 20.0], [EAST, 1.2, 20.3]);
   /* ---------- hydro poles, wires and ivy ---------- */
-  const poles = [-9, 3, 15, 27, 39];
+  const poles = [-9, 3, 15, 27, 39, 57, 63];
   for (const x of poles) {
     b.geo(new THREE.CylinderGeometry(0.13, 0.16, 8, 8), "#7a6048", "outdoors", [x, 4, 19.85], undefined, undefined, 0.7);
     b.box([x - 0.9, 7.2, 19.8], [x + 0.9, 7.35, 19.92], "#6b5540", "outdoors", { collide: false, ink: 0.5 });
@@ -252,18 +254,19 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   phys.box([11.2, 0, 15.3], [12.6, 1.9, 15.7]);
 
   /* ---------- the main street, its streetcar, and the shops across it ---------- */
-  for (const z of [-7.9, -9.3]) for (const dz of [-0.36, 0.36]) b.box([STREET.x0, 0.006, z + dz - 0.04], [41, 0.03, z + dz + 0.04], "#6b6f73", "outdoors", { collide: false, ink: 0.2 });
-  for (let x = -10; x < 41; x += 8) {
+  for (const z of [-7.9, -9.3]) for (const dz of [-0.36, 0.36]) b.box([STREET.x0, 0.006, z + dz - 0.04], [EAST, 0.03, z + dz + 0.04], "#6b6f73", "outdoors", { collide: false, ink: 0.2 });
+  for (let x = -10; x < EAST; x += 8) {
     b.geo(new THREE.CylinderGeometry(0.1, 0.12, 6.2, 8), "#4d5156", "outdoors", [x, 3.1, -6.9], undefined, undefined, 0.6);
     b.box([x - 0.05, 5.8, -9.3], [x + 0.05, 5.9, -6.9], "#4d5156", "outdoors", { collide: false, ink: 0.4 });
   }
-  for (const z of [-7.9, -9.3]) b.box([STREET.x0, 5.7, z - 0.012], [41, 5.725, z + 0.012], P.ink, "outdoors", { collide: false, ink: 0 });
-  phys.box([STREET.x0, 0, STREET.z1 - 0.2], [41, 2, STREET.z1]); // curb: he stays on the sidewalk
+  for (const z of [-7.9, -9.3]) b.box([STREET.x0, 5.7, z - 0.012], [EAST, 5.725, z + 0.012], P.ink, "outdoors", { collide: false, ink: 0 });
+  phys.box([STREET.x0, 0, STREET.z1 - 0.2], [EAST, 2, STREET.z1]); // curb: he stays on the sidewalk
   const shops: [number, number, number, string, string, string][] = [
     [-14, 6.4, 6.4, "#7f6a8a", "VIDEO RENTALS", "#f2b632"], [-7.4, 5.4, 8, "#9aa3a8", "LAUNDROMAT", "#1e1a18"],
     [-1.2, 6.2, 6.8, "#a4553f", "BARBER", "#fbf6ec"], [5.2, 7, 7.2, "#6f8f4e", "FRUIT & VEG", "#fbf6ec"],
     [12.5, 7.4, 7.5, "#b0665a", "CAFÉ", "#fbf6ec"], [20.5, 7.4, 6.5, "#8a9a7e", "BAKERY", "#fbf6ec"],
     [27.5, 7.4, 8.5, "#a4553f", "HARDWARE", "#f2b632"], [35.1, 5.9, 7, "#6f7f86", "RECORDS", "#e0367a"],
+    [41.6, 6.6, 6.8, "#7a6f5c", "PAWN", "#f2b632"], [48.8, 7.4, 7.4, "#5f7f79", "DOLLAR STORE", "#fbf6ec"], [56.8, 7.2, 6.2, "#8a5a6a", "VACUUM REPAIR", "#fbf6ec"],
   ];
   for (const [x, w, h, col, name, fg] of shops) {
     b.box([x, 0, -16.5], [x + w, h, -11], col, "outdoors", { collide: false, ink: 0.8 });

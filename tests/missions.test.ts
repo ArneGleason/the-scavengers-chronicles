@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cycleActive, allDone } from "../src/game/missions";
 import { newGary, stepGary, isGuarded, gagGary, GARY } from "../src/game/gary";
 import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL, HOARD_DIVE } from "../src/game/challenge";
+import { newJam, press, nextKey } from "../src/game/jam";
+import { newSoup, collect, distill, canDistill, isReady, eat } from "../src/game/soup";
+import { INGREDIENTS, DISTILLATIONS, type IngredientId } from "../src/content/soup";
+import { newWanda, stepWanda, applaudWanda, WANDA } from "../src/game/wanda";
 import { GagDirector } from "../src/game/gags";
 
 describe("mission chain", () => {
@@ -43,7 +47,17 @@ describe("mission chain", () => {
     const ev = deliver(s, "stumpProphecy");
     expect(ev[1]).toEqual({ type: "selected", mission: "dumpsterDiplomacy" });
     onPickup(s, "speakAndSpell");
-    deliver(s, "dumpsterDiplomacy");
+    const ev3 = deliver(s, "dumpsterDiplomacy");
+    expect(ev3[0]).toMatchObject({ unlocked: ["grateShelf"] });
+    expect(objective(s)?.point).toBe("junkyard");
+    // errand 4 has two legs: the grate to the workbench, then the shelf to the vault
+    onPickup(s, "rustyGrate");
+    expect(deliverable(s, "workbench", ["rustyGrate"])).toBe("grateShelf");
+    deliver(s, "grateShelf");
+    expect(objective(s)).toMatchObject({ mission: "grateVault", point: "workbench" });
+    onPickup(s, "grateShelf");
+    expect(deliverable(s, "vault", ["grateShelf"])).toBe("grateVault");
+    deliver(s, "grateVault");
     expect(allDone(s)).toBe(true);
     expect(s.active).toBeNull();
   });
@@ -161,5 +175,87 @@ describe("the gag clock", () => {
     // poop is on cooldown and wind isn't eligible
     expect(d.pick(40, opts, () => 0)).toBeNull();
     expect(d.perMinute(40)).toBe(2);
+  });
+});
+
+describe("the masterpiece, as performed", () => {
+  it("plays two notes back and forth, then the third goes sour however right the key was", () => {
+    const j = newJam();
+    expect(nextKey(j)).toBe("E");
+    expect(press(j, "R")).toBeNull(); // wrong key: nothing happens
+    expect(press(j, "E")).toEqual({ midi: 62, sour: false });
+    expect(press(j, "R")).toEqual({ midi: 69, sour: false });
+    expect(press(j, "E")).toEqual({ midi: 62, sour: true });
+    expect(j.done).toBe(true);
+    expect(nextKey(j)).toBeNull();
+    expect(press(j, "R")).toBeNull();
+  });
+});
+
+describe("the soup's ten distillations", () => {
+  it("needs ten ingredients, one per distillation, before it can be eaten", () => {
+    const s = newSoup();
+    expect(canDistill(s)).toBe(false);
+    const ids = Object.keys(INGREDIENTS) as IngredientId[];
+    expect(ids.length).toBeGreaterThanOrEqual(DISTILLATIONS); // enough in the world, with spares
+    expect(collect(s, ids[0])).toBe(true);
+    expect(collect(s, ids[0])).toBe(false); // each ingredient only once
+    expect(distill(s)).toEqual({ ingredient: ids[0], n: 1, ready: false });
+    expect(eat(s)).toBe(false);
+    for (const id of ids.slice(1, DISTILLATIONS)) collect(s, id);
+    let last = null;
+    while (canDistill(s)) last = distill(s);
+    expect(last).toMatchObject({ n: DISTILLATIONS, ready: true });
+    expect(isReady(s)).toBe(true);
+    collect(s, ids[DISTILLATIONS]);
+    expect(canDistill(s)).toBe(false); // ten is plenty
+    expect(eat(s)).toBe(true);
+    expect(eat(s)).toBe(false);
+  });
+});
+
+describe("Big Wanda", () => {
+  const home = { x: 0, z: 0 };
+  const run = (billSpeed: number, carrying = true, seconds = 8) => {
+    const w = newWanda(home);
+    const bill = { x: 4, z: 0 };
+    for (let i = 0; i < seconds * 60; i++) {
+      bill.x += billSpeed / 60; // running away from her
+      const r = stepWanda(w, { bill, carryingGrate: carrying, billInside: true }, 1 / 60);
+      if (r.caught) return { caught: true, w };
+    }
+    return { caught: false, w };
+  };
+
+  it("catches a man shuffling off with the grate, but not one hurrying", () => {
+    expect(run(1.4).caught).toBe(true);
+    expect(run(2.6).caught).toBe(false);
+  });
+
+  it("only admires him, from a respectful distance, when he isn't carrying the grate", () => {
+    const { caught, w } = run(0, false, 10);
+    expect(caught).toBe(false);
+    expect(w.mode).toBe("admire");
+    expect(Math.hypot(4 - w.x, w.z)).toBeCloseTo(WANDA.admireStop, 1);
+  });
+
+  it("stops to applaud a toot, then carries on", () => {
+    const w = newWanda(home);
+    applaudWanda(w, 1);
+    const bill = { x: 3, z: 0 };
+    for (let i = 0; i < 30; i++) stepWanda(w, { bill, carryingGrate: true, billInside: true }, 1 / 60);
+    expect(w.x).toBe(0);
+    for (let i = 0; i < 60; i++) stepWanda(w, { bill, carryingGrate: true, billInside: true }, 1 / 60);
+    expect(w.mode).toBe("chase");
+    expect(w.x).toBeGreaterThan(0);
+  });
+
+  it("gives up and goes home when he leaves the junkyard", () => {
+    const w = newWanda(home);
+    w.x = 5;
+    let last = null;
+    for (let i = 0; i < 60 * 8; i++) last = stepWanda(w, { bill: { x: 20, z: 0 }, carryingGrate: true, billInside: false }, 1 / 60);
+    expect(w.mode).toBe("home");
+    expect(last?.caught).toBe(false);
   });
 });

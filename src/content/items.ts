@@ -2,7 +2,7 @@
  * Item definitions for the walking toy. Names and lines are ported verbatim from the
  * v0.2 prototype (classic/app.js) where they exist.
  */
-export type ItemId = "dinCable" | "powerBrick" | "cableBundle" | "speakAndSpell" | "newspaperBundle" | "personalityStump";
+export type ItemId = "dinCable" | "powerBrick" | "cableBundle" | "speakAndSpell" | "newspaperBundle" | "personalityStump" | "rustyGrate" | "grateShelf";
 export type CarryKind = "satchel" | "heavy";
 export type Surface = "carpet" | "linoleum" | "hardwood" | "concrete" | "grass" | "dirt" | "stairs" | "asphalt";
 
@@ -85,6 +85,28 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     accent: "#d1a260",
     pickupText: "Picked up the Stump With Personality. It is heavy with dirt and unearned confidence.",
     dropText: "The stump lands with the confidence of furniture nobody asked for.",
+  },
+  rustyGrate: {
+    id: "rustyGrate",
+    name: "Rusty Floor Grate",
+    shortName: "Rusty Grate",
+    carry: "heavy",
+    mass: 9,
+    color: "#87624e",
+    accent: "#c7a184",
+    pickupText: "He squints through the grate and sees a shelf, a sculpture, and probably tetanus.",
+    dropText: "The grate clanks down like industrial applause.",
+  },
+  grateShelf: {
+    id: "grateShelf",
+    name: "Visionary Grate Shelf",
+    shortName: "Grate Shelf",
+    carry: "heavy",
+    mass: 10,
+    color: "#a27754",
+    accent: "#ead5a7",
+    pickupText: "The shelf is mostly sharp edges and conviction. Naturally, he calls it mid-century.",
+    dropText: "He sets down the shelf with gallery-opening seriousness.",
   },
 };
 

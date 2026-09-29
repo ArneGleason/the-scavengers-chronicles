@@ -16,6 +16,8 @@ export interface Motion {
   surfing?: boolean;
   /** Heaving in a tug-of-war: feet braced, hands out front. */
   tugging?: boolean;
+  /** At the keyboard: hands on the keys; press is 0..1 for each hand's current note. */
+  playing?: { pressL: number; pressR: number };
 }
 
 export const ANIM = {
@@ -138,6 +140,15 @@ export class BillAnimator {
       tp.le = [0.6, -0.3, 0.1]; tp.re = [-0.6, -0.3, 0.1];
       tp.py = -0.1; tp.hp = -0.2 + 0.05 * Math.sin(t * 22);
       pose = tp;
+    }
+    if (m.playing) {
+      // hands on the keys, head nodding to a rhythm only he can hear
+      const pp = basePose();
+      const { pressL, pressR } = m.playing;
+      pp.lh = [0.16, -0.1 - 0.05 * pressL, 0.36]; pp.rh = [-0.16, -0.1 - 0.05 * pressR, 0.36];
+      pp.le = [0.6, -0.2, 0.1]; pp.re = [-0.6, -0.2, 0.1];
+      pp.lean = 0.1; pp.hp = 0.12 + 0.05 * Math.sin(t * 6) + 0.08 * Math.max(pressL, pressR);
+      pose = pp;
     }
     // the nasal audit overrides the right hand
     if (t < this.noseUntil) {
