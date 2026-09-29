@@ -22,8 +22,8 @@ export interface FootTarget {
   pitch: number;
 }
 
-export const SHUFFLE: GaitParams = { stepLength: 0.42, duty: 0.64, lift: 0.028, width: 0.1 };
-export const HURRY: GaitParams = { stepLength: 0.7, duty: 0.52, lift: 0.075, width: 0.11 };
+export const SHUFFLE: GaitParams = { stepLength: 0.55, duty: 0.62, lift: 0.035, width: 0.1 };
+export const HURRY: GaitParams = { stepLength: 0.86, duty: 0.5, lift: 0.09, width: 0.11 };
 export const HEAVY: GaitParams = { stepLength: 0.34, duty: 0.66, lift: 0.032, width: 0.125 };
 
 export function blendGait(a: GaitParams, b: GaitParams, t: number): GaitParams {

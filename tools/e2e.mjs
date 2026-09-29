@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * End-to-end check of the walking toy's interactions in headless Chrome:
- * pick up a satchel item, drop it, pick up the stump, and get refused when the satchel is full.
+ * End-to-end check of the game's interactions in headless Chrome: pickups and drops, the stairs,
+ * deliveries, the two action challenges (Stump Wrestle, Dumpster Duel), the toot dash, the rake,
+ * the skateboard, and luring Gary.
  *   node tools/e2e.mjs
  */
 import { createServer } from "vite";
@@ -44,6 +45,13 @@ async function walkTo(page, x, z, { hurry = false, timeout = 20000, near = 0.35 
   }
 }
 
+/** Mash E at `perSecond` for `seconds`. */
+async function mash(page, seconds, perSecond = 9) {
+  const n = Math.round(seconds * perSecond);
+  for (let i = 0; i < n; i++) { await page.keyboard.press("KeyE"); await page.waitForTimeout(1000 / perSecond); }
+}
+const scav = (page) => page.evaluate(() => window.__scav);
+
 const slots = (page) => page.$$eval(".slot:not(.empty) span", (els) => els.map((e) => e.textContent));
 
 async function open(hash) {
@@ -69,10 +77,18 @@ async function open(hash) {
   await page.close();
 }
 {
+  // Stump Wrestle: E at the rooted stump starts the challenge; mashing uproots it into his hands
   const page = await open("at=-3.0,0,9.6&face=0&zoom=close");
   await page.keyboard.press("KeyE");
-  await page.waitForTimeout(1200);
-  check((await slots(page)).includes("Stump"), "E lifts the stump into his hands");
+  await page.waitForTimeout(300);
+  check((await scav(page)).challenge?.kind === "stump", "E at the rooted stump starts the Stump Wrestle");
+  await page.screenshot({ path: "shots/e2e-stump-wrestle.png" });
+  await mash(page, 2.2);
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: "shots/e2e-stump-pop.png" });
+  await page.waitForTimeout(1600);
+  const s = await scav(page);
+  check(!s.challenge && !s.rooted && (await slots(page)).includes("Stump"), "mashing uproots the stump and it lands in his hands");
   // walk a little while carrying it
   await page.keyboard.down("KeyD");
   await page.waitForTimeout(1200);
@@ -116,20 +132,86 @@ async function open(hash) {
   await page.waitForTimeout(1500);
   const s = await page.evaluate(() => ({ stages: window.__scav.stages, active: window.__scav.active }));
   check(s.stages.cablePilgrimage === "complete", "delivering the DIN cable completes the Sacred Cable Pilgrimage");
-  check(s.stages.dumpsterDiplomacy === "find" && s.active === "stumpProphecy", "it unlocks the next errands and selects one");
+  check(s.stages.stumpProphecy === "find" && s.stages.dumpsterDiplomacy === "locked" && s.active === "stumpProphecy", "it unlocks the stump errand next, and only that");
   await page.screenshot({ path: "shots/e2e-deliver.png" });
   await page.close();
 }
 {
-  // Errand 3: Gary blocks the Speak & Spell, gets lured down the lane, and loses the race back
-  const page = await open("at=25.1,0,14.05&face=180&skip=cablePilgrimage&zoom=game");
+  // Dumpster Duel, won: Gary goes in the bin, the Speak & Spell goes in the satchel
+  const page = await open("at=25.1,0,14.05&face=180&skip=cablePilgrimage,stumpProphecy&zoom=game");
   await page.waitForTimeout(600);
   await page.keyboard.press("KeyE");
+  await page.waitForTimeout(700);
+  const s0 = await scav(page);
+  check(s0.challenge?.kind === "duel" && s0.gary === "tug", "E at the guarded Speak & Spell starts the Dumpster Duel");
+  await page.screenshot({ path: "shots/e2e-duel.png" });
+  await mash(page, 2.4);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: "shots/e2e-duel-won.png" });
+  const s1 = await scav(page);
+  check(!s1.challenge && s1.gary === "binned" && s1.stages.dumpsterDiplomacy === "deliver", `mashing wins the duel and bins Gary (gary ${s1.gary}, stage ${s1.stages.dumpsterDiplomacy})`);
+  await page.close();
+}
+{
+  // Dumpster Duel, lost: no mashing, Bill gets flung and the prize goes back on the heap
+  const page = await open("at=25.1,0,14.05&face=180&skip=cablePilgrimage,stumpProphecy&zoom=game");
+  await page.waitForTimeout(600);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(3600);
+  await page.screenshot({ path: "shots/e2e-duel-lost.png" });
+  const s = await scav(page);
+  check(!s.challenge && s.stages.dumpsterDiplomacy === "find" && s.pos[2] > 15.2, `losing the duel flings Bill into the lane (z ${s.pos[2].toFixed(2)}) and Gary keeps the prize`);
+  await page.close();
+}
+{
+  // the toot dash: a soup charge, a burst forward; the cloud makes Gary gag, and the prize is free
+  const page = await open("at=25.1,0,15.3&face=0&skip=cablePilgrimage,stumpProphecy&zoom=game");
+  await page.waitForTimeout(600);
+  const before = await scav(page);
+  await page.keyboard.press("Space");
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: "shots/e2e-toot.png" });
   await page.waitForTimeout(500);
-  const blocked = await page.evaluate(() => window.__scav.stages.dumpsterDiplomacy === "find");
-  const garyLine = await page.$eval(".balloon-gary", (e) => !e.hidden && e.textContent.length > 0).catch(() => false);
-  check(blocked && garyLine, "Gary blocks the Speak & Spell while he's guarding it");
-  await page.screenshot({ path: "shots/e2e-gary-block.png" });
+  const after = await scav(page);
+  check(after.gas === before.gas - 1 && after.pos[2] - before.pos[2] > 1.0, `Space spends soup and dashes him forward (${(after.pos[2] - before.pos[2]).toFixed(2)} m)`);
+  check(after.gary === "gag", `the toot cloud makes Gary gag (${after.gary})`);
+  await walkTo(page, 25.1, 13.9, { hurry: true, timeout: 5000, near: 0.3 });
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(900);
+  check((await scav(page)).stages.dumpsterDiplomacy === "deliver", "while Gary gags, E just takes the Speak & Spell");
+  await page.close();
+}
+{
+  // the rake on the path home from the dig patch
+  const page = await open("at=-3.25,0,7.3&face=0&zoom=close");
+  // world +Z is screen down-left (S+A); stop the moment the rake fires and catch the smack
+  await page.keyboard.down("KeyS"); await page.keyboard.down("KeyA");
+  const t0 = Date.now();
+  while (Date.now() - t0 < 4000 && !(await scav(page)).hits?.rake) await page.waitForTimeout(40);
+  await page.keyboard.up("KeyS"); await page.keyboard.up("KeyA");
+  await page.waitForTimeout(120);
+  await page.screenshot({ path: "shots/e2e-rake.png" });
+  const s = await scav(page);
+  check(s.hits.rake === 1, `stepping on the rake smacks him in the face (hits ${s.hits.rake}, ${s.slap})`);
+  await page.close();
+}
+{
+  // the skateboard in the lane: he rides it east, then it shoots out from under him
+  const page = await open("at=3.6,0,17.6&face=90&zoom=game");
+  await page.keyboard.down("KeyD"); await page.keyboard.down("KeyS");
+  await page.waitForTimeout(1300);
+  await page.keyboard.up("KeyD"); await page.keyboard.up("KeyS");
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: "shots/e2e-board.png" });
+  await page.waitForTimeout(2600);
+  const s = await scav(page);
+  check(s.hits.board === 1 && s.pos[0] > 7.5 && !s.ride, `stepping on the skateboard rides him down the lane until he wipes out (x ${s.pos[0].toFixed(1)})`);
+  await page.close();
+}
+{
+  // the old way still works: lure Gary down the lane and beat him back to the prize
+  const page = await open("at=25.1,0,14.05&face=180&skip=cablePilgrimage,stumpProphecy&zoom=game");
+  await page.waitForTimeout(600);
   await walkTo(page, 24.9, 16.9);
   const followed = await page.evaluate(() => window.__scav.gary);
   await walkTo(page, 12.8, 17.6, { timeout: 25000 });

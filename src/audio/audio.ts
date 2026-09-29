@@ -179,6 +179,137 @@ export class GameAudio {
     this.thunk(Math.min(18, speed * 3));
   }
 
+  /* ---------- slapstick (docs/design/comedy.md) ---------- */
+
+  /** A toot: a buzzy, flapping low tone. `size` 0..1 goes from a squeak to a trombone solo. */
+  fart(size = 0.6) {
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = this.now, dur = 0.22 + 0.7 * size;
+    const f0 = (125 - 55 * size) * this.vary(3);
+    const o = ctx.createOscillator(); o.type = "sawtooth";
+    o.frequency.setValueAtTime(f0 * 1.2, t);
+    o.frequency.linearRampToValueAtTime(f0, t + dur * 0.25);
+    o.frequency.exponentialRampToValueAtTime(f0 * 0.65, t + dur);
+    // the flap: amplitude modulation at a lip-buzz rate that slows as it runs out
+    const flap = ctx.createOscillator(); flap.type = "square";
+    flap.frequency.setValueAtTime(26 + 14 * this.rand(), t); flap.frequency.linearRampToValueAtTime(11, t + dur);
+    const depth = ctx.createGain(); depth.gain.value = 0.45;
+    const am = ctx.createGain(); am.gain.value = 0.55;
+    flap.connect(depth).connect(am.gain);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 420 + 380 * size; lp.Q.value = 4;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.9, t + 0.02);
+    g.gain.setValueAtTime(0.9, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(am).connect(lp).connect(g).connect(this.buses.sfx);
+    o.start(t); o.stop(t + dur + 0.05); flap.start(t); flap.stop(t + dur + 0.05);
+    this.noiseBurst("sfx", t, dur * 0.8, "lowpass", 380, 1, 0.25); // the air
+  }
+
+  /** A rake handle to the face, or a fist to the dumpster. */
+  thwack() {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.noiseBurst("sfx", t, 0.07, "bandpass", 2300, 1.1, 1.0);
+    this.tone("sfx", t, "triangle", 900, 180, 0.09, 0.6, 0.001);
+    this.noiseBurst("sfx", t + 0.005, 0.14, "bandpass", 360, 5, 0.6); // wood
+  }
+
+  /** A body meeting the ground. */
+  whump(k = 1) {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.tone("sfx", t, "sine", 95, 38, 0.32, 0.9 * k, 0.003);
+    this.noiseBurst("sfx", t, 0.22, "lowpass", 420, 0.8, 0.7 * k);
+  }
+
+  /** Something wet arriving from above. */
+  splat() {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.noiseBurst("sfx", t, 0.16, "lowpass", 1500, 3, 0.8);
+    this.tone("sfx", t, "sine", 700, 140, 0.12, 0.35, 0.002);
+    this.noiseBurst("sfx", t + 0.07, 0.08, "bandpass", 2600, 2, 0.25);
+  }
+
+  /** A long, proud belch. */
+  burp() {
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = this.now, dur = 0.55 + 0.3 * this.rand();
+    const o = ctx.createOscillator(); o.type = "sawtooth";
+    o.frequency.setValueAtTime(82 * this.vary(2), t); o.frequency.linearRampToValueAtTime(64, t + dur);
+    const rough = ctx.createOscillator(); rough.frequency.value = 31;
+    const rg = ctx.createGain(); rg.gain.value = 18; rough.connect(rg).connect(o.frequency);
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 520; bp.Q.value = 2.5;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1.2, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(bp).connect(g).connect(this.buses.sfx);
+    o.start(t); o.stop(t + dur + 0.05); rough.start(t); rough.stop(t + dur + 0.05);
+  }
+
+  /** Air rushing past (a dash, a gust, a man leaving the ground). */
+  whoosh(dur = 0.45) {
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = this.now;
+    const src = ctx.createBufferSource(); src.buffer = this.noise;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.4;
+    bp.frequency.setValueAtTime(350, t); bp.frequency.exponentialRampToValueAtTime(2200, t + dur * 0.45); bp.frequency.exponentialRampToValueAtTime(450, t + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.6, t + dur * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(bp).connect(g).connect(this.buses.sfx);
+    src.start(t, this.rand(), dur + 0.05);
+  }
+
+  /** A slide whistle, up (flung into the air) or down (falling over). */
+  slide(up: boolean, dur = 0.55) {
+    if (!this.ctx) return;
+    const t = this.now;
+    const o = this.tone("sfx", t, "sine", up ? 420 : 1500, up ? 1600 : 380, dur, 0.28, 0.02);
+    const lfo = this.ctx.createOscillator(); lfo.frequency.value = 6;
+    const lg = this.ctx.createGain(); lg.gain.value = 18; lfo.connect(lg).connect(o.frequency); lfo.start(t); lfo.stop(t + dur + 0.05);
+  }
+
+  /** Steel: a dumpster lid, a man inside a dumpster. */
+  clang() {
+    if (!this.ctx) return;
+    const t = this.now;
+    for (const [f, g] of [[311, 0.5], [737, 0.35], [1187, 0.28], [1790, 0.2], [2630, 0.12]] as const) this.tone("sfx", t, "sine", f * this.vary(0.5), f, 0.9, g, 0.001);
+    this.noiseBurst("sfx", t, 0.05, "highpass", 3000, 0.7, 0.8);
+  }
+
+  /** A spring-loaded boing (rake handles, skateboards, dignity). */
+  boing() {
+    if (!this.ctx) return;
+    const t = this.now;
+    const o = this.tone("sfx", t, "triangle", 190, 150, 0.6, 0.35, 0.003);
+    const lfo = this.ctx.createOscillator(); lfo.frequency.setValueAtTime(18, t); lfo.frequency.linearRampToValueAtTime(7, t + 0.6);
+    const lg = this.ctx.createGain(); lg.gain.setValueAtTime(90, t); lg.gain.exponentialRampToValueAtTime(5, t + 0.6);
+    lfo.connect(lg).connect(o.frequency); lfo.start(t); lfo.stop(t + 0.65);
+  }
+
+  /** One effortful "hnnf" per mash in a tug-of-war. */
+  grunt(pitch = 1) {
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = this.now, dur = 0.14;
+    const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(125 * pitch * this.vary(2), t); o.frequency.exponentialRampToValueAtTime(90 * pitch, t + dur);
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 640; bp.Q.value = 3;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.7, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(bp).connect(g).connect(this.buses.voice); o.start(t); o.stop(t + dur + 0.03);
+  }
+
+  /** Something giving way: a stump out of the ground, a prize out of a fist. */
+  pop() {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.tone("sfx", t, "sine", 500, 1400, 0.08, 0.6, 0.002);
+    this.noiseBurst("sfx", t, 0.3, "lowpass", 700, 0.8, 0.5);
+  }
+
+  /** The victory sting after a challenge: a trombone-ish "ta-daa". Or a sad one. */
+  sting(won: boolean) {
+    if (!this.ctx) return;
+    const t = this.now;
+    const notes = won ? [62, 69, 74] : [67, 66, 65, 62];
+    notes.forEach((n, i) => this.tone("sfx", t + i * (won ? 0.12 : 0.28), "sawtooth", NOTE(n - 12), NOTE(n - 12) * (won ? 1 : 0.97), won && i === 2 ? 0.7 : 0.3, 0.14, 0.02));
+  }
+
   /**
    * Gibberish voice (Animalese-style): one formant-filtered pulse grain per syllable,
    * seeded from the line so the same line always sounds the same.

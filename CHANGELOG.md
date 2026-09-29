@@ -2,6 +2,22 @@
 
 All notable prototype milestones for The Scavenger's Chronicles are tracked here.
 
+## 0.5.0 - Slapstick (in progress)
+
+- Set the comedy direction (`docs/design/comedy.md`): an easy, guided game with a silly action challenge at every key plot beat, and a gag at least every 10–15 seconds.
+- The errands now run in a straight line: cable, then stump, then Speak & Spell.
+- Added the toot dash on `Space`: three charges of soup that refill over time, a green cloud and sound-effect lettering. The cloud makes Gary gag, which leaves the Speak & Spell unguarded, and knocks out the raccoon.
+- Added the Stump Wrestle: the stump is rooted, and mashing `E` pops it free and puts Bill on his backside.
+- Added the Dumpster Duel: grabbing the guarded Speak & Spell starts a tug-of-war with Gary. Win and Gary goes head-first into the dumpster. Lose and Bill is flung into the lane, ready to try again.
+- Added traversal gags: a rake on the path home from the dig patch, and a skateboard in the laneway that Bill rides until it shoots out from under him or he meets a hydro pole.
+- Added the gag clock: when nothing funny has happened for 12 seconds, the world supplies bird poop, a comb-over gust, a nose audit, a burp or a trip.
+- Added pratfalls (stagger, faceplant, butt-flop, flung), stars around the head, pop-in comic lettering, dust and soup clouds.
+- Added synthesised slapstick sounds: toots, thwacks, whumps, splats, a burp, a slide whistle, a dumpster clang, a boing and effort grunts.
+- The narrator now nags with the v0.2 guidance lines, with escalating sarcasm, when progress stalls.
+- Shuffle and hurry are faster, with longer strides.
+- Added a soup gauge and a challenge meter to the HUD. `M` is no longer advertised; the objective always points at the one thing to do.
+- End-to-end checks for both challenges, the toot dash, the rake and the skateboard.
+
 ## 0.4.0 - The Route and the Starter Errands (in progress)
 
 - Added the Route: a laneway behind Bill's back gate with hydro poles, ivy, bins and graffiti; a municipal parking lot; the back of a corner store with its dumpster; a boxing gym; and a streetcar street with shopfronts along the north edge.

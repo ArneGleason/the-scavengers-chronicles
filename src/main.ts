@@ -5,6 +5,7 @@
  *   #at=x,y,z  face=deg  zoom=game|close  ui=0  debug=1  walk=1 (autopilot)  hurry=1
  *   carry=1 (stump in hands)  satchel=n (pre-fill)  expr=junklove|suspicious|soupgrief|elvis
  *   skip=cablePilgrimage,stumpProphecy (complete errands at load)  give=dinCable (start carrying it)
+ *   gag=poop|gust|nose|burp|trip (play an ambient gag a second in)  gas=n (soup charges)
  */
 import * as THREE from "three/webgpu";
 import { createGfx } from "./render/renderer";
@@ -13,22 +14,27 @@ import { ensureInkNormals } from "./render/ink";
 import { Physics } from "./world/physics";
 import { buildEstate, HOUSE } from "./world/estate";
 import { buildRoute, GARY_POST, PRIZE_AT } from "./world/route";
-import { occludes } from "./world/site";
+import { occludes, WALKABLE } from "./world/site";
+import { Hazards } from "./world/hazards";
 import { POINTS, INSTALL } from "./world/points";
 import { Items, type WorldItem } from "./world/items";
 import { BillRig, type Expression } from "./actors/bill/billModel";
 import { BillAnimator, ANIM } from "./actors/bill/animator";
 import { Player, FEEL } from "./actors/player";
 import { Gary } from "./actors/gary";
+import { Slapstick, type Fall } from "./actors/bill/slapstick";
+import { Fx } from "./fx/fx";
 import { Input } from "./core/input";
 import { FixedLoop } from "./core/loop";
-import { clamp, damp, rng, DEG } from "./core/math";
+import { clamp, damp, dampAngle, rng, DEG } from "./core/math";
 import { newInventory, pickUp, drop as dropItem, carriedMass } from "./game/inventory";
 import { pickTarget } from "./game/interact";
 import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cycleActive, allDone, type MissionEvent } from "./game/missions";
-import { isGuarded, type GaryMode } from "./game/gary";
+import { isGuarded, gagGary, type GaryMode } from "./game/gary";
+import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL } from "./game/challenge";
+import { GagDirector } from "./game/gags";
 import { ITEMS, QUIPS, type ItemId, type Surface } from "./content/items";
-import { MISSIONS, MISSION_QUIPS, GARY_SAYS, type MissionId, type PointId } from "./content/missions";
+import { MISSIONS, MISSION_QUIPS, GARY_SAYS, BILL_GAGS, type MissionId, type PointId } from "./content/missions";
 import { LIGHTING } from "./content/palette";
 import { GameAudio } from "./audio/audio";
 import { Hud } from "./ui/hud";
@@ -65,7 +71,10 @@ async function boot() {
   for (const s of [...estate.itemSpawns, ...route.itemSpawns]) items.spawn(s.id, s.at);
   for (const j of [...estate.junkSpawns, ...route.junkSpawns]) items.spawnJunk(j.kind, j.at);
   const gary = new Gary(scene, phys, GARY_POST);
+  const hazards = new Hazards(scene);
   ensureInkNormals(scene);
+  const fx = new Fx(scene);
+  const slap = new Slapstick();
   // loose decor tagged by the floor it belongs to (not part of the merged builder groups)
   const decor: { o: THREE.Object3D; tag: string }[] = [];
   scene.traverse((o) => {
@@ -125,6 +134,17 @@ async function boot() {
     items.beginPickup(it, "satchel");
   }
   hud.setInventory(inv);
+
+  // the stump starts rooted in the dig patch: E starts the Stump Wrestle instead of a pickup
+  const stump = itemOf("personalityStump");
+  const STUMP_ROOT = new THREE.Vector3(-3.0, 0.035, 10.5);
+  let stumpRoot: ReturnType<Physics["box"]> | null = null;
+  if (stump.state === "world") {
+    items.hold(stump);
+    stump.obj.position.copy(STUMP_ROOT);
+    stump.obj.rotation.set(0.08, 0.4, -0.06);
+    stumpRoot = phys.box([-3.2, 0, 10.3], [-2.8, 0.2, 10.7]);
+  }
 
   // ---------- missions ----------
   function refreshObjective() {
@@ -188,11 +208,11 @@ async function boot() {
 
   function tryPickup(it: WorldItem) {
     if (it.id === "speakAndSpell" && isGuarded(gary.brain, PRIZE_AT)) {
-      audio.refuse();
-      gary.block();
-      anim.flash("suspicious", 1.8, now());
-      garySay(quip(GARY_SAYS.block));
-      hud.narrate(quip(MISSION_QUIPS.rummagerBlock), 5, now());
+      startChallenge("duel");
+      return;
+    }
+    if (it === stump && stumpRoot) {
+      startChallenge("stump");
       return;
     }
     const r = pickUp(inv, it.id);
@@ -244,6 +264,327 @@ async function boot() {
     hud.setInventory(inv);
   }
 
+  // ---------- slapstick (docs/design/comedy.md) ----------
+  const gags = new GagDirector<AmbientGag>(12);
+  const timers: { at: number; fn: () => void }[] = [];
+  const later = (sec: number, fn: () => void) => timers.push({ at: now() + sec, fn });
+  const _a = new THREE.Vector3(), _b = new THREE.Vector3();
+  const headAt = (out = new THREE.Vector3()) => bill.head.getWorldPosition(out);
+  const above = (dy: number) => headAt(_a).setY(_a.y + dy).clone();
+  const billSay = (pool: readonly string[], sec = 2.4) => {
+    const line = quip(pool);
+    hud.say(line, sec, now());
+    audio.speak(line);
+  };
+
+  /** A pratfall: pose, lock, sound, lettering. */
+  function fall(kind: Fall, then: Fall | null = null) {
+    slap.start(kind, then);
+    player.stun(Slapstick.lockFor(kind));
+  }
+
+  /** Stars and a THWACK on Bill's head. */
+  function bonk(word: string, seconds = 2) {
+    audio.thwack();
+    loop.hitStop(110);
+    cam.zoomPunch(0.08);
+    fx.letter(word, above(0.35), "#f7d547", 1.0, 0.9);
+    fx.daze(() => headAt(_b).setY(_b.y + 0.2), seconds, now());
+    anim.flash("soupgrief", seconds, now());
+  }
+
+  // the toot dash: three charges of soup, one back every five seconds
+  const GAS = { max: 3, refill: 5, speed: 7.2, time: 0.42 };
+  let gas = Number(hash.get("gas") ?? GAS.max), gasFill = 0;
+  const clouds: { at: THREE.Vector3; until: number }[] = [];
+  let firstToot = true;
+  function toot() {
+    const t = now(), f = player.facing, fw = { x: Math.sin(f), z: Math.cos(f) };
+    const butt = new THREE.Vector3(player.pos.x - fw.x * 0.3, player.pos.y + 0.55, player.pos.z - fw.z * 0.3);
+    if (gas < 1) {
+      audio.fart(0.04);
+      fx.puff(butt, "#c9d68a", 2, { spread: 0.1, up: 0.2, size: 0.18, life: 0.7 });
+      fx.letter("pft.", butt.clone().setY(butt.y + 0.5), "#c9d68a", 0.5, 0.6);
+      if (pick() < 0.5) billSay(BILL_GAGS.noGas);
+      return;
+    }
+    gas--;
+    const k = 1 - 0.4 * player.heavy;
+    player.force(fw.x * GAS.speed * k, fw.z * GAS.speed * k, GAS.time, 0.65);
+    audio.fart(0.45 + 0.55 * pick());
+    audio.whoosh(0.4);
+    fx.puff(butt, "#a9c25a", 8, { spread: 0.3, up: 0.35, push: new THREE.Vector3(-fw.x * 1.4, 0, -fw.z * 1.4), size: 0.5, life: 1.8, grow: 2.2 });
+    fx.letter(quip(["PFFRRT!", "BRAAAP!", "THPPPT!", "PFFT!", "BRRRT!"]), butt.clone().setY(butt.y + 0.8), "#c3dd5a", 0.95, 0.9);
+    anim.flash("junklove", 0.9, t);
+    anim.bump(0.9);
+    cam.zoomPunch(0.035);
+    clouds.push({ at: butt, until: t + 2.4 });
+    gags.mark(t, "burp");
+    if (firstToot) {
+      firstToot = false;
+      hud.narrate("Soup-powered locomotion. Science would be interested, if science could be convinced to come closer.", 5, t);
+    }
+  }
+
+  // the rake and the skateboard
+  let ride: { heading: number; t: number; speed: number } | null = null;
+  const hits = { rake: 0, board: 0 };
+  function rakeHit() {
+    hits.rake++;
+    later(0.08, () => {
+      bonk("THWACK!", 2.2);
+      audio.boing();
+      fall("stagger");
+      billSay(BILL_GAGS.rake);
+      gags.mark(now(), "trip");
+    });
+  }
+  function startRide() {
+    const t = now();
+    hits.board++;
+    ride = { heading: player.facing, t: 0, speed: Math.max(5.2, player.speed * 1.7) };
+    audio.whoosh(0.6);
+    fx.letter("WHEEE!", above(0.4), "#8fd0f0", 0.9, 1.1);
+    anim.flash("junklove", 2, t);
+    billSay(BILL_GAGS.board, 1.8);
+    gags.mark(t, "trip");
+  }
+  function stepRide(dt: number, move: { x: number; y: number }) {
+    if (!ride) return;
+    ride.t += dt;
+    // gentle steering toward the stick, in world space (see Player.step for the mapping)
+    const s = Math.sin(CAM.yaw), c = Math.cos(CAM.yaw);
+    const wx = move.x * c - move.y * s, wz = -move.x * s - move.y * c;
+    if (Math.hypot(wx, wz) > 0.2) ride.heading = dampAngle(ride.heading, Math.atan2(wx, wz), 1.6, dt);
+    const v = ride.speed * (1 - 0.18 * ride.t);
+    Object.assign(player.forced, { vx: Math.sin(ride.heading) * v, vz: Math.cos(ride.heading) * v, time: 0.1, total: 0.1, decay: 0 });
+    player.facing = ride.heading;
+  }
+  function endRide(wall: boolean) {
+    if (!ride) return;
+    const h = ride.heading, v = ride.speed;
+    ride = null;
+    Object.assign(player.forced, { time: 0 });
+    player.vel.x = player.vel.y = 0;
+    if (wall) {
+      hazards.kick(h + Math.PI, 2.5);
+      bonk("BONK!", 2.4);
+      fall("faceplant");
+      later(0.28, () => audio.whump(0.8));
+      billSay(BILL_GAGS.bonk);
+    } else {
+      // the board shoots out ahead; he goes up, and down, on his backside
+      hazards.kick(h, v * 1.1);
+      audio.slide(false, 0.45);
+      fall("buttflop");
+      later(0.18, () => {
+        audio.whump();
+        loop.hitStop(90);
+        cam.zoomPunch(0.06);
+        fx.letter("WHUMP!", above(0.1), "#f7d547", 0.9, 0.8);
+        fx.puff(player.pos.clone().setY(player.pos.y + 0.1), "#d8cdb4", 6, { spread: 0.5, up: 0.3, size: 0.35, life: 0.9 });
+      });
+      later(0.6, () => billSay(BILL_GAGS.wipeout));
+    }
+    gags.mark(now(), "trip");
+  }
+
+  // ---------- action challenges: the Stump Wrestle and the Dumpster Duel ----------
+  let challenge: { kind: "stump" | "duel"; tug: Tug; title: string; mashes: number; jolt: number } | null = null;
+  const sns = itemOf("speakAndSpell");
+  const DUMPSTER_TOP = new THREE.Vector3(26.9, 1.95, 12.9);
+  function startChallenge(kind: "stump" | "duel") {
+    if (challenge || ride) return;
+    const t = now();
+    challenge = { kind, tug: new Tug(kind === "stump" ? STUMP_WRESTLE : DUMPSTER_DUEL), title: kind === "stump" ? "STUMP WRESTLE!" : "DUMPSTER DUEL!", mashes: 0, jolt: 0 };
+    slap.start("tug");
+    player.stun(0.3);
+    player.vel.x = player.vel.y = 0;
+    audio.whoosh(0.3);
+    if (kind === "stump") {
+      billSay(BILL_GAGS.stumpStart);
+      hud.narrate("The stump has roots, opinions, and no intention of leaving. Mash E.", 4.5, t);
+    } else {
+      // Gary shuffles up to arm's length and grabs the other end
+      const dx = gary.pos.x - player.pos.x, dz = gary.pos.z - player.pos.z, d = Math.hypot(dx, dz) || 1;
+      gary.startTug({ x: player.pos.x + (dx / d) * 1.15, z: player.pos.z + (dz / d) * 1.15 });
+      items.hold(sns);
+      billSay(BILL_GAGS.duelStart, 1.8);
+      later(0.5, () => garySay(quip(GARY_SAYS.tug)));
+      hud.narrate("Gary grabs the other end. It is now a matter of dumpster law, and dumpster law is mashing E.", 4.5, t);
+    }
+    gags.mark(t);
+  }
+
+  function stepChallenge(dt: number) {
+    if (!challenge) return;
+    const c = challenge, t = now();
+    player.stun(0.2);
+    // face what he's pulling on
+    const face = c.kind === "stump" ? STUMP_ROOT : gary.pos;
+    player.facing = dampAngle(player.facing, Math.atan2(face.x - player.pos.x, face.z - player.pos.z), 10, dt);
+    if (input.consume("interact")) {
+      c.tug.mash();
+      c.mashes++;
+      audio.grunt(c.kind === "stump" ? 1 : 1.08);
+      anim.bump(-0.35);
+      cam.zoomPunch(0.008);
+      if (c.kind === "stump") fx.puff(STUMP_ROOT.clone().setY(0.05), "#8a6446", 2, { spread: 0.35, up: 0.9, size: 0.2, life: 0.7 });
+      if (c.mashes % 4 === 1) fx.letter(quip(["HNNF!", "GRR!", "HUP!", "NNGH!", "HRRK!"]), above(0.45), "#fff7e3", 0.55, 0.5);
+    }
+    const state = c.tug.update(dt);
+    slap.strain = c.tug.progress;
+    c.jolt = Math.max(0, c.jolt - dt * 3);
+    if (c.tug.sinceSurge === 0) {
+      c.jolt = 1;
+      anim.bump(0.8);
+      audio.grunt(1.5);
+      fx.letter("YOINK!", gary.headWorld(_a).clone(), "#f7d547", 0.7, 0.6);
+    }
+    if (c.kind === "stump") {
+      stump.obj.position.set(STUMP_ROOT.x, STUMP_ROOT.y + 0.12 * c.tug.progress, STUMP_ROOT.z);
+      stump.obj.rotation.z = -0.06 + Math.sin(t * 40) * 0.06 * c.tug.progress;
+    } else {
+      // the prize is between their hands, drifting toward whoever is winning
+      const gh = gary.handsWorld(_a), bh = _b.set(player.pos.x + Math.sin(player.facing) * 0.45, player.pos.y + 0.95, player.pos.z + Math.cos(player.facing) * 0.45);
+      sns.obj.position.lerpVectors(gh, bh, 0.25 + 0.5 * c.tug.progress);
+      sns.obj.rotation.set(Math.sin(t * 31) * 0.15, player.facing, Math.sin(t * 23) * 0.1);
+    }
+    if (state === "won") finishChallenge(true);
+    else if (state === "lost") finishChallenge(false);
+  }
+
+  function finishChallenge(won: boolean) {
+    const c = challenge!;
+    challenge = null;
+    slap.stop();
+    bill.squash.position.set(0, 0, 0);
+    player.lockTimer = 0;
+    const t = now();
+    gags.mark(t);
+    audio.sting(won);
+    if (c.kind === "stump") {
+      // it pops free and he goes over backwards; the stump lands in his arms
+      if (stumpRoot) { phys.world.removeCollider(stumpRoot, false); stumpRoot = null; }
+      stump.obj.rotation.set(0, 0.4, 0);
+      audio.pop();
+      loop.hitStop(140);
+      cam.zoomPunch(0.09);
+      fx.puff(STUMP_ROOT.clone().setY(0.1), "#76553b", 14, { spread: 0.7, up: 2.2, size: 0.4, life: 1.3 });
+      fx.letter("SHLOOP!", STUMP_ROOT.clone().setY(1.3), "#f7d547", 1.1, 1.1);
+      fall("buttflop");
+      later(0.18, () => audio.whump());
+      tryPickup(stump);
+      if (stump.state === "world") items.settle(stump, STUMP_ROOT.clone().setY(0.4)); // his hands were full
+      return;
+    }
+    if (won) {
+      // Gary lets go all at once: he goes head-first into the dumpster, Bill onto his backside
+      gary.endTug(true, DUMPSTER_TOP);
+      audio.slide(true, 0.5);
+      fx.letter("YOINK!", above(0.3), "#f7d547", 1.0, 0.8);
+      fall("buttflop");
+      later(0.18, () => audio.whump());
+      later(0.62, () => {
+        audio.clang();
+        loop.hitStop(120);
+        cam.zoomPunch(0.07);
+        fx.letter("CLANG!", DUMPSTER_TOP.clone().setY(2.6), "#f7d547", 1.2, 1.2);
+        fx.puff(DUMPSTER_TOP.clone().setY(1.5), "#d9d2bd", 10, { spread: 0.9, up: 1.2, size: 0.4, life: 1.2 });
+        hud.narrate("Gary loses the tug-of-war and is filed, head first, under Recycling. The Speak & Spell says 'E.'", 5.5, now());
+      });
+      later(1.6, () => garySay(quip(GARY_SAYS.binned)));
+      tryPickup(sns);
+      if (sns.state === "world") items.settle(sns, PRIZE_AT.clone().setY(PRIZE_AT.y + 0.2)); // the satchel was full
+    } else {
+      // Bill loses: airborne, briefly, then the recycling
+      gary.endTug(false, DUMPSTER_TOP);
+      items.settle(sns, PRIZE_AT.clone().setY(PRIZE_AT.y + 0.2));
+      const dir = new THREE.Vector3(-0.3, 0, 1).normalize();
+      player.facing = Math.atan2(-dir.x, -dir.z);
+      player.force(dir.x * 4.6, dir.z * 4.6, 0.75, 0.2);
+      fall("flung", "buttflop");
+      audio.slide(true, 0.6);
+      fx.letter("YOINK!", gary.headWorld(_a).clone(), "#f7d547", 1.0, 0.8);
+      later(0.75, () => {
+        audio.whump();
+        audio.rattle(4);
+        loop.hitStop(100);
+        cam.zoomPunch(0.07);
+        fx.letter("CRUNCH!", player.pos.clone().setY(player.pos.y + 1.4), "#f7d547", 1.0, 0.9);
+        fx.puff(player.pos.clone().setY(player.pos.y + 0.2), "#7fa7d9", 8, { spread: 0.7, up: 0.8, size: 0.35, life: 1 });
+      });
+      later(0.5, () => garySay(quip(GARY_SAYS.won)));
+      later(1.9, () => billSay(BILL_GAGS.duelLost));
+      hud.narrate("Bill loses the tug-of-war and is briefly airborne, which is more cardio than he's done since 1991. Mash harder, or let Gary smell the soup.", 6, t);
+    }
+  }
+
+  // ---------- ambient gags: the gag clock fills quiet stretches ----------
+  type AmbientGag = "poop" | "gust" | "nose" | "burp" | "trip";
+  let splatUntil = 0, gustT = -1;
+  function playGag(g: AmbientGag) {
+    const t = now();
+    switch (g) {
+      case "poop":
+        later(0.5, () => {
+          bill.setSplat(true);
+          splatUntil = now() + 14;
+          audio.splat();
+          fx.letter("SPLAT!", above(0.5), "#ffffff", 0.8, 0.8);
+          fx.puff(above(0.15), "#ffffff", 3, { spread: 0.15, up: 0.3, size: 0.18, life: 0.5 });
+          anim.flash("suspicious", 2.5, now());
+          later(0.4, () => billSay(BILL_GAGS.poop));
+          hud.narrate("A pigeon files a review of Bill's hair.", 4, now());
+        });
+        fx.letter("coo.", above(2.2), "#dfe6ea", 0.45, 0.7);
+        break;
+      case "gust": {
+        gustT = 0;
+        audio.whoosh(1.4);
+        const w = new THREE.Vector3(1, 0, -0.4).normalize();
+        for (let i = 0; i < 4; i++) later(i * 0.25, () => fx.puff(player.pos.clone().add(new THREE.Vector3(-2.2, 0.3 + pick(), (pick() - 0.5) * 2)), "#e8e0c8", 2, { spread: 0.3, up: 0.1, push: w.clone().multiplyScalar(5), size: 0.22, life: 1 }));
+        player.force(w.x * 1.6, w.z * 1.6, 0.5, 1);
+        later(0.3, () => billSay(BILL_GAGS.gust));
+        hud.narrate("A gust exposes the comb-over's load-bearing structure.", 4, t);
+        break;
+      }
+      case "nose":
+        anim.pickNose(t);
+        later(1.7, () => {
+          audio.pop();
+          fx.letter("FWIP!", above(0.3), "#c3dd5a", 0.5, 0.6);
+          billSay(BILL_GAGS.nose, 1.8);
+        });
+        break;
+      case "burp": {
+        audio.burp();
+        const m = above(-0.1);
+        fx.puff(m, "#c3dd5a", 3, { spread: 0.15, up: 0.3, push: new THREE.Vector3(Math.sin(player.facing), 0, Math.cos(player.facing)).multiplyScalar(0.8), size: 0.25, life: 1.1 });
+        fx.letter("BRRRAAP!", above(0.4), "#c3dd5a", 0.8, 1);
+        later(0.8, () => billSay(BILL_GAGS.burp));
+        break;
+      }
+      case "trip":
+        audio.slide(false, 0.35);
+        fall("faceplant");
+        later(0.28, () => {
+          audio.whump(0.8);
+          loop.hitStop(90);
+          cam.zoomPunch(0.05);
+          fx.letter("OOF!", above(-0.6), "#f7d547", 0.8, 0.8);
+          fx.puff(player.pos.clone().setY(player.pos.y + 0.1), "#d8cdb4", 5, { spread: 0.6, up: 0.3, size: 0.3, life: 0.8 });
+        });
+        later(1.4, () => billSay(BILL_GAGS.trip));
+        break;
+    }
+  }
+  const forcedGag = hash.get("gag") as AmbientGag | null;
+
+
+  // the raccoon, knocked out cold by soup
+  let raccoonKO = 0;
+
   // ---------- simulation ----------
   let autoT = 0;
   let lastSpeed = 0;
@@ -258,9 +599,62 @@ async function boot() {
       analog = true;
     }
     if (Math.hypot(move.x, move.y) > 0.1) hud.hideHelp();
+    const t0 = now();
+    for (let i = timers.length - 1; i >= 0; i--) if (t0 >= timers[i].at) { const f = timers[i].fn; timers.splice(i, 1); f(); }
     player.heavy = damp(player.heavy, inv.hands ? 1 : 0, 10, dt);
     player.loadFactor = 1 - 0.12 * clamp(inv.satchel.reduce((m, id) => m + ITEMS[id].mass, 0) / 6, 0, 1);
+    stepChallenge(dt);
+    stepRide(dt, move);
     player.step(dt, move, analog, hurry, CAM.yaw);
+    if (ride && ride.t > 0.15 && player.moveRatio < 0.45) endRide(true);
+    else if (ride && ride.t > 2.3) endRide(false);
+    else if (ride) hazards.ride(player.pos, ride.heading);
+
+    // soup refills; the toot dash; clouds that gag Gary and floor raccoons
+    if (gas < GAS.max) { gasFill += dt / GAS.refill; if (gasFill >= 1) { gas++; gasFill = 0; } } else gasFill = 0;
+    const busy = !!challenge || !!ride || player.lockTimer > 0;
+    if (input.consume("toot") && !busy) toot();
+    for (let i = clouds.length - 1; i >= 0; i--) {
+      const c = clouds[i];
+      if (t0 > c.until) { clouds.splice(i, 1); continue; }
+      const gm = gary.brain.mode;
+      if (gm !== "binned" && gm !== "tug" && gm !== "gag" && gary.rig.root.visible && Math.hypot(gary.pos.x - c.at.x, gary.pos.z - c.at.z) < 3.4) {
+        gagGary(gary.brain, 4.5);
+        audio.grunt(1.4);
+        fx.letter("HURK!", gary.headWorld(_a).clone(), "#c3dd5a", 0.9, 0.9);
+        garySay(quip(GARY_SAYS.gag), t0);
+        hud.narrate("Gary inhales the soup cloud and reconsiders his relationship with air. The Speak & Spell is unguarded.", 5, t0);
+        gags.mark(t0);
+      }
+      const r = route.raccoon;
+      if (raccoonKO <= 0 && r.visible && Math.hypot(r.position.x - c.at.x, r.position.z - c.at.z) < 3.4) {
+        raccoonKO = 7;
+        audio.chitter();
+        fx.letter("x_x", r.position.clone().setY(r.position.y + 0.7), "#ffffff", 0.6, 1.2);
+        fx.daze(() => route.raccoon.position.clone().setY(route.raccoon.position.y + 0.35), 6.5, t0);
+        hud.narrate("The raccoon, who has eaten from every bin on this lane, faints.", 4.5, t0);
+        gags.mark(t0);
+      }
+    }
+
+    // stepping on things
+    const hit = hazards.check(dt, { x: player.pos.x, y: player.pos.y, z: player.pos.z, facing: player.facing, speed: player.speed, busy });
+    if (hit === "rake") rakeHit();
+    else if (hit === "board") startRide();
+    hazards.update(dt, WALKABLE);
+
+    // the gag clock: if nothing funny has happened for a while, the world obliges
+    if (!busy && !player.isForced) {
+      const outside = sceneName === "outdoors" && mode === "ground";
+      const g = gags.pick(t0, [
+        { id: "poop", ok: outside && t0 > splatUntil, cooldown: 60 },
+        { id: "gust", ok: outside, cooldown: 45 },
+        { id: "nose", ok: player.speed < 0.2 && !inv.hands, cooldown: 30 },
+        { id: "burp", ok: true, cooldown: 40 },
+        { id: "trip", ok: player.speed > 1.2 && surface !== "stairs" && !inv.hands, cooldown: 50 },
+      ], pick);
+      if (g) playGag(g);
+    }
 
     // satchel rattles on sudden starts and stops
     const sp = player.speed;
@@ -289,12 +683,13 @@ async function boot() {
     target = pickTarget({ x: player.pos.x, y: player.pos.y + 0.3, z: player.pos.z, facing: player.facing }, candidates)?.id ?? null;
     delivery = deliveryHere();
 
-    if (input.consume("interact")) {
+    if (challenge || ride || player.lockTimer > 0) input.consume("interact");
+    else if (input.consume("interact")) {
       if (delivery) doDeliver(delivery);
       else if (target) tryPickup(target);
       else if (inv.hands) doDrop();
     }
-    if (input.consume("drop")) doDrop();
+    if (input.consume("drop") && !challenge && !ride) doDrop();
     if (input.consume("mission")) {
       const id = cycleActive(ms);
       if (id) hud.narrate(fill(quip(MISSION_QUIPS.missionSelected), { mission: MISSIONS[id].title, guide: objective(ms)?.guide ?? "" }), 5, now());
@@ -333,6 +728,13 @@ async function boot() {
     // the raccoon sits on the bins until Bill gets close, then legs it down the lane
     const r = route.raccoon, home = route.raccoonHome;
     const d = Math.hypot(pos.x - home.x, pos.z - home.z);
+    if (raccoonKO > 0) {
+      // out cold on the bin lid, then up and away down the lane
+      raccoonKO -= dt;
+      r.rotation.z = damp(r.rotation.z, Math.PI / 2, 14, dt);
+      if (raccoonKO <= 0) { r.rotation.z = 0; raccoonFlee = 1.8; audio.chitter(); }
+      return;
+    }
     if (raccoonFlee <= 0 && raccoonAway <= 0 && d < 2.6) {
       raccoonFlee = 1.8;
       audio.chitter();
@@ -387,13 +789,23 @@ async function boot() {
         skidding: player.skidTimer > 0,
         idleTime: player.idleTime,
         satchelCount: inv.satchel.length,
+        surfing: !!ride,
+        tugging: !!challenge,
       },
       frameDt,
       t,
     );
+    slap.apply(bill, frameDt, t);
+    if (splatUntil && t > splatUntil) { bill.setSplat(false); splatUntil = 0; }
+    if (gustT >= 0) {
+      gustT += frameDt;
+      bill.hairLift = Math.sin(Math.min(1, gustT / 2.6) * Math.PI) ** 0.5;
+      if (gustT > 2.6) { gustT = -1; bill.hairLift = 0; }
+    }
+    fx.update(frameDt, t);
     surface = estate.surfaces.at(pos, "grass");
-    for (const _ of planted) audio.footstep(surface, 1, player.hurrying);
-    audio.shuffle(player.speed, player.hurrying, surface);
+    if (!ride && !slap.state) for (const _ of planted) audio.footstep(surface, 1, player.hurrying);
+    audio.shuffle(ride || slap.state ? 0 : player.speed, player.hurrying, surface);
     gary.render(alpha, t, frameDt);
 
     bill.satchelMouth(mouth);
@@ -458,7 +870,11 @@ async function boot() {
     } else if (target) {
       cam.project(target.obj.position, tgtPx);
       const full = ITEMS[target.id].carry === "satchel" ? inv.satchel.length >= inv.capacity : !!inv.hands;
-      tgt = { x: tgtPx.x, y: tgtPx.y, label: full ? `${ITEMS[target.id].shortName}: no room` : `E  Pick up ${ITEMS[target.id].name}` };
+      const label =
+        target === stump && stumpRoot ? "E  Wrestle the stump out of the ground"
+        : target === sns && isGuarded(gary.brain, PRIZE_AT) ? "E  Fight Gary for it"
+        : full ? `${ITEMS[target.id].shortName}: no room` : `E  Pick up ${ITEMS[target.id].name}`;
+      tgt = { x: tgtPx.x, y: tgtPx.y, label };
     }
     let goal: { x: number; y: number } | null = null;
     const o = objective(ms);
@@ -468,21 +884,56 @@ async function boot() {
       else goalW.copy(POINTS[o.point].at).setY(POINTS[o.point].at.y + 0.6);
       goal = cam.project(goalW, goalPx);
     }
-    hud.update(t, { bill: headPx, gary: mode === "ground" ? garyPx : null }, tgt, goal);
+    if (challenge) tgt = null;
+    hud.update(t, { bill: headPx, gary: mode === "ground" ? garyPx : null }, tgt, challenge ? null : goal);
+    hud.setGas(gas, GAS.max, gasFill);
+    hud.setChallenge(challenge ? { title: challenge.title, progress: challenge.tug.progress, jolt: challenge.jolt, now: t } : null);
+    nudge(t, o, goal);
     fpsAvg = damp(fpsAvg, 1 / Math.max(frameDt, 1e-3), 3, frameDt);
     hud.setDebug(
       `${gfx.backend} · tier ${gfx.tier} · ${fpsAvg.toFixed(0)} fps · ${gfx.drawCalls} draws\n` +
         `speed ${player.speed.toFixed(2)} m/s ${player.hurrying ? "hurry" : "shuffle"}${player.skidTimer > 0 ? " SKID" : ""} · ${mode}${inside ? " inside" : ""} · ${surface}\n` +
-        `satchel ${inv.satchel.length}/4 ${carriedMass(inv).toFixed(1)} kg · zoom ${cam.zoomMode} · gary ${gary.brain.mode}`,
+        `satchel ${inv.satchel.length}/4 ${carriedMass(inv).toFixed(1)} kg · zoom ${cam.zoomMode} · gary ${gary.brain.mode}\n` +
+        `gags ${gags.perMinute(t)}/min · last ${gags.sinceLast(t).toFixed(0)} s ago · soup ${gas}${slap.state ? " · " + slap.state : ""}`,
     );
 
     gfx.render();
     frames++;
+    if (forcedGag && frames === 90) { playGag(forcedGag); gags.mark(t, forcedGag); }
     w.__scav.frames = frames;
     w.__scav.pos = [player.pos.x, player.pos.y, player.pos.z];
     w.__scav.gary = gary.brain.mode;
     w.__scav.stages = { ...ms.stages };
     w.__scav.active = ms.active;
+    w.__scav.challenge = challenge ? { kind: challenge.kind, progress: challenge.tug.progress } : null;
+    w.__scav.slap = slap.state;
+    w.__scav.gas = gas;
+    w.__scav.ride = !!ride;
+    w.__scav.rooted = !!stumpRoot;
+    w.__scav.inv = [...inv.satchel, ...(inv.hands ? [inv.hands] : [])];
+    w.__scav.hits = { ...hits };
+  }
+
+  // ---------- guidance: the narrator nags, with escalating sarcasm, when progress stalls ----------
+  let progressKey = "", progressAt = 0, nudgeLevel = 0;
+  const NUDGE_AT = [25, 50, 80];
+  function nudge(t: number, o: ReturnType<typeof objective>, goal: { x: number; y: number } | null) {
+    const key = JSON.stringify(ms.stages) + inv.satchel.join() + (inv.hands ?? "");
+    if (key !== progressKey) { progressKey = key; progressAt = t; nudgeLevel = 0; }
+    if (!o || !goal || challenge || nudgeLevel >= 3 || t - progressAt < NUDGE_AT[nudgeLevel]) return;
+    nudgeLevel++;
+    const m = MISSIONS[o.mission], finding = ms.stages[o.mission] === "find";
+    let direction: string;
+    if (goalW.y < -1 && pos.y > -1) direction = "downstairs";
+    else if (goalW.y > -1 && pos.y < -1) direction = "upstairs";
+    else {
+      const dx = goal.x - headPx.x, dy = goal.y - headPx.y;
+      const h = Math.abs(dx) > 60 ? (dx > 0 ? "right" : "left") : "", v = Math.abs(dy) > 60 ? (dy > 0 ? "down" : "up") : "";
+      direction = v && h ? `${v} and to the ${h}` : v ? `${v} the screen` : h ? `to the ${h}` : "right here";
+    }
+    const paces = String(Math.max(1, Math.round(goalW.distanceTo(pos) / 0.75)));
+    const line = fill(quip(MISSION_QUIPS.guidance[nudgeLevel as 1 | 2 | 3]), { direction, target: `the ${finding ? m.pickupLabel : m.dropLabel}`, paces });
+    hud.narrate(line[0].toUpperCase() + line.slice(1), 6, t, true);
   }
   const _c = new THREE.Color();
 
@@ -513,13 +964,17 @@ async function boot() {
   const loop = new FixedLoop(step, render);
   let frames = 0;
   const w = window as unknown as {
-    __scav: { ready: boolean; frames: number; backend: string; pos: number[]; gary: string; stages: Record<string, string>; active: string | null };
+    __scav: {
+      ready: boolean; frames: number; backend: string; pos: number[]; gary: string; stages: Record<string, string>; active: string | null;
+      challenge?: { kind: string; progress: number } | null; slap?: string | null; gas?: number; ride?: boolean; rooted?: boolean; inv?: string[]; hits?: Record<string, number>;
+    };
   };
   w.__scav = { ready: false, frames: 0, backend: gfx.backend, pos: [0, 0, 0], gary: "guard", stages: {}, active: null };
   cam.snap(pos.copy(player.pos));
   await gfx.renderer.compileAsync(scene, cam.camera);
   document.getElementById("loading")?.remove();
   hud.narrate("The masterpiece begins, naturally, with not making music and looking for a cord.", 6, now());
+  gags.mark(now());
   w.__scav.ready = true;
   gfx.renderer.setAnimationLoop((ms) => loop.tick(ms ?? performance.now()));
   addEventListener("resize", () => gfx.resize());

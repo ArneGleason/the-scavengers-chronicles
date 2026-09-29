@@ -84,7 +84,20 @@ class GaryRig {
       lean = 0.45; armL = armR = 0.05; spreadL = 0.05; spreadR = -0.05; headDown = 0.5;
     } else if (mode === "block") {
       lean = 0.15; armL = armR = -0.3; spreadL = 1.25; spreadR = -1.25; headDown = -0.05;
+    } else if (mode === "gag") {
+      // doubled over, clutching his throat, head going side to side
+      lean = 0.85; armL = armR = -2.2; spreadL = -0.35; spreadR = 0.35; headDown = 0.3;
+      this.head.rotation.y = 0.3 * Math.sin(t * 14);
+    } else if (mode === "tug") {
+      lean = -0.3 + 0.05 * Math.sin(t * 23); armL = armR = -1.45; spreadL = -0.15; spreadR = 0.15; headDown = -0.1;
+      this.hips[0].rotation.x = 0.35; this.hips[1].rotation.x = -0.25;
+    } else if (mode === "binned") {
+      // upside down in the dumpster: only the legs are visible, kicking
+      lean = 0; armL = armR = 2.8; headDown = 0;
+      this.hips[0].rotation.x = 0.5 * Math.sin(t * 9);
+      this.hips[1].rotation.x = 0.5 * Math.sin(t * 9 + Math.PI);
     }
+    if (mode !== "gag") this.head.rotation.y = damp(this.head.rotation.y, 0, 8, dt);
     this.body.rotation.x = damp(this.body.rotation.x, lean, 8, dt);
     this.sh[0].rotation.set(damp(this.sh[0].rotation.x, armL, 10, dt), 0, damp(this.sh[0].rotation.z, -spreadL, 10, dt));
     this.sh[1].rotation.set(damp(this.sh[1].rotation.x, armR, 10, dt), 0, damp(this.sh[1].rotation.z, -spreadR, 10, dt));
@@ -109,6 +122,9 @@ export class Gary {
   private phase = 0;
   speed = 0;
   private blockUntil = 0;
+  /** Flight into the dumpster: from, to, progress 0..1. */
+  private binFlight: { from: THREE.Vector3; to: THREE.Vector3; k: number } | null = null;
+  private tugSpot = { x: 0, z: 0 };
 
   constructor(scene: THREE.Scene, private phys: Physics, post: { x: number; z: number }) {
     this.brain = newGary(post);
@@ -126,8 +142,16 @@ export class Gary {
 
   /** Fixed step: the brain picks where he wants to be; the capsule gets him there around obstacles. */
   step(dt: number, world: GaryWorld): GaryMode | null {
+    if (this.brain.mode === "binned") return null;
     this.prev.copy(this.pos);
-    const changed = stepGary(this.brain, world, dt);
+    let changed: GaryMode | null = null;
+    if (this.brain.mode === "tug") {
+      // shuffle up to arm's length of Bill and dig in
+      const dx = this.tugSpot.x - this.brain.x, dz = this.tugSpot.z - this.brain.z, d = Math.hypot(dx, dz);
+      const k = d > 1e-3 ? Math.min(1, (2.2 * dt) / d) : 0;
+      this.brain.x += dx * k;
+      this.brain.z += dz * k;
+    } else changed = stepGary(this.brain, world, dt);
     const t = this.body.translation();
     const want = { x: this.brain.x - t.x, y: -0.5 * dt, z: this.brain.z - t.z };
     this.kcc.computeColliderMovement(this.col, want);
@@ -139,7 +163,8 @@ export class Gary {
     this.pos.set(this.brain.x, t.y + mv.y - 0.78, this.brain.z);
     const dx = this.pos.x - this.prev.x, dz = this.pos.z - this.prev.z;
     this.speed = Math.hypot(dx, dz) / dt;
-    if (this.speed > 0.1) this.facing = dampAngle(this.facing, Math.atan2(dx, dz), 10, dt);
+    if (this.brain.mode === "tug") this.facing = dampAngle(this.facing, Math.atan2(world.bill.x - this.pos.x, world.bill.z - this.pos.z), 12, dt);
+    else if (this.speed > 0.1) this.facing = dampAngle(this.facing, Math.atan2(dx, dz), 10, dt);
     else {
       // face Bill when shadowing or blocking, the prize when rummaging
       const look = this.brain.mode === "follow" || this.blockUntil > 0 ? world.bill : this.brain.post;
@@ -157,12 +182,48 @@ export class Gary {
     this.blockUntil = seconds;
   }
 
+  /** Lock him into a tug-of-war over the prize, standing at `spot` (arm's length from Bill). */
+  startTug(spot: { x: number; z: number }) {
+    this.brain.mode = "tug";
+    this.brain.gag = 0;
+    this.tugSpot = { ...spot };
+    this.blockUntil = 0;
+  }
+
+  /** The tug is over: he either gloats (won) or goes head-first into the dumpster. */
+  endTug(billWon: boolean, dumpsterTop: THREE.Vector3) {
+    if (billWon) {
+      this.brain.mode = "binned";
+      this.binFlight = { from: this.pos.clone(), to: dumpsterTop.clone(), k: 0 };
+      this.phys.world.removeCollider(this.col, false); // he's out of everyone's way now
+    } else {
+      this.brain.mode = "guard";
+      this.block(1.8);
+    }
+  }
+
   render(alpha: number, t: number, dt: number) {
+    if (this.binFlight) {
+      // an arc over the rim, flipping head-first, then legs kicking above the lid
+      const f = this.binFlight;
+      f.k = Math.min(1, f.k + dt / 0.6);
+      const r = this.rig.root;
+      r.position.lerpVectors(f.from, f.to, f.k);
+      r.position.y += Math.sin(f.k * Math.PI) * 1.6;
+      r.rotation.x = Math.PI * f.k;
+      this.rig.pose(0, 0, "binned", t, dt);
+      return;
+    }
     this.rig.root.position.lerpVectors(this.prev, this.pos, clamp(alpha, 0, 1));
     const cur = this.rig.root.rotation.y;
     this.rig.root.rotation.y = cur + angleDelta(cur, this.facing) * Math.min(1, dt * 12);
     const mode: Mode = this.blockUntil > 0 ? "block" : this.brain.mode;
     this.rig.pose(this.speed, this.phase, mode, t, dt);
+  }
+
+  /** World position of his hands, roughly (for the thing he's tugging on). */
+  handsWorld(out: THREE.Vector3) {
+    return out.set(this.pos.x + Math.sin(this.facing) * 0.45, this.pos.y + 0.95, this.pos.z + Math.cos(this.facing) * 0.45);
   }
 
   /** World position of his head (for his speech balloon). */

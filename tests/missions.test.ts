@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cycleActive, allDone } from "../src/game/missions";
-import { newGary, stepGary, isGuarded, GARY } from "../src/game/gary";
+import { newGary, stepGary, isGuarded, gagGary, GARY } from "../src/game/gary";
+import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL } from "../src/game/challenge";
+import { GagDirector } from "../src/game/gags";
 
 describe("mission chain", () => {
   it("starts on the cable pilgrimage with only that errand open", () => {
@@ -18,8 +20,9 @@ describe("mission chain", () => {
     expect(deliverable(s, "shelfZone", ["dinCable"])).toBeNull();
     expect(deliverable(s, "synthAltar", ["dinCable"])).toBe("cablePilgrimage");
     const ev = deliver(s, "cablePilgrimage");
-    expect(ev[0]).toEqual({ type: "completed", mission: "cablePilgrimage", unlocked: ["stumpProphecy", "dumpsterDiplomacy"] });
+    expect(ev[0]).toEqual({ type: "completed", mission: "cablePilgrimage", unlocked: ["stumpProphecy"] });
     expect(ev[1]).toEqual({ type: "selected", mission: "stumpProphecy" });
+    expect(s.stages.dumpsterDiplomacy).toBe("locked");
   });
 
   it("items picked up early still count, and dropping sends the errand back to finding", () => {
@@ -31,14 +34,14 @@ describe("mission chain", () => {
     expect(s.stages.cablePilgrimage).toBe("find");
   });
 
-  it("M cycles between open errands, and all three can be completed", () => {
+  it("runs in a straight line: cable, then stump, then Speak & Spell", () => {
     const s = newMissionState();
     onPickup(s, "dinCable");
     deliver(s, "cablePilgrimage");
-    expect(cycleActive(s)).toBe("dumpsterDiplomacy");
-    expect(cycleActive(s)).toBe("stumpProphecy");
+    expect(cycleActive(s)).toBe("stumpProphecy"); // only one errand is ever open
     onPickup(s, "personalityStump");
-    deliver(s, "stumpProphecy");
+    const ev = deliver(s, "stumpProphecy");
+    expect(ev[1]).toEqual({ type: "selected", mission: "dumpsterDiplomacy" });
     onPickup(s, "speakAndSpell");
     deliver(s, "dumpsterDiplomacy");
     expect(allDone(s)).toBe(true);
@@ -73,11 +76,11 @@ describe("Gary the Rummager", () => {
   it("drifts back slowly enough that a hurrying Bill wins the race back", () => {
     const g = newGary(post);
     g.x = GARY.leash; g.mode = "drift"; g.timer = GARY.distractedTime;
-    // Bill hurries (2.4 m/s) from just past Gary back to the prize
+    // Bill hurries (3.3 m/s) from just past Gary back to the prize
     let bill = { x: GARY.leash + 1, z: 0 };
     let t = 0;
     while (Math.hypot(bill.x - prize.x, bill.z - prize.z) > 0.8 && t < 20) {
-      bill = { x: bill.x - 2.4 / 60, z: 0 };
+      bill = { x: bill.x - 3.3 / 60, z: 0 };
       stepGary(g, { bill, decoy: null, prizeTaken: false }, 1 / 60);
       t += 1 / 60;
     }
@@ -94,5 +97,61 @@ describe("Gary the Rummager", () => {
     expect(g.mode).toBe("guard"); // back on duty during the cooldown
     run(g, { x: 30, z: 0 }, 12, brick);
     expect(g.mode).toBe("decoy"); // the brick is still humming
+  });
+});
+
+describe("Gary and the soup cloud", () => {
+  it("gags, stops guarding, then goes back to his post", () => {
+    const g = newGary({ x: 0, z: 0 });
+    expect(gagGary(g, 3)).toBe(true);
+    stepGary(g, { bill: { x: 1, z: 0 }, decoy: null, prizeTaken: false }, 1 / 60);
+    expect(g.mode).toBe("gag");
+    expect(isGuarded(g, { x: 0.5, z: 0 })).toBe(false);
+    for (let i = 0; i < 4 * 60; i++) stepGary(g, { bill: { x: 20, z: 0 }, decoy: null, prizeTaken: false }, 1 / 60);
+    expect(["return", "guard"]).toContain(g.mode);
+  });
+});
+
+describe("tug-of-war challenges", () => {
+  const play = (cfg: typeof STUMP_WRESTLE, mashesPerSecond: number, seconds = 12) => {
+    const t = new Tug(cfg);
+    const dt = 1 / 60;
+    let acc = 0;
+    for (let i = 0; i < seconds * 60 && t.state === "running"; i++) {
+      acc += mashesPerSecond * dt;
+      while (acc >= 1) { t.mash(); acc -= 1; }
+      t.update(dt);
+    }
+    return t;
+  };
+
+  it("the stump comes out for anyone mashing at a relaxed 4 presses a second, in about 3 seconds", () => {
+    const t = play(STUMP_WRESTLE, 4);
+    expect(t.state).toBe("won");
+    expect(t.elapsed).toBeLessThan(4.5);
+  });
+
+  it("the ground never wins, however lazy the player", () => {
+    expect(play(STUMP_WRESTLE, 0.5, 30).state).toBe("running");
+  });
+
+  it("Gary beats a player who barely tries, and loses to one who mashes", () => {
+    expect(play(DUMPSTER_DUEL, 1).state).toBe("lost");
+    const t = play(DUMPSTER_DUEL, 5);
+    expect(t.state).toBe("won");
+    expect(t.elapsed).toBeLessThan(5);
+  });
+});
+
+describe("the gag clock", () => {
+  it("stays quiet right after a gag, then supplies one that's eligible and off cooldown", () => {
+    const d = new GagDirector<"poop" | "wind">(12);
+    d.mark(0);
+    const opts = [{ id: "poop" as const, ok: true, cooldown: 60 }, { id: "wind" as const, ok: false, cooldown: 30 }];
+    expect(d.pick(5, opts, () => 0)).toBeNull();
+    expect(d.pick(13, opts, () => 0)).toBe("poop");
+    // poop is on cooldown and wind isn't eligible
+    expect(d.pick(40, opts, () => 0)).toBeNull();
+    expect(d.perMinute(40)).toBe(2);
   });
 });

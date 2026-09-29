@@ -23,19 +23,23 @@ export class Hud {
   private debug = el("div", "debug");
   private objective = el("div", "objective");
   private marker = el("div", "marker");
+  private gas = el("div", "gas");
+  private challengeEl = el("div", "challenge");
+  private lastGas = "";
   private captionUntil = 0;
   private captionQueue: { text: string; seconds: number }[] = [];
   showDebug = false;
 
   constructor(private root: HTMLElement) {
-    root.append(this.caption, this.prompt, this.satchel, this.help, this.debug, this.objective, this.marker);
-    this.help.innerHTML = `<b>Bill's walking toy</b>
+    root.append(this.caption, this.prompt, this.satchel, this.help, this.debug, this.objective, this.marker, this.gas, this.challengeEl);
+    this.help.innerHTML = `<b>How to Bill</b>
       <span><kbd>WASD</kbd> shuffle</span><span><kbd>Shift</kbd> hurry</span>
-      <span><kbd>E</kbd> pick up</span><span><kbd>R</kbd> drop</span>
-      <span><kbd>M</kbd> next errand</span><span><kbd>Z</kbd> zoom</span>
+      <span><kbd>Space</kbd> toot dash</span><span><kbd>E</kbd> grab / mash</span>
+      <span><kbd>R</kbd> drop</span><span><kbd>Z</kbd> zoom</span>
       <span><kbd>T</kbd> tune feel</span><span><kbd>N</kbd> mute</span>`;
     this.marker.innerHTML = `<span>&#9660;</span>`;
-    for (const e of [this.caption, this.prompt, this.debug, this.objective, this.marker]) e.hidden = true;
+    this.challengeEl.innerHTML = `<b></b><div class="meter"><i></i><em></em></div><span class="mash">MASH <kbd>E</kbd>!</span>`;
+    for (const e of [this.caption, this.prompt, this.debug, this.objective, this.marker, this.challengeEl]) e.hidden = true;
   }
 
   private balloon(speaker: string) {
@@ -81,13 +85,17 @@ export class Hud {
    * @param goal where the objective marker points (screen px), or null
    */
   update(now: number, anchors: Record<string, Pt | null>, target: (Pt & { label: string }) | null, goal: Pt | null) {
+    const placed: { x: number; y: number; w: number; h: number }[] = [];
     for (const [speaker, b] of this.balloons) {
       if (now > b.until) b.el.hidden = true;
       const head = anchors[speaker];
       if (b.el.hidden || !head) { if (!head) b.el.hidden = true; continue; }
       const w = b.el.offsetWidth, h = b.el.offsetHeight;
       const x = Math.min(innerWidth - w - 12, Math.max(12, head.x - w * 0.3));
-      const y = Math.max(12, head.y - h - 26);
+      let y = Math.max(12, head.y - h - 26);
+      // two people talking at once: stack the later balloon above the earlier one
+      for (const o of placed) if (x < o.x + o.w && o.x < x + w && y < o.y + o.h + 6 && o.y < y + h) y = o.y - h - 10;
+      placed.push({ x, y, w, h });
       b.el.style.transform = `translate(${x}px, ${y}px)`;
       b.el.style.setProperty("--tail", `${Math.min(w - 24, Math.max(18, head.x - x))}px`);
     }
@@ -128,6 +136,30 @@ export class Hud {
     };
     const slots = Array.from({ length: inv.capacity }, (_, i) => slot(inv.satchel[i] ?? null, "bag")).join("");
     this.satchel.innerHTML = `<div class="label">Satchel</div><div class="slots">${slots}</div><div class="label">Hands</div>${slot(inv.hands, "hands")}`;
+  }
+
+  /** The soup gauge: one bean per toot, the next one filling up. */
+  setGas(charges: number, max: number, refill: number) {
+    const key = `${charges}|${Math.round(refill * 10)}`;
+    if (key === this.lastGas) return;
+    this.lastGas = key;
+    const beans = Array.from({ length: max }, (_, i) => {
+      const f = i < charges ? 1 : i === charges ? refill : 0;
+      return `<i class="${f >= 1 ? "full" : ""}" style="--f:${(f * 100).toFixed(0)}%"></i>`;
+    }).join("");
+    this.gas.innerHTML = `<span>Soup</span>${beans}<kbd>Space</kbd>`;
+  }
+
+  /** The action-challenge panel: a title, a tug meter (0..1, 0.5 is even), and a mash prompt. */
+  setChallenge(c: { title: string; progress: number; jolt: number; now: number } | null) {
+    this.challengeEl.hidden = !c;
+    if (!c) return;
+    this.challengeEl.querySelector("b")!.textContent = c.title;
+    (this.challengeEl.querySelector(".meter i") as HTMLElement).style.width = `${(c.progress * 100).toFixed(1)}%`;
+    (this.challengeEl.querySelector(".meter em") as HTMLElement).style.left = `${(c.progress * 100).toFixed(1)}%`;
+    const shake = c.jolt > 0 ? Math.sin(c.now * 70) * 6 * c.jolt : 0;
+    this.challengeEl.style.transform = `translateX(calc(-50% + ${shake.toFixed(1)}px))`;
+    this.challengeEl.querySelector(".mash")!.classList.toggle("big", Math.sin(c.now * 18) > 0);
   }
 
   hideHelp() {

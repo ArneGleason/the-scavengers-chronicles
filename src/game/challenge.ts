@@ -1,0 +1,63 @@
+/**
+ * Tug-of-war: the action challenge used at key plot beats (docs/design/comedy.md). The
+ * player mashes; the opponent (the ground, or Gary) pulls back steadily, with the odd surge.
+ * Tuned to be easy: enthusiastic mashing always wins. Pure, so it's unit-tested.
+ */
+export interface TugConfig {
+  /** Where the meter starts, 0..1. */
+  start: number;
+  /** Progress per mash. */
+  gain: number;
+  /** Progress lost per second to the opponent. */
+  pull: number;
+  /** Seconds between opponent surges (0 = none), and how much each surge takes. */
+  surgeEvery: number;
+  surge: number;
+  /** Losing is possible only if this is set (the ground can't win; Gary can). */
+  canLose: boolean;
+}
+
+export const STUMP_WRESTLE: TugConfig = { start: 0.05, gain: 0.1, pull: 0.12, surgeEvery: 0, surge: 0, canLose: false };
+export const DUMPSTER_DUEL: TugConfig = { start: 0.5, gain: 0.08, pull: 0.17, surgeEvery: 1.4, surge: 0.07, canLose: true };
+
+export type TugState = "running" | "won" | "lost";
+
+export class Tug {
+  progress: number;
+  state: TugState = "running";
+  elapsed = 0;
+  /** Seconds since the last opponent surge (for a little visual jolt). */
+  sinceSurge = 99;
+  private nextSurge: number;
+
+  constructor(readonly cfg: TugConfig) {
+    this.progress = cfg.start;
+    this.nextSurge = cfg.surgeEvery;
+  }
+
+  mash() {
+    if (this.state !== "running") return;
+    this.progress = Math.min(1, this.progress + this.cfg.gain);
+    if (this.progress >= 1) this.state = "won";
+  }
+
+  update(dt: number) {
+    if (this.state !== "running") return this.state;
+    this.elapsed += dt;
+    this.sinceSurge += dt;
+    this.progress -= this.cfg.pull * dt;
+    if (this.cfg.surgeEvery > 0) {
+      this.nextSurge -= dt;
+      if (this.nextSurge <= 0) {
+        this.progress -= this.cfg.surge;
+        this.nextSurge = this.cfg.surgeEvery;
+        this.sinceSurge = 0;
+      }
+    }
+    if (this.progress <= 0) {
+      this.progress = 0;
+      if (this.cfg.canLose) this.state = "lost";
+    }
+    return this.state;
+  }
+}

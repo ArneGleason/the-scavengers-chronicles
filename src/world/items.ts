@@ -233,6 +233,20 @@ export class Items {
     return arrived;
   }
 
+  /** Take an item out of physics so something else (a tug-of-war, the ground) can hold it. */
+  hold(it: WorldItem) {
+    if (it.body) { this.phys.remove(it.body); it.body = null; }
+  }
+
+  /** Put an item back in the world at a spot and let physics have it again. */
+  settle(it: WorldItem, at: THREE.Vector3) {
+    this.hold(it);
+    it.obj.position.copy(at);
+    it.obj.quaternion.identity();
+    it.state = "world";
+    it.body = this.phys.dynamicBox(it.obj, it.half, ITEMS[it.id].mass, at);
+  }
+
   /** Put an item back into the world in front of Bill. */
   drop(it: WorldItem, at: THREE.Vector3, facing: number, fromHands: boolean) {
     const ahead = fromHands ? 0.45 : 0.55;

@@ -213,10 +213,12 @@ function faceZ(x: number, y: number) {
 export interface Pose {
   py: number; px: number; roll: number; yaw: number; lean: number; troll: number; tyaw: number; breath: number; neck: number;
   hp: number; hr: number; hy: number; push: number; carry: number; curl: number; nudge: number;
+  /** 0..1 right index finger heading for the nose (the nasal audit). */
+  nose: number;
   lf: number[]; rf: number[]; lh: number[]; rh: number[]; le: number[]; re: number[];
 }
 export const basePose = (): Pose => ({
-  py: 0, px: 0, roll: 0, yaw: 0, lean: 0, troll: 0, tyaw: 0, breath: 0, neck: 0, hp: 0, hr: 0, hy: 0, push: 0, carry: 0, curl: 0, nudge: 0,
+  py: 0, px: 0, roll: 0, yaw: 0, lean: 0, troll: 0, tyaw: 0, breath: 0, neck: 0, hp: 0, hr: 0, hy: 0, push: 0, carry: 0, curl: 0, nudge: 0, nose: 0,
   lf: [0.1, 0, 0.02, 0], rf: [-0.1, 0, 0.02, 0], lh: [0.215, -0.085, 0.085], rh: [-0.215, -0.085, 0.085], le: [0.5, 0.1, -0.7], re: [-0.5, 0.1, -0.7],
 });
 export function blendPose(a: Pose, b: Pose, w: number): Pose {
@@ -279,6 +281,9 @@ export class BillRig {
   private springs: Spring[] = [];
   private ex: Ex = { ...EXPR.deadpan };
   expression: Expression = "deadpan";
+  /** 0..1: a gust of wind lifting the hair straight up. */
+  hairLift = 0;
+  private splatMesh: THREE.Mesh;
 
   constructor() {
     this.root.add(this.squash);
@@ -413,6 +418,10 @@ export class BillRig {
       mesh(hc, setTube(tubeGeo(24, 6), pts, (t) => w * (0.5 + 0.6 * Math.sin(PI * t)), 0.5, (p, _t, o) => o.copy(p).normalize()), M.hair);
     }
 
+    // bird poop, for when the gag clock needs it
+    this.splatMesh = mesh(hc, blob(0.07, 0.035, 0.06, (v) => { if (v.y < 0) v.y *= 0.3; if (v.x > 0.4) v.y -= 0.4 * (v.x - 0.4); }), toon("#f4f1e8", { ink: 0.7 }), [0.03, 0.17, 0.02], [0.2, 0.3, -0.15]);
+    this.splatMesh.visible = false;
+
     // contact shadow
     const shadow = mesh(this.root, new THREE.PlaneGeometry(0.8, 0.8), M.shadow, [0, 0.006, 0.03], [-PI / 2, 0, 0]);
     shadow.renderOrder = -1;
@@ -460,11 +469,12 @@ export class BillRig {
       if (p.carry > 0.01) _t0.lerp(this.carry.localToWorld(_c0.set(this.gripHalf * arm.s, 0.035, 0.02)), p.carry);
       const pushing = arm.s < 0 && p.push > 0.001;
       if (pushing) _t0.lerp(this.hc.localToWorld(_c0.set(-0.004, -0.045, this.G0.z + 0.125)), p.push);
+      if (arm.s < 0 && p.nose > 0.001) _t0.lerp(this.hc.localToWorld(_c0.set(0.004, -0.06, faceZ(0, -0.06) + 0.1)), p.nose);
       const pe = p[e];
       torso.localToWorld(_p0.set(...(pushing ? [lerp(pe[0], -0.6, p.push), lerp(pe[1], -0.6, p.push), lerp(pe[2], 0.3, p.push)] as [number, number, number] : [pe[0], pe[1], pe[2]] as [number, number, number])));
       ik(arm.sh, arm.el, arm.wr, _t0, _p0, -1);
       arm.hand.rotation.set(p.carry * -0.3 + (arm.s < 0 ? PUSH_BEND * p.push : 0), p.carry * 0.9 * arm.s, 0);
-      const c = arm.s < 0 ? p.curl : 0; arm.mitt.scale.set(1, 1 - 0.35 * c, 1 + 0.1 * c); arm.mitt.position.y = -0.075 + 0.025 * c;
+      const c = arm.s < 0 ? Math.max(p.curl, p.nose) : 0; arm.mitt.scale.set(1, 1 - 0.35 * c, 1 + 0.1 * c); arm.mitt.position.y = -0.075 + 0.025 * c;
     }
     // expression blend (~50 ms time constant)
     const target = EXPR[this.expression], k = 1 - Math.exp(-dt / 0.05);
@@ -502,13 +512,24 @@ export class BillRig {
     const DOWN = _down.set(0, -1, 0);
     for (const s of this.springs) {
       s.pivot.parent!.getWorldQuaternion(_pq); s.pivot.getWorldPosition(_R);
-      _X.copy(s.dir).applyQuaternion(_pq).lerp(DOWN, s.g).normalize().multiplyScalar(s.len).add(_R);
+      _X.copy(s.dir).applyQuaternion(_pq).lerp(DOWN, s.g);
+      if (this.hairLift > 0 && s.pivot !== this.bagPivot) _X.lerp(_up.set(0.15, 1, -0.2), this.hairLift);
+      _X.normalize().multiplyScalar(s.len).add(_R);
       const y = dt > 0 ? s.sod.step(dt, _X) : s.sod.reset(_X);
       const d = _D.copy(y).sub(_R).normalize().applyQuaternion(_pq.invert());
       _q.setFromUnitVectors(s.dir, d); const ang = 2 * Math.acos(clamp(Math.abs(_q.w), 0, 1));
       if (ang > s.max) _q.slerpQuaternions(_q0, _q, s.max / ang);
       s.pivot.quaternion.copy(_q);
     }
+  }
+
+  setSplat(on: boolean) {
+    this.splatMesh.visible = on;
+  }
+
+  /** World position of the top of his head (for stars and splats). */
+  crown(out: V) {
+    return this.hc.localToWorld(out.set(0, 0.2, 0));
   }
 
   /** World position of the satchel opening (where picked-up items fly to). */

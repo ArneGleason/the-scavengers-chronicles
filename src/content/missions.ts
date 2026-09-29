@@ -1,5 +1,7 @@
 /**
  * The three starter errands, ported verbatim from the v0.2 prototype (public/classic/app.js).
+ * Since the comedy direction (docs/design/comedy.md) they run in a straight line:
+ * cable, then stump, then Speak & Spell.
  * Points are named places in the world (see world/points.ts), not raw coordinates.
  */
 import type { ItemId } from "./items";
@@ -39,7 +41,7 @@ export const MISSIONS: Record<MissionId, MissionDef> = {
     completeGuide: "The cable is installed. Press M to select the next obstacle to genius.",
     pickupText: "Picked up the Obscure DIN Sync Cable. He remembers buying it in 1986 and needing it since 1987.",
     completeText: "Mission complete: the cable fits. No music happens, but the excuse architecture improves.",
-    unlocks: ["stumpProphecy", "dumpsterDiplomacy"],
+    unlocks: ["stumpProphecy"],
   },
   stumpProphecy: {
     id: "stumpProphecy",
@@ -55,7 +57,7 @@ export const MISSIONS: Record<MissionId, MissionDef> = {
     completeGuide: "The stump has arrived indoors, which history may not forgive.",
     pickupText: "Picked up the Stump With Personality. It is heavy with dirt and unearned confidence.",
     completeText: "Mission complete: the stump is now furniture-adjacent, which is legally different from garbage.",
-    unlocks: [],
+    unlocks: ["dumpsterDiplomacy"],
   },
   dumpsterDiplomacy: {
     id: "dumpsterDiplomacy",
@@ -90,6 +92,24 @@ export const MISSION_QUIPS = {
     "Gary shadows him, muttering about phonics rights and dumpster jurisdiction.",
     "Gary takes the bait because nothing clouds judgment like a red toy that spells badly.",
   ],
+  /** Escalating nags when the player dawdles (v0.2 verbatim; "{direction}" is a screen direction here). */
+  guidance: {
+    1: [
+      'Helpful nudge: go {direction} toward {target}. The Scavenger calls this "field research" because "wandering" sounds taxable.',
+      "The objective is {direction}: {target}. He has been circling it like a man testing carpet density.",
+      "Small hint, enormous implication: {target} is {direction}.",
+    ],
+    2: [
+      "Still looking? {target} remains {direction}. It has not moved; unlike his standards, it is stable.",
+      "{target} continues being {direction}, about {paces} paces away, despite his commitment to avoidance.",
+      "The guide would like to remind everyone that {target} is not a philosophical concept. It is {direction}.",
+    ],
+    3: [
+      "The help system has escalated to theatre. {target} is {direction}, roughly {paces} paces away. The game is short. Help it end.",
+      "Emergency clarity: {target}, {direction}, {paces} paces. Even the soup understands this route.",
+      "At this point the glowing marker is basically doing community service. Go {direction} to {target}.",
+    ],
+  },
   rummagerBlock: [
     'Gary the Rummager blocks the Speak & Spell: "Back off, phonics vulture." Lure him away, then sprint back.',
     'Gary plants himself in front of the Speak & Spell: "Find your own talking rectangle." Draw him away.',
@@ -104,4 +124,25 @@ export const GARY_SAYS = {
   block: ["Back off, phonics vulture.", "Find your own talking rectangle."],
   decoy: ["Is that... humming? Is that for me?", "Finders keepers. Brick edition."],
   lost: ["My alphabet!", "That was spelled M-I-N-E."],
+  tug: ["Mine! MINE!", "Let go of my alphabet!", "Dumpster law!"],
+  gag: ["HURK! My eyes!", "What did you EAT?", "That's a bylaw violation!"],
+  won: ["Phonics stays with Gary.", "Educational plastic: one. You: zero."],
+  binned: ["I meant to do this.", "It's warmer in here anyway.", "Nobody look at me.", "Found a sandwich. Never mind."],
+} as const;
+
+/** Bill's lines for the slapstick layer (docs/design/comedy.md). */
+export const BILL_GAGS = {
+  rake: ["Who left a rake there? I left a rake there.", "That rake has been waiting since 1994.", "Garden... ambush."],
+  board: ["Wheels! I have wheels!", "Nobody tell my knees.", "I am the wind."],
+  wipeout: ["Nobody saw that.", "Planned dismount.", "The board and I have agreed to see other people."],
+  bonk: ["Wall.", "Who moved the fence?"],
+  poop: ["Is it raining? It is not raining.", "A review. Of my hair.", "That's good luck. Somewhere."],
+  gust: ["My architecture!", "Don't look at the scaffolding."],
+  nose: ["Just auditing.", "Quality control."],
+  burp: ["Soup's still with me.", "Pardon the bouillon."],
+  trip: ["Nobody saw that.", "Gravity's been extra lately.", "The ground started it."],
+  noGas: ["Running on fumes. Literally.", "The soup is still processing."],
+  stumpStart: ["Come to Bill.", "You have presence. You also have roots."],
+  duelStart: ["Unhand my phonics!", "It's for the masterpiece!"],
+  duelLost: ["I let him have that one.", "He's been training."],
 } as const;

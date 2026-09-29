@@ -25,6 +25,12 @@ const SHOTS = [
   ["route-dumpster", "at=24.5,0,17.4&face=0&skip=cablePilgrimage"],
   ["route-lot", "at=17.5,0,6&face=90"],
   ["route-street", "at=-2,0,-5.8&face=90"],
+  // slapstick: [name, hash, viewport, extra wait in ms]
+  ["gag-poop", "at=0.5,0,16.8&face=200&zoom=close&gag=poop", null, 1900],
+  ["gag-gust", "at=0.5,0,12&face=200&zoom=close&gag=gust", null, 2100],
+  ["gag-nose", "at=2.4,0,2.2&face=200&zoom=close&gag=nose", null, 1900],
+  ["gag-burp", "at=2.4,0,2.2&face=200&zoom=close&gag=burp", null, 1500],
+  ["stump-rooted", "at=-3.0,0,9.5&face=0&zoom=close"],
 ];
 
 const filter = process.argv[2];
@@ -38,7 +44,7 @@ const browser = await chromium.launch({
   args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 });
 let failed = 0;
-for (const [name, hash, viewport] of SHOTS) {
+for (const [name, hash, viewport, wait] of SHOTS) {
   if (filter && !name.includes(filter)) continue;
   const page = await browser.newPage({ viewport: viewport ?? { width: 1280, height: 800 }, deviceScaleFactor: 1 });
   const errors = [];
@@ -48,6 +54,7 @@ for (const [name, hash, viewport] of SHOTS) {
     const crashed = new Promise((_, reject) => page.on("pageerror", (e) => reject(e)));
     await page.goto(`${base}${process.env.Q ?? ""}#${hash}`);
     await Promise.race([page.waitForFunction(() => window.__scav?.ready && window.__scav.frames > 90, null, { timeout: 90000 }), crashed]);
+    if (wait) await page.waitForTimeout(wait);
     await page.screenshot({ path: `shots/${name}.png` });
     const backend = await page.evaluate(() => window.__scav.backend);
     console.log(`ok   ${name} (${backend})${errors.length ? `  [${errors.length} console errors]` : ""}`);

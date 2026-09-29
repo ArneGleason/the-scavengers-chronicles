@@ -26,15 +26,15 @@ export const GARY: GaryTuning = {
   noticeRadius: 5.5,
   leash: 11,
   guardRadius: 2.2,
-  followSpeed: 1.15,
-  returnSpeed: 0.45,
+  followSpeed: 1.5,
+  returnSpeed: 0.6,
   distractedTime: 4,
-  returnHurrySpeed: 0.95,
+  returnHurrySpeed: 1.25,
   decoyRadius: 9,
   decoyTime: 9,
 };
 
-export type GaryMode = "guard" | "follow" | "drift" | "return" | "decoy" | "sulk";
+export type GaryMode = "guard" | "follow" | "drift" | "return" | "decoy" | "sulk" | "gag" | "binned" | "tug";
 
 export interface GaryState {
   x: number;
@@ -44,10 +44,12 @@ export interface GaryState {
   timer: number;
   /** Seconds before a decoy can distract him again. */
   cooldown: number;
+  /** Seconds left gagging in one of Bill's clouds. */
+  gag: number;
   post: { x: number; z: number };
 }
 
-export const newGary = (post: { x: number; z: number }): GaryState => ({ x: post.x, z: post.z, mode: "guard", timer: 0, cooldown: 0, post: { ...post } });
+export const newGary = (post: { x: number; z: number }): GaryState => ({ x: post.x, z: post.z, mode: "guard", timer: 0, cooldown: 0, gag: 0, post: { ...post } });
 
 export interface GaryWorld {
   bill: { x: number; z: number };
@@ -71,6 +73,13 @@ function moveToward(g: GaryState, t: { x: number; z: number }, speed: number, dt
 /** Advance Gary. Returns the mode he just entered (for barks), or null. */
 export function stepGary(g: GaryState, w: GaryWorld, dt: number, t: GaryTuning = GARY): GaryMode | null {
   const prev = g.mode;
+  // a man in the dumpster, or locked in a tug-of-war, is not making decisions
+  if (g.mode === "binned" || g.mode === "tug") return null;
+  if (g.gag > 0) {
+    g.gag -= dt;
+    g.mode = g.gag > 0 ? "gag" : "return";
+    return g.mode !== prev ? g.mode : null;
+  }
   const billFromPost = dist(w.bill, g.post);
   g.cooldown = Math.max(0, g.cooldown - dt);
   if (w.prizeTaken) {
@@ -115,6 +124,13 @@ export function stepGary(g: GaryState, w: GaryWorld, dt: number, t: GaryTuning =
   return g.mode !== prev ? g.mode : null;
 }
 
+/** Bill's cloud reached him: he's busy gagging for a while. */
+export function gagGary(g: GaryState, seconds: number) {
+  if (g.mode === "binned" || g.mode === "sulk") return false;
+  g.gag = Math.max(g.gag, seconds);
+  return true;
+}
+
 /** Is the prize (at `prize`) guarded right now? */
 export const isGuarded = (g: GaryState, prize: { x: number; z: number }, t: GaryTuning = GARY) =>
-  g.mode !== "sulk" && dist(g, prize) < t.guardRadius;
+  !["sulk", "gag", "binned"].includes(g.mode) && g.gag <= 0 && dist(g, prize) < t.guardRadius;

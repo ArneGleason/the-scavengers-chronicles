@@ -5,11 +5,12 @@ import { DEG, clamp, damp, dampAngle, angleDelta, moveTowards2 } from "../core/m
 
 /** Tunable feel parameters (docs/design/technical-design.md, "Bill's controller"). */
 export const FEEL = {
-  shuffleSpeed: 1.3,
-  hurrySpeed: 2.4,
+  // brisker than the walking toy: getting around shouldn't be the boring part (docs/design/comedy.md)
+  shuffleSpeed: 1.75,
+  hurrySpeed: 3.3,
   heavyFactor: 0.8,
-  accelTime: 0.28,
-  hurryAccelTime: 0.4,
+  accelTime: 0.2,
+  hurryAccelTime: 0.3,
   stopTime: 0.18,
   hurryStopTime: 0.4,
   /** Seconds to mostly finish turning toward the move direction. */
@@ -54,6 +55,12 @@ export class Player {
   idleTime = 0;
   /** Multiplier from carried mass (satchel full of junk slows him a little). */
   loadFactor = 1;
+  /** Seconds of ignored input (dazed, flat on his face, mid-challenge). */
+  lockTimer = 0;
+  /** A velocity imposed from outside (toot dash, skateboard, being flung), decaying linearly. */
+  readonly forced = { vx: 0, vz: 0, time: 0, total: 0, decay: 0 };
+  /** Actual horizontal movement / intended, last step (well below 1 = he hit something). */
+  moveRatio = 1;
   onSkid: ((speed: number) => void) | null = null;
   onLand: ((speed: number) => void) | null = null;
 
@@ -90,9 +97,29 @@ export class Player {
    * One fixed step. `move` is the screen-space input (x right, y up), `camYaw` the camera yaw.
    * `pull` is an extra world-space input vector (the soup pull, later).
    */
+  /** Ignore input for a while (he's busy being dazed). */
+  stun(seconds: number) {
+    this.lockTimer = Math.max(this.lockTimer, seconds);
+  }
+
+  /** Impose a velocity for `seconds`; `decay` 0..1 is how much of it bleeds away by the end. */
+  force(vx: number, vz: number, seconds: number, decay = 0) {
+    Object.assign(this.forced, { vx, vz, time: seconds, total: seconds, decay });
+  }
+
+  get isForced() {
+    return this.forced.time > 0;
+  }
+
   step(dt: number, move: { x: number; y: number }, analog: boolean, hurry: boolean, camYaw: number, pull?: { x: number; z: number }) {
     this.prevPos.copy(this.pos);
     this.prevFacing = this.facing;
+    if (this.lockTimer > 0 || this.forced.time > 0) {
+      this.lockTimer = Math.max(0, this.lockTimer - dt);
+      move = { x: 0, y: 0 };
+      hurry = false;
+      pull = undefined;
+    }
 
     // keyboard input gets smoothed so diagonal changes blend; analog sticks are already smooth
     if (analog) {
@@ -144,9 +171,16 @@ export class Player {
       moveTowards2(this.vel, tx, tz, rate * dt);
     }
 
-    // turn toward the direction of travel (or of input when starting)
+    if (this.forced.time > 0) {
+      const k = 1 - this.forced.decay * (1 - this.forced.time / this.forced.total);
+      this.vel.x = this.forced.vx * k;
+      this.vel.y = this.forced.vz * k;
+      this.forced.time = Math.max(0, this.forced.time - dt);
+    }
+
+    // turn toward the direction of travel (or of input when starting); not while being shoved
     const aimX = mag > 0.1 ? wx : this.vel.x, aimZ = mag > 0.1 ? wz : this.vel.y;
-    if (Math.hypot(aimX, aimZ) > 0.05 && this.skidTimer <= 0) {
+    if (Math.hypot(aimX, aimZ) > 0.05 && this.skidTimer <= 0 && this.forced.time <= 0 && this.lockTimer <= 0) {
       const target = Math.atan2(aimX, aimZ);
       const lambda = 4 / (FEEL.turnTime + 0.08 * this.heavy);
       this.facing = dampAngle(this.facing, target, lambda, dt);
@@ -186,6 +220,8 @@ export class Player {
       }
     }
     this.groundNy = groundNy;
+    const want = Math.hypot(desired.x, desired.z);
+    this.moveRatio = want > 1e-4 ? Math.hypot(mv.x, mv.z) / want : 1;
     this.pos.set(t.x + mv.x, t.y + mv.y - FOOT_OFFSET, t.z + mv.z);
 
     this.idleTime = mag > 0.1 || speed > 0.1 ? 0 : this.idleTime + dt;
