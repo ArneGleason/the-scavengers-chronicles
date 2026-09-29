@@ -16,6 +16,7 @@ import { buildEstate, HOUSE } from "./world/estate";
 import { buildRoute, GARY_POST, PRIZE_AT } from "./world/route";
 import { occludes, WALKABLE } from "./world/site";
 import { Hazards } from "./world/hazards";
+import { buildProps, PaperTrain, HOARD_AT, TOASTER_AT, FRIDGE_AT, ADAPTER_BOX_AT } from "./world/props";
 import { POINTS, INSTALL } from "./world/points";
 import { Items, type WorldItem } from "./world/items";
 import { BillRig, type Expression } from "./actors/bill/billModel";
@@ -31,7 +32,7 @@ import { newInventory, pickUp, drop as dropItem, carriedMass } from "./game/inve
 import { pickTarget } from "./game/interact";
 import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cycleActive, allDone, type MissionEvent } from "./game/missions";
 import { isGuarded, gagGary, type GaryMode } from "./game/gary";
-import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL } from "./game/challenge";
+import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL, HOARD_DIVE } from "./game/challenge";
 import { GagDirector } from "./game/gags";
 import { ITEMS, QUIPS, type ItemId, type Surface } from "./content/items";
 import { MISSIONS, MISSION_QUIPS, GARY_SAYS, BILL_GAGS, type MissionId, type PointId } from "./content/missions";
@@ -72,9 +73,11 @@ async function boot() {
   for (const j of [...estate.junkSpawns, ...route.junkSpawns]) items.spawnJunk(j.kind, j.at);
   const gary = new Gary(scene, phys, GARY_POST);
   const hazards = new Hazards(scene);
+  const props = buildProps(scene, phys);
   ensureInkNormals(scene);
   const fx = new Fx(scene);
   const slap = new Slapstick();
+  const paper = new PaperTrain(scene);
   // loose decor tagged by the floor it belongs to (not part of the merged builder groups)
   const decor: { o: THREE.Object3D; tag: string }[] = [];
   scene.traverse((o) => {
@@ -144,6 +147,14 @@ async function boot() {
     stump.obj.position.copy(STUMP_ROOT);
     stump.obj.rotation.set(0.08, 0.4, -0.06);
     stumpRoot = phys.box([-3.2, 0, 10.3], [-2.8, 0.2, 10.7]);
+  }
+  // the DIN cable is somewhere inside the basement hoard: E there starts the Hoard Dive
+  const cable = itemOf("dinCable");
+  let cableBuried = false;
+  if (cable.state === "world") {
+    items.hold(cable);
+    cable.obj.position.copy(HOARD_AT).setY(HOARD_AT.y + 0.3);
+    cableBuried = true;
   }
 
   // ---------- missions ----------
@@ -390,20 +401,26 @@ async function boot() {
   }
 
   // ---------- action challenges: the Stump Wrestle and the Dumpster Duel ----------
-  let challenge: { kind: "stump" | "duel"; tug: Tug; title: string; mashes: number; jolt: number } | null = null;
+  type ChallengeKind = "stump" | "duel" | "hoard";
+  const TITLES: Record<ChallengeKind, string> = { stump: "STUMP WRESTLE!", duel: "DUMPSTER DUEL!", hoard: "HOARD DIVE!" };
+  let challenge: { kind: ChallengeKind; tug: Tug; title: string; mashes: number; jolt: number; surges: number } | null = null;
   const sns = itemOf("speakAndSpell");
   const DUMPSTER_TOP = new THREE.Vector3(26.9, 1.95, 12.9);
-  function startChallenge(kind: "stump" | "duel") {
+  function startChallenge(kind: ChallengeKind) {
     if (challenge || ride) return;
     const t = now();
-    challenge = { kind, tug: new Tug(kind === "stump" ? STUMP_WRESTLE : DUMPSTER_DUEL), title: kind === "stump" ? "STUMP WRESTLE!" : "DUMPSTER DUEL!", mashes: 0, jolt: 0 };
-    slap.start("tug");
+    const cfg = kind === "stump" ? STUMP_WRESTLE : kind === "duel" ? DUMPSTER_DUEL : HOARD_DIVE;
+    challenge = { kind, tug: new Tug(cfg), title: TITLES[kind], mashes: 0, jolt: 0, surges: 0 };
+    slap.start(kind === "hoard" ? "dig" : "tug");
     player.stun(0.3);
     player.vel.x = player.vel.y = 0;
     audio.whoosh(0.3);
     if (kind === "stump") {
       billSay(BILL_GAGS.stumpStart);
       hud.narrate("The stump has roots, opinions, and no intention of leaving. Mash E.", 4.5, t);
+    } else if (kind === "hoard") {
+      billSay(BILL_GAGS.hoardStart);
+      hud.narrate("Somewhere in the archive is the DIN sync cable. Mash E to dig. Mind the newspapers.", 4.5, t);
     } else {
       // Gary shuffles up to arm's length and grabs the other end
       const dx = gary.pos.x - player.pos.x, dz = gary.pos.z - player.pos.z, d = Math.hypot(dx, dz) || 1;
@@ -421,27 +438,44 @@ async function boot() {
     const c = challenge, t = now();
     player.stun(0.2);
     // face what he's pulling on
-    const face = c.kind === "stump" ? STUMP_ROOT : gary.pos;
+    const face = c.kind === "stump" ? STUMP_ROOT : c.kind === "hoard" ? HOARD_AT : gary.pos;
     player.facing = dampAngle(player.facing, Math.atan2(face.x - player.pos.x, face.z - player.pos.z), 10, dt);
     if (input.consume("interact")) {
       c.tug.mash();
       c.mashes++;
-      audio.grunt(c.kind === "stump" ? 1 : 1.08);
+      audio.grunt(c.kind === "duel" ? 1.08 : 1);
       anim.bump(-0.35);
       cam.zoomPunch(0.008);
       if (c.kind === "stump") fx.puff(STUMP_ROOT.clone().setY(0.05), "#8a6446", 2, { spread: 0.35, up: 0.9, size: 0.2, life: 0.7 });
-      if (c.mashes % 4 === 1) fx.letter(quip(["HNNF!", "GRR!", "HUP!", "NNGH!", "HRRK!"]), above(0.45), "#fff7e3", 0.55, 0.5);
+      if (c.kind === "hoard") {
+        // archive flies out behind him, item by useless item
+        audio.rustle();
+        fx.puff(HOARD_AT.clone().setY(HOARD_AT.y + 0.8), "#ece2c8", 2, { spread: 0.5, up: 1.6, size: 0.24, life: 0.8 });
+        if (c.mashes % 3 === 1) fx.letter(quip(BILL_GAGS.hoardFinds), HOARD_AT.clone().setY(HOARD_AT.y + 1.3 + pick() * 0.4), "#ece2c8", 0.5, 0.7);
+      } else if (c.mashes % 4 === 1) fx.letter(quip(["HNNF!", "GRR!", "HUP!", "NNGH!", "HRRK!"]), above(0.45), "#fff7e3", 0.55, 0.5);
     }
     const state = c.tug.update(dt);
     slap.strain = c.tug.progress;
     c.jolt = Math.max(0, c.jolt - dt * 3);
     if (c.tug.sinceSurge === 0) {
       c.jolt = 1;
+      c.surges++;
       anim.bump(0.8);
-      audio.grunt(1.5);
-      fx.letter("YOINK!", gary.headWorld(_a).clone(), "#f7d547", 0.7, 0.6);
+      if (c.kind === "hoard") {
+        // the newspaper avalanche: it buries him a bit
+        audio.rustle(2.5);
+        audio.whump(0.5);
+        fx.puff(above(0.2), "#ece2c8", 9, { spread: 0.7, up: -0.4, size: 0.34, life: 0.9 });
+        fx.letter("FWUMP!", above(0.6), "#ece2c8", 0.8, 0.7);
+        if (c.surges === 1) hud.narrate("The archive fights back.", 3, t);
+      } else {
+        audio.grunt(1.5);
+        fx.letter("YOINK!", gary.headWorld(_a).clone(), "#f7d547", 0.7, 0.6);
+      }
     }
-    if (c.kind === "stump") {
+    if (c.kind === "hoard") {
+      props.hoard.rotation.z = Math.sin(t * 30) * 0.025 * (0.3 + c.tug.progress);
+    } else if (c.kind === "stump") {
       stump.obj.position.set(STUMP_ROOT.x, STUMP_ROOT.y + 0.12 * c.tug.progress, STUMP_ROOT.z);
       stump.obj.rotation.z = -0.06 + Math.sin(t * 40) * 0.06 * c.tug.progress;
     } else {
@@ -463,6 +497,26 @@ async function boot() {
     const t = now();
     gags.mark(t);
     audio.sting(won);
+    if (c.kind === "hoard") {
+      // the excavation becomes a geyser of obsolete goods; the cable rides it into the satchel
+      cableBuried = false;
+      props.hoard.rotation.z = 0;
+      props.hoard.scale.set(1.08, 0.72, 1.08);
+      const top = HOARD_AT.clone().setY(HOARD_AT.y + 0.9);
+      for (let i = 0; i < 5; i++) items.spawnJunk(i % 2 ? "bucket" : "box", top.clone().add(new THREE.Vector3((pick() - 0.5) * 0.5, 0.3 + i * 0.35, (pick() - 0.5) * 0.5)), new THREE.Vector3((pick() - 0.5) * 3, 5 + pick() * 2.5, (pick() - 0.5) * 3));
+      audio.pop();
+      audio.whoosh(0.6);
+      loop.hitStop(130);
+      cam.zoomPunch(0.09);
+      fx.puff(top, "#ece2c8", 16, { spread: 0.8, up: 2.6, size: 0.36, life: 1.4 });
+      fx.letter("KA-FWOOSH!", top.clone().setY(top.y + 1.2), "#f7d547", 1.1, 1.2);
+      fall("buttflop");
+      later(0.18, () => audio.whump());
+      cable.obj.position.copy(top);
+      tryPickup(cable);
+      if (cable.state === "world") items.settle(cable, top.clone().add(new THREE.Vector3(0.9, 0, 0.9))); // the satchel was full
+      return;
+    }
     if (c.kind === "stump") {
       // it pops free and he goes over backwards; the stump lands in his arms
       if (stumpRoot) { phys.world.removeCollider(stumpRoot, false); stumpRoot = null; }
@@ -520,8 +574,146 @@ async function boot() {
     }
   }
 
+  // ---------- pokes: props that do something when Bill presses E beside them ----------
+  interface Poke { id: string; at: THREE.Vector3; reach: number; label: string; ready: () => boolean; use: () => void }
+  let poke: Poke | null = null;
+  let fridgeReady = true, toasterReady = true, adaptersReady = true;
+  const toastFlights: { m: THREE.Mesh; from: THREE.Vector3; to: THREE.Vector3; t: number; dur: number; arc: number; spin: number }[] = [];
+  const pokes: Poke[] = [
+    { id: "hoard", at: HOARD_AT, reach: 1.45, label: "E  Dive into the hoard for the DIN cable", ready: () => cableBuried, use: () => startChallenge("hoard") },
+    { id: "fridge", at: FRIDGE_AT, reach: 1.1, label: "E  Open the last properly made fridge", ready: () => fridgeReady, use: fridgeGag },
+    { id: "toaster", at: TOASTER_AT.clone().setY(0), reach: 1.0, label: "E  Make toast", ready: () => toasterReady, use: toasterGag },
+    { id: "adapters", at: ADAPTER_BOX_AT, reach: 1.2, label: "E  Rummage in the box marked ADAPTERS", ready: () => adaptersReady, use: adapterGag },
+  ];
+  function nearestPoke() {
+    let best: Poke | null = null, bd = 1e9;
+    for (const p of pokes) {
+      if (!p.ready() || Math.abs(p.at.y - player.pos.y) > 1.2) continue;
+      const d = Math.hypot(p.at.x - player.pos.x, p.at.z - player.pos.z);
+      if (d < p.reach && d < bd) { best = p; bd = d; }
+    }
+    return best ? { p: best, d: bd } : null;
+  }
+
+  /** The museum tour: the last properly made fridge, and what he archived in it. */
+  function fridgeGag() {
+    fridgeReady = false;
+    const t = now();
+    player.facing = -Math.PI / 2;
+    anim.flash("junklove", 1.4, t);
+    billSay(BILL_GAGS.fridge);
+    gags.mark(t);
+    later(1.3, () => {
+      for (let i = 0; i < 5; i++) {
+        items.spawnJunk(i % 3 === 2 ? "bucket" : "box", new THREE.Vector3(-4.9, 0.55 + i * 0.28, 4.3 + pick() * 0.45), new THREE.Vector3(3.5 + pick() * 2, 0.5 + pick() * 1.5, (pick() - 0.5) * 1.5));
+      }
+      audio.thunk(12);
+      audio.rattle(4);
+      audio.whoosh(0.5);
+      loop.hitStop(110);
+      cam.zoomPunch(0.08);
+      fx.letter("KER-CHUNK!", FRIDGE_AT.clone().setY(2.3), "#f7d547", 1.0, 1.0);
+      fx.puff(FRIDGE_AT.clone().setY(1.0), "#d9d2bd", 8, { spread: 0.5, up: 0.4, push: new THREE.Vector3(2, 0, 0), size: 0.35, life: 1 });
+      // the archive carries him across the kitchen
+      player.force(3.4, 0, 0.6, 0.5);
+      fall("buttflop");
+      later(0.2, () => audio.whump());
+      later(1.7, () => {
+        billSay(BILL_GAGS.fridgeAfter, 2.6);
+        fx.letter("SEE?", above(0.35), "#fff7e3", 0.6, 1.0);
+        hud.narrate("Bill recovers one small knob from the avalanche and holds it up as proof that the fridge was right to keep things.", 5, now());
+      });
+    });
+    later(40, () => (fridgeReady = true));
+  }
+
+  /** A 1955 toaster: nothing, nothing, he leans in to check, PAP. */
+  function toasterGag() {
+    toasterReady = false;
+    const t = now();
+    const lever = props.toaster.getObjectByName("lever")!;
+    player.facing = -Math.PI / 2;
+    for (const m of props.toast) { props.toaster.attach(m); m.position.copy(m.userData.home as THREE.Vector3); m.rotation.set(0, Math.PI / 2, 0); }
+    lever.position.y = 0.07;
+    audio.thunk(0.3);
+    billSay(BILL_GAGS.toast);
+    gags.mark(t);
+    later(1.5, () => { anim.flash("suspicious", 1.6, now()); fx.letter("...", above(0.45), "#fff7e3", 0.5, 0.9); });
+    later(2.7, () => {
+      lever.position.y = 0.13;
+      audio.pop();
+      audio.boing();
+      const head = headAt(new THREE.Vector3());
+      props.toast.forEach((m, i) => {
+        const from = m.getWorldPosition(new THREE.Vector3());
+        scene.attach(m);
+        toastFlights.push({ m, from, to: head.clone().add(new THREE.Vector3(0, 0.05 * i, 0.08 * (i - 0.5))), t: 0, dur: 0.22 + i * 0.05, arc: 0.35, spin: 9 });
+      });
+      later(0.24, () => {
+        bonk("PAP!", 1.8);
+        fall("stagger");
+        // and down they go, onto the lino
+        props.toast.forEach((m, i) => toastFlights.push({ m, from: m.position.clone(), to: player.pos.clone().add(new THREE.Vector3(0.35 + i * 0.2, 0.012, (i - 0.5) * 0.4)), t: 0, dur: 0.45, arc: 0.3, spin: 6 }));
+      });
+    });
+    later(20, () => (toasterReady = true));
+  }
+
+  /** A box marked ADAPTERS: fondue pot, vacuum, electric blanket. The blanket's cord trips him. */
+  function adapterGag() {
+    adaptersReady = false;
+    const t = now();
+    player.facing = Math.atan2(ADAPTER_BOX_AT.x - player.pos.x, ADAPTER_BOX_AT.z - player.pos.z);
+    anim.flash("junklove", 1.6, t);
+    billSay(BILL_GAGS.adapters, 1.6);
+    slap.start("dig");
+    player.stun(1.5);
+    gags.mark(t);
+    ["FONDUE POT", "VACUUM", "ELECTRIC BLANKET"].forEach((w, i) => later(0.35 + i * 0.4, () => {
+      audio.rustle();
+      fx.letter(w, ADAPTER_BOX_AT.clone().setY(1.1 + i * 0.25), "#ece2c8", 0.45, 0.9);
+    }));
+    later(1.5, () => {
+      slap.stop();
+      bill.squash.position.set(0, 0, 0);
+      audio.slide(false, 0.35);
+      fx.letter("YANK!", above(0), "#f7d547", 0.8, 0.8);
+      fall("faceplant");
+      later(0.28, () => { audio.whump(0.8); loop.hitStop(90); cam.zoomPunch(0.05); });
+      hud.narrate("The box marked ADAPTERS holds adapters for a fondue pot, a vacuum and an electric blanket. The blanket's cord seizes its moment.", 5.5, now());
+      later(1.8, () => billSay(BILL_GAGS.adaptersAfter));
+    });
+    later(30, () => (adaptersReady = true));
+  }
+
+  // Captain Caffeine ignition: sometimes a hurry from a standstill spins his wheels first
+  let spin = 0, lastSpin = -99, wanted = false;
+  function stepWheelspin(dt: number, move: { x: number; y: number }, hurry: boolean, busy: boolean) {
+    const t = now(), wants = Math.hypot(move.x, move.y) > 0.5;
+    if (spin > 0) {
+      spin -= dt;
+      if (pick() < 0.35) fx.puff(player.pos.clone().add(new THREE.Vector3(-Math.sin(player.facing) * 0.3, 0.08, -Math.cos(player.facing) * 0.3)), "#d8cdb4", 1, { spread: 0.2, up: 0.3, size: 0.2, life: 0.5 });
+      if (spin <= 0) {
+        const s = Math.sin(CAM.yaw), c = Math.cos(CAM.yaw);
+        const wx = move.x * c - move.y * s, wz = -move.x * s - move.y * c;
+        if (Math.hypot(wx, wz) > 0.2) player.facing = Math.atan2(wx, wz);
+        player.force(Math.sin(player.facing) * 7.5, Math.cos(player.facing) * 7.5, 0.4, 0.5);
+        audio.whoosh(0.4);
+        fx.letter("ZOOM!", above(0.3), "#f7d547", 0.8, 0.7);
+      }
+    } else if (wants && !wanted && hurry && !busy && !inv.hands && player.speed < 0.2 && t - lastSpin > 35 && pick() < 0.4) {
+      spin = 0.6;
+      lastSpin = t;
+      player.stun(0.6);
+      audio.skid();
+      fx.letter("SKREEE!", above(0.2), "#fff7e3", 0.7, 0.6);
+      gags.mark(t);
+    }
+    wanted = wants;
+  }
+
   // ---------- ambient gags: the gag clock fills quiet stretches ----------
-  type AmbientGag = "poop" | "gust" | "nose" | "burp" | "trip";
+  type AmbientGag = "poop" | "gust" | "nose" | "burp" | "trip" | "blurt" | "snag" | "paper";
   let splatUntil = 0, gustT = -1;
   function playGag(g: AmbientGag) {
     const t = now();
@@ -565,6 +757,29 @@ async function boot() {
         later(0.8, () => billSay(BILL_GAGS.burp));
         break;
       }
+      case "blurt":
+        // the satchel plays one synth note at exactly the wrong moment
+        audio.blurt();
+        bill.satchelMouth(_a);
+        fx.letter("BWAAMP!", _a.clone().setY(_a.y + 0.4), "#f2b632", 0.75, 0.9);
+        anim.flash("suspicious", 2, t);
+        later(0.8, () => billSay(BILL_GAGS.blurt));
+        break;
+      case "snag": {
+        // a cable end catches on something and yanks him back like a bow
+        const f = player.facing;
+        player.force(-Math.sin(f) * 2.4, -Math.cos(f) * 2.4, 0.25, 1);
+        audio.boing();
+        fx.letter("TWANG!", above(0.3), "#f7d547", 0.8, 0.8);
+        fall("stagger");
+        later(0.9, () => billSay(BILL_GAGS.snag));
+        break;
+      }
+      case "paper":
+        paper.start(player.pos);
+        audio.rustle(0.6);
+        later(1.2, () => fx.letter("fwip", above(-0.9), "#ece2c8", 0.4, 0.6));
+        break;
       case "trip":
         audio.slide(false, 0.35);
         fall("faceplant");
@@ -605,6 +820,7 @@ async function boot() {
     player.loadFactor = 1 - 0.12 * clamp(inv.satchel.reduce((m, id) => m + ITEMS[id].mass, 0) / 6, 0, 1);
     stepChallenge(dt);
     stepRide(dt, move);
+    stepWheelspin(dt, move, hurry, !!challenge || !!ride || (player.lockTimer > 0 && spin <= 0));
     player.step(dt, move, analog, hurry, CAM.yaw);
     if (ride && ride.t > 0.15 && player.moveRatio < 0.45) endRide(true);
     else if (ride && ride.t > 2.3) endRide(false);
@@ -637,6 +853,16 @@ async function boot() {
       }
     }
 
+    // the newspaper train: when it's grown long enough he notices, and it goes everywhere
+    const scattered = paper.update(dt, player.pos, t0);
+    if (scattered) {
+      audio.rustle(2);
+      for (const p of scattered) fx.puff(p.setY(p.y + 0.1), "#ece2c8", 1, { spread: 0.2, up: 1.4, size: 0.3, life: 0.8 });
+      fx.letter("FLAP-FLAP!", above(0.3), "#ece2c8", 0.6, 0.8);
+      anim.flash("suspicious", 1.5, t0);
+      billSay(BILL_GAGS.paper);
+    }
+
     // stepping on things
     const hit = hazards.check(dt, { x: player.pos.x, y: player.pos.y, z: player.pos.z, facing: player.facing, speed: player.speed, busy });
     if (hit === "rake") rakeHit();
@@ -652,6 +878,9 @@ async function boot() {
         { id: "nose", ok: player.speed < 0.2 && !inv.hands, cooldown: 30 },
         { id: "burp", ok: true, cooldown: 40 },
         { id: "trip", ok: player.speed > 1.2 && surface !== "stairs" && !inv.hands, cooldown: 50 },
+        { id: "blurt", ok: inv.satchel.length > 0, cooldown: 45 },
+        { id: "snag", ok: inv.satchel.length > 0 && player.speed > 0.8 && surface !== "stairs", cooldown: 50 },
+        { id: "paper", ok: sceneName !== "outdoors" && player.speed > 0.6 && !paper.active, cooldown: 50 },
       ], pick);
       if (g) playGag(g);
     }
@@ -678,14 +907,22 @@ async function boot() {
     }
 
     const candidates = items.list
-      .filter((i) => i.state === "world")
+      .filter((i) => i.state === "world" && !(i === cable && cableBuried))
       .map((i) => ({ id: i, x: i.obj.position.x, z: i.obj.position.z, y: i.obj.position.y, reach: ITEMS[i.id].carry === "heavy" ? 1.3 : 1.2 }));
     target = pickTarget({ x: player.pos.x, y: player.pos.y + 0.3, z: player.pos.z, facing: player.facing }, candidates)?.id ?? null;
     delivery = deliveryHere();
+    // a prop beats an item only if it's closer
+    const np = delivery || challenge ? null : nearestPoke();
+    poke = null;
+    if (np) {
+      const td = target ? Math.hypot(target.obj.position.x - player.pos.x, target.obj.position.z - player.pos.z) : 1e9;
+      if (np.d < td) { poke = np.p; target = null; }
+    }
 
     if (challenge || ride || player.lockTimer > 0) input.consume("interact");
     else if (input.consume("interact")) {
       if (delivery) doDeliver(delivery);
+      else if (poke) poke.use();
       else if (target) tryPickup(target);
       else if (inv.hands) doDrop();
     }
@@ -781,8 +1018,8 @@ async function boot() {
 
     const planted = anim.update(
       {
-        speed: player.speed,
-        hurrying: player.hurrying,
+        speed: spin > 0 ? 5 : player.speed,
+        hurrying: player.hurrying || spin > 0,
         heavy: player.heavy,
         accel: player.accel,
         yawRate: player.yawRate,
@@ -834,7 +1071,16 @@ async function boot() {
       o.visible = tag === "basement" ? g.basement.visible : tag === "ground" ? g.ground.visible : roof ? roof.obj.visible : g.outdoors.visible;
     }
     const onThisFloor = (y: number) => (mode === "basement" ? y < -1 : y > -1 || inside);
-    for (const it of items.list) if (it.state === "world" || it.state === "installed") it.obj.visible = onThisFloor(it.obj.position.y);
+    for (const it of items.list) if (it.state === "world" || it.state === "installed") it.obj.visible = onThisFloor(it.obj.position.y) && !(it === cable && cableBuried);
+    for (const m of props.toast) if (m.parent === scene) m.visible = g.ground.visible;
+    for (let i = toastFlights.length - 1; i >= 0; i--) {
+      const f = toastFlights[i];
+      f.t = Math.min(1, f.t + frameDt / f.dur);
+      f.m.position.lerpVectors(f.from, f.to, f.t);
+      f.m.position.y += Math.sin(f.t * Math.PI) * f.arc;
+      f.m.rotation.x += f.spin * frameDt;
+      if (f.t >= 1) { if (f.to.y < 0.1) f.m.rotation.set(-Math.PI / 2, 0, pick() * 3); toastFlights.splice(i, 1); }
+    }
     items.setJunkVisibility(onThisFloor);
     gary.rig.root.visible = mode === "ground";
     ambient(frameDt, t, pos);
@@ -875,6 +1121,9 @@ async function boot() {
         : target === sns && isGuarded(gary.brain, PRIZE_AT) ? "E  Fight Gary for it"
         : full ? `${ITEMS[target.id].shortName}: no room` : `E  Pick up ${ITEMS[target.id].name}`;
       tgt = { x: tgtPx.x, y: tgtPx.y, label };
+    } else if (poke) {
+      cam.project(poke.at.clone().setY(poke.at.y + 1.0), tgtPx);
+      tgt = { x: tgtPx.x, y: tgtPx.y, label: poke.label };
     }
     let goal: { x: number; y: number } | null = null;
     const o = objective(ms);
@@ -912,6 +1161,8 @@ async function boot() {
     w.__scav.rooted = !!stumpRoot;
     w.__scav.inv = [...inv.satchel, ...(inv.hands ? [inv.hands] : [])];
     w.__scav.hits = { ...hits };
+    w.__scav.buried = cableBuried;
+    w.__scav.poke = poke?.id ?? null;
   }
 
   // ---------- guidance: the narrator nags, with escalating sarcasm, when progress stalls ----------
@@ -966,7 +1217,7 @@ async function boot() {
   const w = window as unknown as {
     __scav: {
       ready: boolean; frames: number; backend: string; pos: number[]; gary: string; stages: Record<string, string>; active: string | null;
-      challenge?: { kind: string; progress: number } | null; slap?: string | null; gas?: number; ride?: boolean; rooted?: boolean; inv?: string[]; hits?: Record<string, number>;
+      challenge?: { kind: string; progress: number } | null; slap?: string | null; gas?: number; ride?: boolean; rooted?: boolean; inv?: string[]; hits?: Record<string, number>; buried?: boolean; poke?: string | null;
     };
   };
   w.__scav = { ready: false, frames: 0, backend: gfx.backend, pos: [0, 0, 0], gary: "guard", stages: {}, active: null };

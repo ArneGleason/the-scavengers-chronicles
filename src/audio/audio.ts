@@ -302,6 +302,28 @@ export class GameAudio {
     this.noiseBurst("sfx", t, 0.3, "lowpass", 700, 0.8, 0.5);
   }
 
+  /** The satchel blurts one synth note at the wrong moment: a detuned brass stab with a pitch droop. */
+  blurt() {
+    if (!this.ctx) return;
+    const ctx = this.ctx, t = this.now, f = NOTE(50 + Math.floor(this.rand() * 5) * 2);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 6;
+    lp.frequency.setValueAtTime(300, t); lp.frequency.exponentialRampToValueAtTime(2600, t + 0.08); lp.frequency.exponentialRampToValueAtTime(400, t + 0.7);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+    for (const d of [0.995, 1.005]) {
+      const o = ctx.createOscillator(); o.type = "sawtooth";
+      o.frequency.setValueAtTime(f * d, t); o.frequency.exponentialRampToValueAtTime(f * d * 0.94, t + 0.8);
+      o.connect(lp); o.start(t); o.stop(t + 0.85);
+    }
+    lp.connect(g).connect(this.buses.sfx);
+  }
+
+  /** Paper: rummaging in a hoard, a newspaper flapping off a shoe. */
+  rustle(k = 1) {
+    if (!this.ctx) return;
+    const t = this.now;
+    for (let i = 0; i < 3; i++) this.noiseBurst("foley", t + i * 0.04 + this.rand() * 0.02, 0.05, "bandpass", 2800 + this.rand() * 2000, 1.5, 0.25 * k);
+  }
+
   /** The victory sting after a challenge: a trombone-ish "ta-daa". Or a sad one. */
   sting(won: boolean) {
     if (!this.ctx) return;

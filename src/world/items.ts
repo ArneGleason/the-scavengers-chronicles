@@ -139,12 +139,17 @@ export class Items {
     return it;
   }
 
-  spawnJunk(kind: "box" | "crate" | "bucket", at: THREE.Vector3) {
+  /** Loose junk with physics; `vel` launches it (a geyser of archive, a fridge avalanche). */
+  spawnJunk(kind: "box" | "crate" | "bucket", at: THREE.Vector3, vel?: THREE.Vector3) {
     const { g, half, mass } = junkModel(kind);
     ensureInkNormals(g);
     g.position.copy(at);
     this.scene.add(g);
-    this.phys.dynamicBox(g, half, mass, at);
+    const body = this.phys.dynamicBox(g, half, mass, at);
+    if (vel) {
+      body.setLinvel({ x: vel.x, y: vel.y, z: vel.z }, true);
+      body.setAngvel({ x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8, z: (Math.random() - 0.5) * 8 }, true);
+    }
     this.junk.push(g);
     const sh = new THREE.Mesh(this.shadowGeo, this.shadowMat);
     sh.rotation.x = -Math.PI / 2;

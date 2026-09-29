@@ -137,6 +137,39 @@ async function open(hash) {
   await page.close();
 }
 {
+  // Hoard Dive: the DIN cable is buried in the basement hoard; E starts the dig, mashing finds it
+  const page = await open("at=-2.0,-2.6,1.75&face=180&zoom=close");
+  const s0 = await scav(page);
+  check(s0.buried && s0.poke === "hoard", `the cable starts buried and E is offered at the hoard (poke ${s0.poke})`);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(300);
+  check((await scav(page)).challenge?.kind === "hoard", "E at the hoard starts the Hoard Dive");
+  await mash(page, 1.2);
+  await page.screenshot({ path: "shots/e2e-hoard-dive.png" });
+  await mash(page, 2.8);
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: "shots/e2e-hoard-geyser.png" });
+  await page.waitForTimeout(1500);
+  const s1 = await scav(page);
+  check(!s1.challenge && !s1.buried && s1.inv.includes("dinCable"), `mashing digs out the DIN cable into the satchel (${s1.inv})`);
+  await page.close();
+}
+for (const [name, hash, wait, slap, extra] of [
+  ["toaster", "at=-4.85,0,2.3&face=270&zoom=close", 3400, "stagger"],
+  ["fridge", "at=-4.6,0,4.5&face=270&zoom=close", 1900, "buttflop", (a, b) => b.pos[0] - a.pos[0] > 0.8],
+  ["adapters", "at=8.6,0,16.95&face=180&zoom=close", 2100, "faceplant"],
+]) {
+  // the props you can poke: each one ends with Bill on the floor
+  const page = await open(hash);
+  const a = await scav(page);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(wait);
+  await page.screenshot({ path: `shots/e2e-${name}.png` });
+  const b = await scav(page);
+  check(a.poke === name && b.slap === slap && (!extra || extra(a, b)), `E at the ${name} plays its gag (poke ${a.poke}, ${b.slap})`);
+  await page.close();
+}
+{
   // Dumpster Duel, won: Gary goes in the bin, the Speak & Spell goes in the satchel
   const page = await open("at=25.1,0,14.05&face=180&skip=cablePilgrimage,stumpProphecy&zoom=game");
   await page.waitForTimeout(600);

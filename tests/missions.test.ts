@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cycleActive, allDone } from "../src/game/missions";
 import { newGary, stepGary, isGuarded, gagGary, GARY } from "../src/game/gary";
-import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL } from "../src/game/challenge";
+import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL, HOARD_DIVE } from "../src/game/challenge";
 import { GagDirector } from "../src/game/gags";
 
 describe("mission chain", () => {
@@ -133,6 +133,14 @@ describe("tug-of-war challenges", () => {
 
   it("the ground never wins, however lazy the player", () => {
     expect(play(STUMP_WRESTLE, 0.5, 30).state).toBe("running");
+  });
+
+  it("the hoard gives up the cable to steady mashing, avalanches and all, and can't be lost", () => {
+    const t = play(HOARD_DIVE, 5);
+    expect(t.state).toBe("won");
+    expect(t.elapsed).toBeGreaterThan(2.2); // long enough for at least one avalanche
+    expect(t.elapsed).toBeLessThan(6);
+    expect(play(HOARD_DIVE, 0, 30).state).toBe("running");
   });
 
   it("Gary beats a player who barely tries, and loses to one who mashes", () => {

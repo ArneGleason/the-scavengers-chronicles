@@ -16,7 +16,11 @@ All notable prototype milestones for The Scavenger's Chronicles are tracked here
 - The narrator now nags with the v0.2 guidance lines, with escalating sarcasm, when progress stalls.
 - Shuffle and hurry are faster, with longer strides.
 - Added a soup gauge and a challenge meter to the HUD. `M` is no longer advertised; the objective always points at the one thing to do.
-- End-to-end checks for both challenges, the toot dash, the rake and the skateboard.
+- Added the Hoard Dive: the DIN cable is buried in a basement heap. Mash E to dig through newspaper avalanches until a geyser of obsolete goods knocks Bill over and the cable flies into the satchel.
+- Added props to poke with E: the last properly made fridge, a 1955 toaster, and a box marked ADAPTERS in the lane.
+- Added more gags: a wheel-spinning start when he hurries from a standstill, a cable snag, a newspaper that grows into a train behind him, and a satchel that blurts one synth note.
+- Started the gag catalogue (`docs/design/gags.md`) from an outside brainstorm, and a brief for running more of them (`docs/design/briefs/gag-brainstorm.md`).
+- End-to-end checks for all three challenges, the toot dash, the rake, the skateboard and the poke-able props.
 
 ## 0.4.0 - The Route and the Starter Errands (in progress)
 

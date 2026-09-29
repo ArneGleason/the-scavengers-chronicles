@@ -49,12 +49,14 @@ The gag clock lives in `src/game/gags.ts`. Player-caused gags (toots, the rake, 
 
 | Beat | Challenge | Status |
 |---|---|---|
-| Sacred Cable Pilgrimage | **Hoard Dive:** dig through the hoard and escape the newspaper avalanche | Planned |
+| Sacred Cable Pilgrimage | **Hoard Dive:** dig through the hoard while newspaper avalanches bury him; it ends in a geyser of obsolete goods | Built |
 | Stump of Destiny | **Stump Wrestle:** mash to uproot it; it pops free and he goes over backwards. Then the rake on the way home. | Built |
 | Speak & Spell Salvage Duel | **Dumpster Duel:** a tug-of-war with Gary. Win and Gary goes head-first into the dumpster, legs kicking. Lose and Bill lands in the recycling. A toot or the old lure are the sneaky alternatives. | Built |
 | Soup episodes | **Soup Sprint:** a timed forage run, with the leg-pull | Planned |
 | The Route | **Stealth Shuffle** past bylaw flashlight cones; an **Insult Volley** with the gym guys | Planned |
 | Landfill | **Wanda Chase** | Planned |
 | Finale | **Takeoff:** mash to get the jet moving while the masterpiece plays | Planned |
+
+Candidates for the planned challenges, and the full backlog of gags, are in [gags.md](gags.md).
 
 The main plot runs in a straight line: cable, then stump, then Speak & Spell. Each errand unlocks the next, and the objective card and marker always point at the one thing to do.
