@@ -16,6 +16,8 @@ export interface Motion {
   surfing?: boolean;
   /** Heaving in a tug-of-war: feet braced, hands out front. */
   tugging?: boolean;
+  /** Posing for the commemorative photo: arms up in a V, TA-DA. */
+  posing?: boolean;
   /** At the keyboard: hands on the keys; press is 0..1 for each hand's current note. */
   playing?: { pressL: number; pressR: number };
 }
@@ -148,6 +150,14 @@ export class BillAnimator {
       pp.lh = [0.16, -0.1 - 0.05 * pressL, 0.36]; pp.rh = [-0.16, -0.1 - 0.05 * pressR, 0.36];
       pp.le = [0.6, -0.2, 0.1]; pp.re = [-0.6, -0.2, 0.1];
       pp.lean = 0.1; pp.hp = 0.12 + 0.05 * Math.sin(t * 6) + 0.08 * Math.max(pressL, pressR);
+      pose = pp;
+    }
+    if (m.posing) {
+      const pp = basePose();
+      pp.lf = [0.17, 0, 0.05, 0]; pp.rf = [-0.17, 0, -0.03, 0];
+      pp.lh = [0.4, 0.52, 0.12]; pp.rh = [-0.4, 0.52, 0.12];
+      pp.le = [0.9, 0.6, -0.2]; pp.re = [-0.9, 0.6, -0.2];
+      pp.hp = -0.12; pp.lean = -0.04; pp.roll = 0.05 * Math.sin(t * 3);
       pose = pp;
     }
     // the nasal audit overrides the right hand

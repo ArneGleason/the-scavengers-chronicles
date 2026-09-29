@@ -39,7 +39,8 @@ import { FixedLoop } from "./core/loop";
 import { clamp, damp, dampAngle, rng, DEG } from "./core/math";
 import { newInventory, pickUp, drop as dropItem, carriedMass } from "./game/inventory";
 import { pickTarget } from "./game/interact";
-import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cycleActive, allDone, type MissionEvent } from "./game/missions";
+import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cycleActive, allDone, syncCarrying, type MissionEvent } from "./game/missions";
+import { PHOTOS, type PhotoKey } from "./content/photos";
 import { isGuarded, gagGary, type GaryMode } from "./game/gary";
 import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL, HOARD_DIVE, HAMMER_TIME } from "./game/challenge";
 import { GagDirector } from "./game/gags";
@@ -186,10 +187,14 @@ async function boot() {
     const o = objective(ms);
     hud.setObjective(o ? MISSIONS[o.mission].title : allDone(ms) ? "Errands complete" : null, o?.guide ?? (allDone(ms) ? "The masterpiece is now only one adapter away." : ""));
   }
+  const carrying = () => [...inv.satchel, ...(inv.hands ? [inv.hands] : [])];
   function announce(events: MissionEvent[]) {
     for (const e of events) {
       if (e.type === "completed") {
         hud.narrate(MISSIONS[e.mission].completeText, 5.5, now());
+        if (PHOTOS[e.mission]) commemorate(e.mission, MISSIONS[e.mission].title);
+      } else if (e.type === "alreadyDone") {
+        hud.narrate(`${MISSIONS[e.mission].title}: already done. He did it out of order and is calling it initiative.`, 5, now(), true);
       } else if (e.type === "selected") {
         const m = MISSIONS[e.mission], o = objective(ms);
         hud.narrate(fill(quip(MISSION_QUIPS.missionSelected), { mission: m.title, guide: o?.guide ?? "" }), 6, now(), true);
@@ -236,8 +241,86 @@ async function boot() {
     cam.zoomPunch(0.06);
     hud.say("Another step toward the masterpiece. Which is going fine.", 3.2, now());
     audio.speak("Another step toward the masterpiece");
-    announce(deliver(ms, d.mission));
+    announce(deliver(ms, d.mission, carrying()));
     if (allDone(ms)) hud.narrate("Every errand is done. No music has been written, but the altar has never looked more prepared.", 6, now(), true);
+  }
+
+  // ---------- the commemorative photo at the end of each errand ----------
+  const album: { key: PhotoKey; url: string }[] = [];
+  let posing = 0, cardAge = -1, photoQueued = 0, photoOk = false;
+  let capture: ((url: string) => void) | null = null;
+  const photoCanvas = document.createElement("canvas");
+  photoCanvas.width = 640; photoCanvas.height = 480;
+  function commemorate(key: PhotoKey, title: string) {
+    const p = PHOTOS[key]!;
+    const wait = 1.1 + photoQueued * 9;
+    photoQueued++;
+    later(wait, () => {
+      // he sets the self-timer and strikes a pose beside the evidence
+      posing = 2.1;
+      player.stun(2.4);
+      player.vel.x = player.vel.y = 0;
+      player.facing = Math.PI / 4; // toward the camera
+      anim.flash("elvis", 2.2, now());
+      billSay([p.pose], 1.5);
+      ["3", "2", "1"].forEach((n, i) => later(0.45 + i * 0.4, () => { fx.letter(n, above(0.75), "#fff7e3", 0.55, 0.35); audio.bloop(i); }));
+    });
+    later(wait + 1.75, () => {
+      hud.flash();
+      audio.shutter();
+      capture = (url) => {
+        album.push({ key, url });
+        later(0.45, () => {
+          photoQueued = Math.max(0, photoQueued - 1);
+          hud.showCard({ url, stamp: key === "soup" ? "SOUP COMPLETE!" : "ERRAND COMPLETE!", title, caption: p.caption, sent: `Sent to all ${CONTACTS} contacts \u2713` });
+          cardAge = 0;
+          audio.sting(true);
+          p.replies.forEach(([from, text], i) => later(0.9 + i * 0.6, () => { if (hud.cardShown) { hud.cardReply(from, text); audio.bloop(i); } }));
+          later(2.8, () => hud.narrate(p.narrator, 5, now(), true));
+        });
+      };
+    });
+  }
+  /** Grab the photo from the frame just rendered: a 4:3 crop around Bill, warmed up, date-stamped. */
+  function takeCapture() {
+    const cb = capture!;
+    capture = null;
+    const src = gfx.renderer.domElement, k = src.width / innerWidth;
+    const sh = Math.min(innerHeight * 0.46, innerWidth * 0.4), sw = (sh * 4) / 3;
+    const cx = clamp(headPx.x, sw / 2, innerWidth - sw / 2), cy = clamp(headPx.y + sh * 0.28, sh / 2, innerHeight - sh / 2);
+    const g = photoCanvas.getContext("2d")!;
+    g.fillStyle = "#5f7f79";
+    g.fillRect(0, 0, 640, 480);
+    try { g.drawImage(src, (cx - sw / 2) * k, (cy - sh / 2) * k, sw * k, sh * k, 0, 0, 640, 480); } catch { /* not readable here */ }
+    // did we get a picture? (some GPUs won't hand the frame over)
+    const px = g.getImageData(0, 0, 640, 480).data;
+    let varied = 0;
+    for (let i = 0; i < px.length; i += 4 * 997) if (Math.abs(px[i] - 95) + Math.abs(px[i + 1] - 127) + Math.abs(px[i + 2] - 121) > 30) varied++;
+    photoOk = varied >= 5;
+    if (varied < 5) {
+      g.fillStyle = "#e9dcc0"; g.fillRect(0, 0, 640, 480);
+      g.fillStyle = "#1e1a18"; g.textAlign = "center"; g.font = "400 64px Bangers, Impact, sans-serif";
+      g.fillText("BLURRY", 320, 220);
+      g.font = "700 26px 'Shantell Sans', sans-serif";
+      g.fillText("He calls it artistic.", 320, 280);
+    }
+    // warm it up like a drugstore print, then the orange date stamp
+    g.globalCompositeOperation = "multiply";
+    g.fillStyle = "#fff0d8"; g.fillRect(0, 0, 640, 480);
+    g.globalCompositeOperation = "source-over";
+    const v = g.createRadialGradient(320, 240, 180, 320, 240, 420);
+    v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(30,20,10,0.35)");
+    g.fillStyle = v; g.fillRect(0, 0, 640, 480);
+    g.font = "700 26px 'Courier New', monospace"; g.textAlign = "right";
+    g.fillStyle = "#ff8a1f"; g.fillText("'26 9 29", 612, 452);
+    cb(photoCanvas.toDataURL("image/jpeg", 0.88));
+  }
+  hud.onCardClick = () => closeCard();
+  function closeCard() {
+    if (!hud.cardShown) return;
+    hud.hideCard();
+    cardAge = -1;
+    player.lockTimer = 0;
   }
 
   // ---------- interaction ----------
@@ -596,7 +679,7 @@ async function boot() {
       fx.letter("TA-DAA!", BENCH_TOP.clone().setY(BENCH_TOP.y + 1.2), "#f2b632", 1.1, 1.3);
       anim.flash("elvis", 2, t);
       billSay(["Mid-century.", "Buying shelves is how they get you."], 2.4);
-      announce(deliver(ms, "grateShelf"));
+      announce(deliver(ms, "grateShelf", carrying()));
       return;
     }
     if (c.kind === "hoard") {
@@ -944,6 +1027,7 @@ async function boot() {
       gas = GAS.max;
       hud.narrate("The soup is eaten. Two hundred and fourteen people are relieved. The soup gauge is permanently larger.", 6, now());
       soupBusy = false;
+      commemorate("soup", "The Ten Distillations");
     });
     gags.mark(now());
   }
@@ -1123,6 +1207,13 @@ async function boot() {
     for (let i = timers.length - 1; i >= 0; i--) if (t0 >= timers[i].at) { const f = timers[i].fn; timers.splice(i, 1); f(); }
     player.heavy = damp(player.heavy, inv.hands ? 1 : 0, 10, dt);
     player.loadFactor = 1 - 0.12 * clamp(inv.satchel.reduce((m, id) => m + ITEMS[id].mass, 0) / 6, 0, 1);
+    if (cardAge >= 0) {
+      cardAge += dt;
+      player.stun(0.2);
+      if ((input.consume("interact") || input.consume("toot") || cardAge > 12) && cardAge > 0.6) closeCard();
+    }
+    posing = Math.max(0, posing - dt);
+    if (syncCarrying(ms, carrying())) refreshObjective();
     stepChallenge(dt);
     stepJam();
     const wr = wanda.step(dt, { bill: { x: player.pos.x, z: player.pos.z }, carryingGrate: inv.hands === "rustyGrate", billInside: player.pos.y > -1 && inJunkyard(player.pos) });
@@ -1139,7 +1230,7 @@ async function boot() {
 
     // soup refills; the toot dash; clouds that gag Gary and floor raccoons
     if (gas < GAS.max) { gasFill += dt / GAS.refill; if (gasFill >= 1) { gas++; gasFill = 0; } } else gasFill = 0;
-    const busy = !!challenge || !!ride || !!jam || soupBusy || !!toss || player.lockTimer > 0;
+    const busy = !!challenge || !!ride || !!jam || soupBusy || !!toss || cardAge >= 0 || posing > 0 || player.lockTimer > 0;
 
     // soup ingredients: he collects them by walking up to them
     const got = pantry.update(dt, t0, player.pos);
@@ -1365,6 +1456,7 @@ async function boot() {
         surfing: !!ride,
         tugging: !!challenge,
         playing: jam ? { pressL: jam.pressL, pressR: jam.pressR } : undefined,
+        posing: posing > 0,
       },
       frameDt,
       t,
@@ -1484,7 +1576,7 @@ async function boot() {
       else goalW.copy(POINTS[o.point].at).setY(POINTS[o.point].at.y + 0.6);
       goal = cam.project(goalW, goalPx);
     }
-    if (challenge) tgt = null;
+    if (challenge || posing > 0 || cardAge >= 0) tgt = null;
     hud.update(t, { bill: headPx, gary: mode === "ground" ? garyPx : null, wanda: mode === "ground" ? wandaPx : null }, tgt, challenge ? null : goal);
     hud.setGas(gas, GAS.max, gasFill);
     hud.setSoup({ distilled: soup.distilled, of: DISTILLATIONS, pocket: soup.pocket.length, ready: isReady(soup), eaten: soup.eaten });
@@ -1500,6 +1592,7 @@ async function boot() {
     );
 
     gfx.render();
+    if (capture) takeCapture();
     frames++;
     if (forcedGag && frames === 90) { playGag(forcedGag); gags.mark(t, forcedGag); }
     w.__scav.frames = frames;
@@ -1520,6 +1613,9 @@ async function boot() {
     w.__scav.soup = { distilled: soup.distilled, pocket: soup.pocket.length, eaten: soup.eaten };
     w.__scav.wanda = wanda.brain.mode;
     w.__scav.tossed = !!toss;
+    w.__scav.album = album.map((a) => a.key);
+    w.__scav.card = hud.cardShown;
+    w.__scav.photoOk = photoOk;
   }
 
   // ---------- guidance: the narrator nags, with escalating sarcasm, when progress stalls ----------
@@ -1575,7 +1671,7 @@ async function boot() {
     __scav: {
       ready: boolean; frames: number; backend: string; pos: number[]; gary: string; stages: Record<string, string>; active: string | null;
       challenge?: { kind: string; progress: number } | null; slap?: string | null; gas?: number; ride?: boolean; rooted?: boolean; inv?: string[]; hits?: Record<string, number>; buried?: boolean; poke?: string | null;
-      jam?: { active: boolean; takes: number; step: number }; soup?: { distilled: number; pocket: number; eaten: boolean }; wanda?: string; tossed?: boolean;
+      jam?: { active: boolean; takes: number; step: number }; soup?: { distilled: number; pocket: number; eaten: boolean }; wanda?: string; tossed?: boolean; album?: string[]; card?: boolean; photoOk?: boolean;
     };
   };
   w.__scav = { ready: false, frames: 0, backend: gfx.backend, pos: [0, 0, 0], gary: "guard", stages: {}, active: null };

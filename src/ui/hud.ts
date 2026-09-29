@@ -29,6 +29,9 @@ export class Hud {
   private soupEl = el("div", "soup");
   private phoneEl = el("div", "phone");
   private flashEl = el("div", "flash");
+  private cardEl = el("div", "photocard");
+  /** Called when the player clicks the photo card away. */
+  onCardClick: (() => void) | null = null;
   private lastSoup = "";
   private lastGas = "";
   private captionUntil = 0;
@@ -36,7 +39,7 @@ export class Hud {
   showDebug = false;
 
   constructor(private root: HTMLElement) {
-    root.append(this.caption, this.prompt, this.satchel, this.help, this.debug, this.objective, this.marker, this.gas, this.challengeEl, this.jamEl, this.soupEl, this.phoneEl, this.flashEl);
+    root.append(this.caption, this.prompt, this.satchel, this.help, this.debug, this.objective, this.marker, this.gas, this.challengeEl, this.jamEl, this.soupEl, this.phoneEl, this.flashEl, this.cardEl);
     this.help.innerHTML = `<b>How to Bill</b>
       <span><kbd>WASD</kbd> shuffle</span><span><kbd>Shift</kbd> hurry</span>
       <span><kbd>Space</kbd> toot dash</span><span><kbd>E</kbd> grab / mash</span>
@@ -46,7 +49,9 @@ export class Hud {
     this.challengeEl.innerHTML = `<b></b><div class="meter"><i></i><em></em></div><span class="mash">MASH <kbd>E</kbd>!</span>`;
     this.jamEl.innerHTML = `<b></b><div class="notes"><i>&#9834;</i><i>&#9834;</i><i>&#9834;</i></div><span class="press">PRESS <kbd></kbd></span>`;
     this.phoneEl.innerHTML = `<div class="screen"><small>SOUP UPDATE</small><b></b><div class="photo"><i></i></div><div class="send"><span></span><em><i></i></em></div><ul></ul></div>`;
-    for (const e of [this.caption, this.prompt, this.debug, this.objective, this.marker, this.challengeEl, this.jamEl, this.phoneEl, this.flashEl]) e.hidden = true;
+    this.cardEl.innerHTML = `<div class="polaroid"><img alt="" /><span class="stamp"></span><p></p></div><div class="meta"><small>COMMEMORATIVE PHOTO</small><b></b><span class="sent"></span><ul></ul><span class="continue"><kbd>E</kbd> continue</span></div>`;
+    this.cardEl.addEventListener("click", () => this.onCardClick?.());
+    for (const e of [this.caption, this.prompt, this.debug, this.objective, this.marker, this.challengeEl, this.jamEl, this.phoneEl, this.flashEl, this.cardEl]) e.hidden = true;
   }
 
   private balloon(speaker: string) {
@@ -218,6 +223,35 @@ export class Hud {
 
   phoneHide() {
     this.phoneEl.hidden = true;
+  }
+
+  /** The big card at the end of an errand: the photo, a stamp, the caption, and who it went to. */
+  showCard(c: { url: string; stamp: string; title: string; caption: string; sent: string }) {
+    const e = this.cardEl;
+    (e.querySelector("img") as HTMLImageElement).src = c.url;
+    e.querySelector(".stamp")!.textContent = c.stamp;
+    e.querySelector(".polaroid p")!.textContent = c.caption;
+    e.querySelector(".meta b")!.textContent = c.title;
+    e.querySelector(".sent")!.textContent = c.sent;
+    e.querySelector("ul")!.innerHTML = "";
+    e.hidden = false;
+    e.classList.remove("in");
+    void e.offsetWidth;
+    e.classList.add("in");
+  }
+
+  cardReply(from: string, text: string) {
+    const li = document.createElement("li");
+    li.innerHTML = `<b>${esc(from)}</b> ${esc(text)}`;
+    this.cardEl.querySelector("ul")!.append(li);
+  }
+
+  hideCard() {
+    this.cardEl.hidden = true;
+  }
+
+  get cardShown() {
+    return !this.cardEl.hidden;
   }
 
   /** A camera flash over the whole screen. */

@@ -14,6 +14,8 @@ All notable prototype milestones for The Scavenger's Chronicles are tracked here
 - The shuffle sound is one quieter scrape per step instead of a constant drone.
 - The toot meter is labelled "Toots"; a soup card shows the distillations.
 - The street runs further east, with a pawn shop, a dollar store and a vacuum repair.
+- Errands can be done out of order. Grab an errand's item early and the errand goes straight to delivery when its turn comes; deliver it early and it's done on the spot, and the chain skips it later ("already done... he is calling it initiative").
+- Every errand, and the finished soup, now ends with a commemorative photo. Bill sets the self-timer and strikes a pose, and the flash catches a real frame from the game. It arrives as a big photo card with an ERRAND COMPLETE! stamp, a handwritten caption, a date stamp, and replies from his contacts. E puts it away.
 
 ## 0.5.0 - Slapstick (in progress)
 

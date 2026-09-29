@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cycleActive, allDone } from "../src/game/missions";
+import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cycleActive, allDone, syncCarrying } from "../src/game/missions";
 import { newGary, stepGary, isGuarded, gagGary, GARY } from "../src/game/gary";
 import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL, HOARD_DIVE } from "../src/game/challenge";
 import { newJam, press, nextKey } from "../src/game/jam";
@@ -60,6 +60,45 @@ describe("mission chain", () => {
     deliver(s, "grateVault");
     expect(allDone(s)).toBe(true);
     expect(s.active).toBeNull();
+  });
+});
+
+describe("errands out of order", () => {
+  it("an item grabbed early turns its errand straight into a delivery when the chain reaches it", () => {
+    const s = newMissionState();
+    const carrying = ["speakAndSpell"] as const;
+    syncCarrying(s, carrying); // still locked: nothing to do yet
+    expect(s.stages.dumpsterDiplomacy).toBe("locked");
+    onPickup(s, "dinCable");
+    deliver(s, "cablePilgrimage", carrying);
+    onPickup(s, "personalityStump");
+    const ev = deliver(s, "stumpProphecy", carrying);
+    expect(s.stages.dumpsterDiplomacy).toBe("deliver");
+    expect(ev.at(-1)).toEqual({ type: "selected", mission: "dumpsterDiplomacy" });
+    expect(objective(s)).toMatchObject({ point: "synthAltar" }); // not "go to Gary's"
+  });
+
+  it("an item delivered early completes its errand, and the chain skips it later", () => {
+    const s = newMissionState();
+    expect(deliverable(s, "synthAltar", ["speakAndSpell"])).toBe("dumpsterDiplomacy");
+    const early = deliver(s, "dumpsterDiplomacy");
+    expect(early[0]).toMatchObject({ type: "completed", mission: "dumpsterDiplomacy", early: true, unlocked: [] });
+    expect(s.stages.grateShelf).toBe("locked"); // nothing opens out of turn
+    expect(s.active).toBe("cablePilgrimage");
+    onPickup(s, "dinCable");
+    deliver(s, "cablePilgrimage");
+    onPickup(s, "personalityStump");
+    const ev = deliver(s, "stumpProphecy");
+    expect(ev).toContainEqual({ type: "alreadyDone", mission: "dumpsterDiplomacy" });
+    expect(s.stages.grateShelf).toBe("find");
+    expect(s.active).toBe("grateShelf");
+  });
+
+  it("losing the item sends a delivery back to a search", () => {
+    const s = newMissionState();
+    onPickup(s, "dinCable");
+    expect(syncCarrying(s, [])).toBe(true);
+    expect(s.stages.cablePilgrimage).toBe("find");
   });
 });
 
