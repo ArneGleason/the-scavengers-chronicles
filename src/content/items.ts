@@ -2,7 +2,7 @@
  * Item definitions for the walking toy. Names and lines are ported verbatim from the
  * v0.2 prototype (classic/app.js) where they exist.
  */
-export type ItemId = "dinCable" | "powerBrick" | "cableBundle" | "speakAndSpell" | "newspaperBundle" | "personalityStump" | "rustyGrate" | "grateShelf";
+export type ItemId = "dinCable" | "powerBrick" | "cableBundle" | "speakAndSpell" | "newspaperBundle" | "personalityStump" | "rustyGrate" | "grateShelf" | "complaint" | "parcels" | "movieIdeas";
 export type CarryKind = "satchel" | "heavy";
 export type Surface = "carpet" | "linoleum" | "hardwood" | "concrete" | "grass" | "dirt" | "stairs" | "asphalt";
 
@@ -107,6 +107,39 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     accent: "#ead5a7",
     pickupText: "The shelf is mostly sharp edges and conviction. Naturally, he calls it mid-century.",
     dropText: "He sets down the shelf with gallery-opening seriousness.",
+  },
+  complaint: {
+    id: "complaint",
+    name: "Formal Noise Complaint",
+    shortName: "Complaint",
+    carry: "satchel",
+    mass: 0.1,
+    color: "#fbf6ec",
+    accent: "#c8312d",
+    pickupText: "Four pages. One paragraph. Eleven exclamation marks. Signed: Bill's Legal Department.",
+    dropText: "He sets the complaint down gently. It is a legal document.",
+  },
+  parcels: {
+    id: "parcels",
+    name: "Kevin's Parcels",
+    shortName: "Parcels",
+    carry: "heavy",
+    mass: 6,
+    color: "#c79a62",
+    accent: "#e0c28a",
+    pickupText: "Three parcels addressed to Kevin, who is away. Legally, this is protection.",
+    dropText: "The parcels land with the thud of someone else's online order.",
+  },
+  movieIdeas: {
+    id: "movieIdeas",
+    name: "Movie Ideas (Sticky Notes)",
+    shortName: "Movie Ideas",
+    carry: "satchel",
+    mass: 0.4,
+    color: "#f2d547",
+    accent: "#e8b23a",
+    pickupText: "Forty years of movie ideas, one per sticky note, mostly about soup.",
+    dropText: "He sets the movie ideas down. The top one just says SEQUEL.",
   },
 };
 

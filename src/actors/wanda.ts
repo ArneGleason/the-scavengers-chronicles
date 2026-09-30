@@ -63,14 +63,17 @@ class WandaRig {
     this.root.traverse((o) => { o.frustumCulled = false; });
   }
 
-  pose(speed: number, phase: number, mode: WandaMode | "caught", t: number, dt: number) {
+  pose(speed: number, phase: number, mode: WandaMode | "caught" | "lunge", t: number, dt: number) {
     const walk = clamp(speed / 1.2, 0, 1);
     const swing = Math.sin(phase) * 0.6 * walk;
     this.hips[0].rotation.x = swing;
     this.hips[1].rotation.x = -swing;
     this.body.position.y = 0.95 - 0.04 * Math.abs(Math.cos(phase)) * walk;
     let lean = 0.05 + 0.08 * walk, armL = -swing * 0.7, armR = swing * 0.7, spreadL = 0.15, spreadR = -0.15, headX = 0;
-    if (mode === "chase") {
+    if (mode === "lunge") {
+      // a flying tackle of admiration
+      lean = 0.75; armL = armR = -1.7; spreadL = 0.45; spreadR = -0.45; headX = -0.35;
+    } else if (mode === "chase") {
       // arms out, reaching for her magnificent little scrap prophet
       lean = 0.3; armL = armR = -1.45 + 0.2 * Math.sin(t * 9); spreadL = 0.25; spreadR = -0.25; headX = -0.1;
     } else if (mode === "applaud") {
@@ -122,7 +125,7 @@ export class Wanda {
   step(dt: number, world: WandaWorld) {
     this.prev.copy(this.pos);
     this.holding = Math.max(0, this.holding - dt);
-    const r = this.holding > 0 ? { changed: null, caught: false } : stepWanda(this.brain, world, dt);
+    const r = this.holding > 0 ? { changed: null, caught: false, lunged: false, noticed: false } : stepWanda(this.brain, world, dt);
     const t = this.body.translation();
     const want = { x: this.brain.x - t.x, y: -0.5 * dt, z: this.brain.z - t.z };
     this.kcc.computeColliderMovement(this.col, want);
@@ -145,7 +148,7 @@ export class Wanda {
     this.rig.root.position.lerpVectors(this.prev, this.pos, clamp(alpha, 0, 1));
     const cur = this.rig.root.rotation.y;
     this.rig.root.rotation.y = cur + angleDelta(cur, this.facing) * Math.min(1, dt * 10);
-    this.rig.pose(this.speed, this.phase, this.holding > 0 ? "caught" : this.brain.mode, t, dt);
+    this.rig.pose(this.speed, this.phase, this.holding > 0 ? "caught" : this.brain.lunge > 0 ? "lunge" : this.brain.mode, t, dt);
   }
 
   headWorld(out: THREE.Vector3) {

@@ -19,6 +19,10 @@ export const FRIDGE_AT = new THREE.Vector3(-5.1, 0, 4.52);
 export const ADAPTER_BOX_AT = new THREE.Vector3(8.6, 0, 16.2);
 /** Where Bill stands at the backyard workbench (the bench itself is just past him, toward +Z). */
 export const WORKBENCH_AT = new THREE.Vector3(7.8, 0, 7.8);
+/** Bill's Legal Department: a typewriter on a desk in the front hall; he stands on its south side. */
+export const TYPEWRITER_AT = new THREE.Vector3(-3.3, 0, -1.5);
+/** The movie ideas live on the counter by the fridge, which is also covered in them. */
+export const STICKY_AT = new THREE.Vector3(-5.55, 1.0, 3.55);
 
 const newsTex = canvasTex(64, 48, (g, w, h) => {
   g.fillStyle = "#ece2c8"; g.fillRect(0, 0, w, h);
@@ -39,6 +43,7 @@ export interface Props {
   toast: THREE.Mesh[];
   adapterBox: THREE.Group;
   bench: THREE.Group;
+  legal: THREE.Group;
 }
 
 export function buildProps(scene: THREE.Scene, phys: Physics): Props {
@@ -146,7 +151,49 @@ export function buildProps(scene: THREE.Scene, phys: Physics): Props {
   tagged(bench, "outdoors", scene);
   phys.box([WORKBENCH_AT.x - 0.8, 0, WORKBENCH_AT.z + 0.6], [WORKBENCH_AT.x + 0.8, 0.93, WORKBENCH_AT.z + 1.3]);
 
-  return { hoard, toaster, toast, adapterBox, bench };
+  /* ---------- Bill's Legal Department: a desk, a typewriter, a sign ---------- */
+  const legal = new THREE.Group();
+  const desk = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 0.6), toon(P.walnut, { ink: 0.9 }));
+  desk.position.y = 0.74;
+  legal.add(desk);
+  for (const x of [-0.55, 0.55]) for (const z of [-0.25, 0.25]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.74, 0.06), toon(P.walnut, { ink: 0.8 }));
+    leg.position.set(x, 0.37, z);
+    legal.add(leg);
+  }
+  const tw = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.14, 0.34), toon("#4a5a4e", { ink: 1 }));
+  tw.position.set(0, 0.85, 0.02);
+  const roller = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.5, 12), toon(P.ink, { ink: 0.6 }));
+  roller.rotation.z = Math.PI / 2; roller.position.set(0, 0.93, -0.1);
+  const page = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.26, 0.005), toon("#fbf6ec", { ink: 0.5 }));
+  page.position.set(0, 1.05, -0.12); page.rotation.x = -0.15;
+  legal.add(tw, roller, page);
+  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.22), toon("#fff", {
+    map: canvasTex(320, 80, (g, w, h) => {
+      g.fillStyle = "#f2d88a"; g.fillRect(0, 0, w, h);
+      g.fillStyle = P.ink; g.font = "900 26px 'Arial Black', Impact, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText("BILL'S LEGAL DEPARTMENT", w / 2, h / 2, w - 14);
+    }),
+    ink: 0.3,
+  }));
+  plaque.position.set(0, 0.6, 0.305);
+  legal.add(plaque);
+  legal.position.set(TYPEWRITER_AT.x, 0, TYPEWRITER_AT.z - 0.75);
+  tagged(legal, "ground", scene);
+  phys.box([TYPEWRITER_AT.x - 0.62, 0, TYPEWRITER_AT.z - 1.07], [TYPEWRITER_AT.x + 0.62, 0.8, TYPEWRITER_AT.z - 0.43]);
+
+  /* ---------- the fridge, papered in movie ideas ---------- */
+  const notes = new THREE.Group();
+  const yellow = toon("#f2d547", { ink: 0.4 }), orange = toon("#f7b64a", { ink: 0.4 });
+  for (let i = 0; i < 26; i++) {
+    const n = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.1), i % 4 ? yellow : orange);
+    n.position.set(-5.14, 0.3 + (i % 7) * 0.2 + (i % 3) * 0.03, 4.22 + Math.floor(i / 7) * 0.17 + (i % 2) * 0.03);
+    n.rotation.set(0, Math.PI / 2, (i % 5) * 0.12 - 0.24);
+    notes.add(n);
+  }
+  tagged(notes, "ground", scene);
+
+  return { hoard, toaster, toast, adapterBox, bench, legal };
 }
 
 /**

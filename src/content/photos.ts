@@ -41,6 +41,24 @@ export const PHOTOS: Partial<Record<PhotoKey, PhotoDef>> = {
     replies: [["Big Wanda", "I KNEW that grate had a future"], ["Rob", "is that from a sewer"], ["Unknown number", "tetanus is real, Bill"]],
     narrator: "The shelf is photographed from its good side. It does not have a good side.",
   },
+  noiseComplaint: {
+    caption: "Complaint delivered. The Lug Nutz were very supportive. (The complaint is now a doormat.)",
+    pose: "For the file. Nobody flex.",
+    replies: [["The Lug Nutz", "good letter bill"], ["Bylaw office", "Noted."], ["Rob", "did they read it"]],
+    narrator: "He photographs the gym's new doormat. It is his complaint. He considers this a partial victory.",
+  },
+  parcelProtection: {
+    caption: "Parcels in protective custody. Kevin is away. (Kevin is not away.)",
+    pose: "Neighbourly. Say 'custody'.",
+    replies: [["Kevin", "have you seen my packages"], ["Unknown number", "that's theft, Bill"], ["Rob", "lol"]],
+    narrator: "He photographs the parcels on his stoop, and sends it to everyone, including Kevin.",
+  },
+  thePitch: {
+    caption: "The Pitch. Kevin is taking it to the top. (Kevin runs social media for a mattress store.)",
+    pose: "Hollywood, get ready.",
+    replies: [["Kevin", "please stop putting notes on my car"], ["Rob", "which idea did he like"], ["Sleep Barn Mattresses", "who is this"]],
+    narrator: "He photographs Kevin under the sticky notes. It is the first time his ideas have been seen by anyone in media.",
+  },
   soup: {
     caption: "Distillation eleven: consumed.",
     pose: "The final distillation. For posterity.",

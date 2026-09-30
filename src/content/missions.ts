@@ -6,8 +6,10 @@
  */
 import type { ItemId } from "./items";
 
-export type MissionId = "cablePilgrimage" | "stumpProphecy" | "dumpsterDiplomacy" | "grateShelf" | "grateVault";
-export type PointId = "basementHoard" | "synthAltar" | "backyardDig" | "shelfZone" | "dumpster" | "junkyard" | "workbench" | "vault";
+export type MissionId = "cablePilgrimage" | "stumpProphecy" | "dumpsterDiplomacy" | "grateShelf" | "grateVault" | "noiseComplaint" | "parcelProtection" | "thePitch";
+export type PointId =
+  | "basementHoard" | "synthAltar" | "backyardDig" | "shelfZone" | "dumpster" | "junkyard" | "workbench" | "vault"
+  | "typewriter" | "gymDoor" | "kevinStoop" | "billStoop" | "stickyWall" | "kevinDoor";
 
 export interface MissionDef {
   id: MissionId;
@@ -106,11 +108,60 @@ export const MISSIONS: Record<MissionId, MissionDef> = {
     completeGuide: "The vault shelf is installed. Several antiques now fear for their finish.",
     pickupText: "Picked up the Visionary Grate Shelf. It is mostly rust plus thesis statement.",
     completeText: "Mission complete: the grate shelf is installed with the confidence of a man banned from furniture stores.",
+    unlocks: ["noiseComplaint"],
+  },
+  // new errands for the street and the gym (29 September 2026 playtest feedback), in the v0.2 voice
+  noiseComplaint: {
+    id: "noiseComplaint",
+    title: "The Noise Complaint",
+    summary: "Type a formal noise complaint about the Lug Nutz, whom he can hear from a quarter of a kilometre away, and deliver it in person.",
+    item: "complaint",
+    pickup: "typewriter",
+    drop: "gymDoor",
+    pickupLabel: "the typewriter",
+    dropLabel: "Lug Nutz gym",
+    pickupGuide: "The Lug Nutz are grunting again. He can hear them from here. Type a formal complaint at Bill's Legal Department (the typewriter in the front hall).",
+    returnGuide: "Deliver the complaint to the Lug Nutz at the gym door. In person. With feeling.",
+    completeGuide: "The complaint is on the record. The grunting continues, but now it's documented.",
+    pickupText: "The complaint is typed: four pages, one paragraph, eleven exclamation marks.",
+    completeText: "Mission complete: the Lug Nutz accept the complaint and put it down as a doormat. It is, technically, received.",
+    unlocks: ["parcelProtection"],
+  },
+  parcelProtection: {
+    id: "parcelProtection",
+    title: "Parcel Protection Program",
+    summary: "Kevin across the street is away (he is not away). Protect his parcels by taking them.",
+    item: "parcels",
+    pickup: "kevinStoop",
+    drop: "billStoop",
+    pickupLabel: "Kevin's parcels",
+    dropLabel: "Bill's front stoop",
+    pickupGuide: "Kevin's parcels are sitting on his stoop across the street, unprotected. Kevin is away. (Bill has decided that Kevin is away.)",
+    returnGuide: "Carry the parcels to your own front stoop for safekeeping. Kevin will owe you one.",
+    completeGuide: "The parcels are safe. Kevin, a media mogul (he works at a media company), now owes Bill one.",
+    pickupText: "Picked up Kevin's parcels. They are heavy with obligation.",
+    completeText: "Mission complete: the parcels are in protective custody. Kevin comes home, which is suspicious for a man who was away.",
+    unlocks: ["thePitch"],
+  },
+  thePitch: {
+    id: "thePitch",
+    title: "The Pitch",
+    summary: "Kevin owes him one, and Kevin is in media. Pitch him the movie ideas off the fridge.",
+    item: "movieIdeas",
+    pickup: "stickyWall",
+    drop: "kevinDoor",
+    pickupLabel: "movie ideas",
+    dropLabel: "Kevin's front door",
+    pickupGuide: "Kevin owes him one, and Kevin is in media. Grab the movie ideas from beside the fridge: forty years of sticky notes.",
+    returnGuide: "Take the movie ideas across the street and pitch them to Kevin at his door.",
+    completeGuide: "Hollywood has been notified, via Kevin, via a mattress store.",
+    pickupText: "Picked up the movie ideas: a brick of sticky notes, some of them still sticky.",
+    completeText: "Mission complete: Kevin will pass it along. To whom is unclear. Kevin runs social media for a mattress store.",
     unlocks: [],
   },
 };
 
-export const MISSION_ORDER: MissionId[] = ["cablePilgrimage", "stumpProphecy", "dumpsterDiplomacy", "grateShelf", "grateVault"];
+export const MISSION_ORDER: MissionId[] = ["cablePilgrimage", "stumpProphecy", "dumpsterDiplomacy", "grateShelf", "grateVault", "noiseComplaint", "parcelProtection", "thePitch"];
 
 /** v0.2 quip pools for the mission layer and Gary (verbatim). */
 export const MISSION_QUIPS = {
@@ -183,6 +234,27 @@ export const WANDA_SAYS = {
   gaveUp: ["He'll be back. They always come back for the grates."],
 } as const;
 
+/** The Lug Nutz: menacing, enormous, and relentlessly encouraging. They laugh off insults. */
+export const LUGNUTZ_SAYS = {
+  passing: ["Looking swole, Bill!", "You want a spot, soup man?", "Every day is leg day, Bill!", "Nice satchel, bro!", "HUP! Morning, Bill!"],
+  laugh: ["HAW HAW!", "HOO HOO!", "HAR!", "Good one, Bill!"],
+  retort: ["That's the spirit, Bill!", "We love the energy!", "Put it in the complaint!", "Bill! Protein!"],
+} as const;
+
+/** Kevin across the street, who works at a media company (Bill says he's a media mogul). */
+export const KEVIN_SAYS = {
+  home: ["Bill. Have you seen my packages?", "The doorbell camera shows a man in a sweater vest.", "I was only at work, Bill."],
+  pitch: ["I really have to go, Bill.", "Is this about my packages?", "I do social, Bill. For a mattress store.", "Please stop sticking these on me."],
+  after: ["I'll... pass it along.", "Can I have my packages back?"],
+  bill: ["They're in protective custody.", "He loved it."],
+} as const;
+
+/** Bill's movie ideas, one per sticky note, pitched at Kevin one at a time. */
+export const MOVIE_IDEAS = ["SOUP: THE MUSICAL", "DIE HARD, BUT IN A BASEMENT", "THE GRATE ESCAPE", "CAPTAIN CAFFEINE", "A SYNTH THAT SOLVES CRIMES", "ELVIS STOLE MY FACE", "STUMP WARS", "THE DIN SYNC CODE", "GARY: ORIGINS", "SEQUEL"] as const;
+
+/** The joggers, cheerfully using the public sidewalk that Bill has claimed. */
+export const JOGGER_SAYS = { reply: ["Morning!", "On your left!", "Love the yard!", "Beautiful day!"], toot: ["EW!", "WHY?!", "My lungs!"] } as const;
+
 /** Bill's lines for the slapstick layer (docs/design/comedy.md). */
 export const BILL_GAGS = {
   rake: ["Who left a rake there? I left a rake there.", "That rake has been waiting since 1994.", "Garden... ambush."],
@@ -209,6 +281,10 @@ export const BILL_GAGS = {
   snag: ["The cable has concerns.", "It wants to go back."],
   paper: ["I was going to file those.", "The archive follows me. As it should."],
   insults: ["You'll be hearing from my legal department.", "Cease and desist, dumpster man.", "Unhand it, you phonics goblin.", "You rummage like an amateur.", "My counsel is a cat and she'd beat you.", "That's evidence you're touching.", "You smell like recycling day."],
+  joggers: ["PRIVATE SIDEWALK!", "This is a residential sidewalk!", "Jog on your OWN property!", "I can hear your earbuds from here!", "That's MY concrete!"],
+  lugInsults: ["Your grunting is registered with my legal department.", "I can hear every rep. From my house.", "Some of us are composing.", "Cease and desist. The lifting.", "Your protein smells like a lawsuit."],
+  lugNoise: ["I can hear them.", "The Lug Nutz. Grunting. At this hour.", "Every rep. I hear every rep.", "That's a deadlift. I can tell."],
+  legalStart: ["Bill's Legal Department is now in session.", "To whom it may concern. Which is them."],
   jamStart: ["From the top.", "This is the one.", "Okay. Now with feeling.", "Quiet, everyone. Genius is happening."],
   jamExcuse: ["Genius. This keyboard can't capture it.", "It needs more parameters. More dynamics.", "The gear isn't ready for me.", "That third note was the synth's fault. Clearly.", "Too much genius for sixty-one keys.", "The velocity curve is wrong. I'm not."],
 } as const;

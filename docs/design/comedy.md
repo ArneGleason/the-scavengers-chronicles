@@ -52,6 +52,8 @@ The gag clock lives in `src/game/gags.ts`. Player-caused gags (toots, the rake, 
 | Sacred Cable Pilgrimage | **Hoard Dive:** dig through the hoard while newspaper avalanches bury him; it ends in a geyser of obsolete goods | Built |
 | Stump of Destiny | **Stump Wrestle:** mash to uproot it; it pops free and he goes over backwards. Then the rake on the way home. | Built |
 | Speak & Spell Salvage Duel | **Dumpster Duel:** a tug-of-war with Gary. Win and Gary goes head-first into the dumpster, legs kicking. Lose and Bill lands in the recycling. A toot or the old lure are the sneaky alternatives. | Built |
+| The Noise Complaint | **LEGAL DEPARTMENT!** (type it, mind the carriage return), then the **INSULT VOLLEY!** at the Lug Nutz, who laugh and flex it off | Built |
+| The Pitch | **THE PITCH!**: sticky-note movie ideas stuck on Kevin one at a time while he tries to close the door | Built |
 | The soup | **The Ten Distillations:** collect ingredients, add one per distillation, photograph it and send it to every contact | Built (the timed Soup Sprint is still planned) |
 | The Route | **Stealth Shuffle** past bylaw flashlight cones; an **Insult Volley** with the gym guys | Planned |
 | Grate Shelf Revelation | **Wanda Chase:** grab the grate and she chases; hurry or toot to escape, or get thrown back over the fence. Then **SHELF-IFY!** at the workbench: mash to hammer, and mind the thumb. | Built |

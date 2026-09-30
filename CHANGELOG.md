@@ -2,6 +2,26 @@
 
 All notable prototype milestones for The Scavenger's Chronicles are tracked here.
 
+## 0.7.0 - The Street (in progress)
+
+- Added the front of the house (`docs/design/areas/the-street.md`):
+  - Bill's front door, and an overgrown front yard of tall weeds, a bathtub planter, a rusty bike and a dry birdbath.
+  - The camera turns round in the front yard to show the front of the house.
+- The shops and streetcar along the north edge are gone. In their place is a quiet residential street with houses on both sides, trees, and cars parked along both curbs. The corner store and the gym stay.
+- Added Kevin across the street, the Lug Nutz at the gym, and joggers on "his" sidewalk.
+- Added three errands after the Grate Shelf Revelation:
+  - **The Noise Complaint:** type it at Bill's Legal Department (LEGAL DEPARTMENT!), then read it to the Lug Nutz (INSULT VOLLEY!).
+  - **Parcel Protection Program:** Kevin's parcels, "protected".
+  - **The Pitch:** sticky-note movie ideas, stuck on Kevin one at a time.
+- Big Wanda is more aggressive. She crowds him in her yard. When he takes the grate she yells "HEY!", then charges and lunges, and rattles the fence if he's just out of reach. A toot still stops her to applaud, and after two catches she's winded.
+- Guidance:
+  - The arrow is bigger, bounces and pulses, and carries a label.
+  - It routes through doors, gates and the stairs instead of pointing through walls.
+  - A ring pulses on the ground where it's pointing.
+  - Errand items he has dropped get a marker of their own.
+- The gym's camera-side walls now open only when Bill is inside, or right behind it and actually hidden. Its roof lifts when he's inside, and it has the east wall it was missing. Every building now opens up on its own, instead of all at once.
+- The gym is LUG NUTZ BOXING & IRON; Bill can hear them from home (he says).
+
 ## 0.6.0 - Soup, Synth and Big Wanda's Junkyard (in progress)
 
 - Added the soup's ten distillations. The soup is on the stove from the start, and twelve ingredients lie around the house and the Route; walk into one to collect it. Each distillation at the stove adds an ingredient, and Bill photographs it and sends it to all 214 contacts, whose replies come in on his phone. After the tenth he eats it ("SOUP FIRST. EVERYTHING ELSE LATER.") and the toot gauge grows to five for good.

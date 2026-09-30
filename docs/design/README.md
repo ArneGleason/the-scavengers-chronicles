@@ -14,6 +14,7 @@ The audit and planning pass that led here: [The Scavenger Goes 3D](https://claud
 | [comedy.md](comedy.md) | The comedy direction: the gag clock, easy guided play, Bill's comedy verbs, world gags, and an action challenge at every plot beat. Outranks earlier pacing assumptions | v0, first pass built |
 | [gags.md](gags.md) | The gag catalogue: what's built, what's next, what waits on other systems, mini-games against the plot beats, and canon from the brainstorm | Living |
 | [briefs/gag-brainstorm.md](briefs/gag-brainstorm.md) | A self-contained brief for brainstorming gags with an outside partner (ChatGPT): story, cast, rules, verbs, what's built, and the answer format | v0 |
+| [areas/the-street.md](areas/the-street.md) | The Street: Bill's overgrown front yard and front door, the residential street, Kevin, the Lug Nutz, the joggers, and the errands there. The camera turns round in the front yard | v0, built |
 | [areas/the-route.md](areas/the-route.md) | The Route: inspiration, layout, the three starter errands, Gary's rules, ambient life | v0, built as greybox |
 | [maquettes/bill-maquette-v0.html](maquettes/bill-maquette-v0.html) | Bill built from primitives under the real renderer (three.js r186, toon ramp, ink pass): poses, expressions, game zoom. [Live page](https://claude.ai/artifact/Rnmx5EQGARTef27vSA3Gg4) | v0 |
 | [technical-design.md](technical-design.md) | Stack, layout, runtime, content and zone formats, render pipeline, camera, controller, animation, NPCs, testing, the walking-toy milestone | v0 |

@@ -2,14 +2,13 @@
  * The Route (Act 2), greybox. Inspired by a Toronto west-end block, not copied from it:
  * Victorian semis backing onto a named laneway of garages, ivy-covered hydro poles, tangled
  * wires and green bins; a municipal parking lot; the back of a corner store with its
- * dumpster; a boxing gym; and a streetcar street beyond the lot.
+ * dumpster; and the Lug Nutz' boxing gym. The residential street out front is world/street.ts.
  *
  * Layout (metres; the camera looks from +X+Z):
  *   laneway      z 15.6..19.6, the whole width of the site, behind Bill's backyard gate
  *   parking lot  x 12.5..21.5, z -5.2..15.5
  *   corner store x 22..31,    z -5.2..9.5, its yard and dumpster between it and the lane
  *   boxing gym   x 32..40,    z -5.2..10
- *   main street  z -10.5..-6.6 with streetcar tracks, along the whole north edge (past Bill's front)
  */
 import * as THREE from "three/webgpu";
 import { StaticBuilder, type Walls, type Surfaces } from "./builder";
@@ -23,18 +22,18 @@ export const LANE = { z0: 15.6, z1: 19.6 };
 export const LOT: Rect = { x0: 12.5, x1: 21.5, z0: -5.2, z1: 15.5 };
 export const STORE: Rect = { x0: 22, x1: 31, z0: -5.2, z1: 9.5 };
 export const GYM: Rect = { x0: 32, x1: 40, z0: -5.2, z1: 10 };
-export const STREET = { z0: -10.5, z1: -6.6, x0: -14 };
 /** Gary's post, in front of the dumpster and the heap the Speak & Spell sits on. */
 export const GARY_POST = { x: 25.9, z: 14.4 };
 export const PRIZE_AT = new THREE.Vector3(25.1, 0.62, 13.0);
 
 export interface Route {
   builder: StaticBuilder;
-  /** Building roofs to lift when they'd hide Bill. */
-  roofs: { rect: Rect; obj: THREE.Object3D }[];
+  /** Building roofs to lift when they'd hide Bill (top is the roof's height). */
+  roofs: { rect: Rect; obj: THREE.Object3D; top: number }[];
+  /** Signs and murals on walls that drop away when he's inside that building. */
+  wallDecor: { rect: Rect; obj: THREE.Object3D }[];
   itemSpawns: { id: ItemId; at: THREE.Vector3 }[];
   junkSpawns: { kind: "box" | "crate" | "bucket"; at: THREE.Vector3 }[];
-  streetcar: THREE.Group;
   raccoon: THREE.Group;
   raccoonHome: THREE.Vector3;
 }
@@ -79,7 +78,7 @@ const muralTex = canvasTex(512, 256, (g, w, h) => {
   g.fillStyle = "#d9a441"; g.beginPath(); g.arc(w / 2, h / 2, 62, 0, 7); g.fill();
   g.fillStyle = P.ink; g.beginPath(); g.arc(w / 2 - 22, h / 2 - 12, 8, 0, 7); g.arc(w / 2 + 22, h / 2 - 12, 8, 0, 7); g.fill();
   g.beginPath(); g.moveTo(w / 2 - 12, h / 2 + 14); g.lineTo(w / 2 + 12, h / 2 + 14); g.lineTo(w / 2, h / 2 + 28); g.fill();
-  g.font = "900 40px 'Arial Black', Impact, sans-serif"; g.fillStyle = "#fbf6ec"; g.textAlign = "left"; g.fillText("PRIDE", 20, 50); g.textAlign = "right"; g.fillText("BOXING", w - 20, h - 24);
+  g.font = "900 40px 'Arial Black', Impact, sans-serif"; g.fillStyle = "#fbf6ec"; g.textAlign = "left"; g.fillText("LUG NUTZ", 20, 50); g.textAlign = "right"; g.fillText("BOXING & IRON", w - 20, h - 24);
 });
 const asphaltTex = canvasTex(64, 64, (g) => {
   g.fillStyle = P.asphalt; g.fillRect(0, 0, 64, 64);
@@ -97,6 +96,7 @@ const EAST = SITE.x1;
 export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surfaces: Surfaces): Route {
   const b = new StaticBuilder(scene, phys);
   const roofs: Route["roofs"] = [];
+  const wallDecor: Route["wallDecor"] = [];
   const asphalt = toon("#fff", { map: asphaltTex, ink: 0.5 });
   const brick = toon("#fff", { map: brickTex, ink: 0.8 });
 
@@ -104,12 +104,9 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   b.box([-14, -0.1, LANE.z0], [EAST, 0.006, LANE.z1], asphalt, "outdoors", { collide: false, tile: 2 });
   b.box([LOT.x0, -0.1, LOT.z0], [LOT.x1, 0.006, LOT.z1], asphalt, "outdoors", { collide: false, tile: 2 });
   b.box([STORE.x0, -0.1, STORE.z1], [EAST, 0.008, LANE.z0], P.concrete, "outdoors", { collide: false, ink: 0.4 });
-  b.box([STREET.x0, -0.1, STREET.z0], [EAST, 0.006, STREET.z1], asphalt, "outdoors", { collide: false, tile: 2 });
-  b.box([STREET.x0, -0.1, STREET.z1], [EAST, 0.03, -5.1], P.concrete, "outdoors", { collide: false, ink: 0.5 }); // sidewalk
   surfaces.add({ x0: -14, x1: EAST, z0: LANE.z0, z1: LANE.z1, y0: -0.5, y1: 2, surface: "asphalt" });
   surfaces.add({ x0: LOT.x0, x1: LOT.x1, z0: LOT.z0, z1: LOT.z1, y0: -0.5, y1: 2, surface: "asphalt" });
   surfaces.add({ x0: STORE.x0, x1: EAST, z0: STORE.z1, z1: LANE.z0, y0: -0.5, y1: 2, surface: "concrete" });
-  surfaces.add({ x0: STREET.x0, x1: EAST, z0: STREET.z1, z1: -5.1, y0: -0.5, y1: 2, surface: "concrete" });
   // oil stains and a drain grate in the lane
   for (const [x, z, r] of [[6, 17.2, 0.7], [18.5, 18.1, 0.5], [30, 16.8, 0.9], [-7, 18.4, 0.6]] as const) {
     b.geo(new THREE.CircleGeometry(r, 14), "#2a2e33", "outdoors", [x, 0.008, z], [-Math.PI / 2, 0, 0], [1, 0.7, 1], 0.2);
@@ -139,7 +136,7 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
 
   /* ---------- the corner store (the back of it faces the lane) ---------- */
   const H = 4.0;
-  const wallOpts = { base: 0, height: H, level: "ground" as const, color: "#c9b79a" };
+  const wallOpts = { base: 0, height: H, level: "ground" as const, color: "#c9b79a", owner: STORE };
   walls.add("x", STORE.z1, STORE.x0, STORE.x1, { ...wallOpts, openings: [{ from: 27.4, to: 28.5, kind: "door" }, { from: 23.2, to: 25.0, kind: "window" }] });
   walls.add("z", STORE.x0, STORE.z0, STORE.z1, { ...wallOpts, openings: [{ from: -3.8, to: -0.4, kind: "window" }, { from: 1.2, to: 4.6, kind: "window" }] });
   walls.add("z", STORE.x1, STORE.z0, STORE.z1, wallOpts);
@@ -162,11 +159,13 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   storeRoof.add(sign);
   scene.add(storeRoof);
   tagOutdoors(storeRoof);
-  roofs.push({ rect: STORE, obj: storeRoof });
+  roofs.push({ rect: STORE, obj: storeRoof, top: H + 1.2 });
   const deliveries = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.35), toon("#fff", { map: signTex("DELIVERIES ONLY", "#fbf6ec", "#1e1a18", 512, 128, "900 52px 'Arial Black', sans-serif"), ink: 0.6 }));
   deliveries.position.set(27.95, 2.45, STORE.z1 + 0.09); scene.add(deliveries); tagOutdoors(deliveries);
+  wallDecor.push({ rect: STORE, obj: deliveries });
   const mural = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.4), toon("#fff", { map: graffitiTex("#c9b79a", 3), ink: 0.3 }));
   mural.position.set(29.6, 1.7, STORE.z1 + 0.085); scene.add(mural); tagOutdoors(mural);
+  wallDecor.push({ rect: STORE, obj: mural });
 
   /* ---------- store yard: the dumpster and the heap ---------- */
   // dumpster: green steel with the lid flipped open
@@ -186,13 +185,15 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   b.box([22.1, 2.4, 11.3], [24.4, 2.55, 15.3], "#5b5249", "outdoors", { collide: false });
 
   /* ---------- the boxing gym ---------- */
-  const gymOpts = { base: 0, height: 4.4, level: "ground" as const, color: "#8c8f93" };
+  const gymOpts = { base: 0, height: 4.4, level: "ground" as const, color: "#8c8f93", owner: GYM };
   walls.add("x", GYM.z1, GYM.x0, GYM.x1, { ...gymOpts, openings: [{ from: 34.0, to: 36.8, kind: "door" }] });
   walls.add("z", GYM.x0, GYM.z0, GYM.z1, gymOpts);
   walls.add("x", GYM.z0, GYM.x0, GYM.x1, gymOpts);
+  walls.add("z", GYM.x1, GYM.z0, GYM.z1, { ...gymOpts, openings: [{ from: 2.0, to: 5.0, kind: "window" }] }); // it never had an east wall
   b.box([GYM.x0, -0.05, GYM.z0], [GYM.x1, 0.02, GYM.z1], "#3a3f46", "outdoors", { collide: false, ink: 0.4 });
   const gymMural = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3), toon("#fff", { map: muralTex, ink: 0.4 }));
   gymMural.position.set(38.4, 2.6, GYM.z1 + 0.085); scene.add(gymMural); tagOutdoors(gymMural);
+  wallDecor.push({ rect: GYM, obj: gymMural });
   // a heavy bag and ring posts, visible through the roll-up door
   b.geo(new THREE.CylinderGeometry(0.22, 0.22, 1.1, 14), "#8a2b2b", "outdoors", [35.4, 1.6, 8.2]);
   b.geo(new THREE.CylinderGeometry(0.01, 0.01, 1.6, 4), P.ink, "outdoors", [35.4, 3.0, 8.2], undefined, undefined, 0);
@@ -202,7 +203,7 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   const gslab = new THREE.Mesh(new THREE.BoxGeometry(GYM.x1 - GYM.x0 + 0.3, 0.25, GYM.z1 - GYM.z0 + 0.3), roofMat);
   gslab.position.set((GYM.x0 + GYM.x1) / 2, 4.4 + 0.12, (GYM.z0 + GYM.z1) / 2);
   gymRoof.add(gslab); scene.add(gymRoof); tagOutdoors(gymRoof);
-  roofs.push({ rect: GYM, obj: gymRoof });
+  roofs.push({ rect: GYM, obj: gymRoof, top: 4.6 });
 
   /* ---------- the neighbour's garage west of Bill's yard, and fences across the lane ---------- */
   b.box([-13.8, 0, 11.6], [-11.4, 2.5, 15.3], brick, "outdoors", { tile: 1.2 });
@@ -253,32 +254,6 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   b.geo(new THREE.BoxGeometry(1.4, 1.9, 0.22), "#e9dcc0", "outdoors", [11.9, 0.95, 15.45], [-0.18, 0, 0]); // curbside mattress
   phys.box([11.2, 0, 15.3], [12.6, 1.9, 15.7]);
 
-  /* ---------- the main street, its streetcar, and the shops across it ---------- */
-  for (const z of [-7.9, -9.3]) for (const dz of [-0.36, 0.36]) b.box([STREET.x0, 0.006, z + dz - 0.04], [EAST, 0.03, z + dz + 0.04], "#6b6f73", "outdoors", { collide: false, ink: 0.2 });
-  for (let x = -10; x < EAST; x += 8) {
-    b.geo(new THREE.CylinderGeometry(0.1, 0.12, 6.2, 8), "#4d5156", "outdoors", [x, 3.1, -6.9], undefined, undefined, 0.6);
-    b.box([x - 0.05, 5.8, -9.3], [x + 0.05, 5.9, -6.9], "#4d5156", "outdoors", { collide: false, ink: 0.4 });
-  }
-  for (const z of [-7.9, -9.3]) b.box([STREET.x0, 5.7, z - 0.012], [EAST, 5.725, z + 0.012], P.ink, "outdoors", { collide: false, ink: 0 });
-  phys.box([STREET.x0, 0, STREET.z1 - 0.2], [EAST, 2, STREET.z1]); // curb: he stays on the sidewalk
-  const shops: [number, number, number, string, string, string][] = [
-    [-14, 6.4, 6.4, "#7f6a8a", "VIDEO RENTALS", "#f2b632"], [-7.4, 5.4, 8, "#9aa3a8", "LAUNDROMAT", "#1e1a18"],
-    [-1.2, 6.2, 6.8, "#a4553f", "BARBER", "#fbf6ec"], [5.2, 7, 7.2, "#6f8f4e", "FRUIT & VEG", "#fbf6ec"],
-    [12.5, 7.4, 7.5, "#b0665a", "CAFÉ", "#fbf6ec"], [20.5, 7.4, 6.5, "#8a9a7e", "BAKERY", "#fbf6ec"],
-    [27.5, 7.4, 8.5, "#a4553f", "HARDWARE", "#f2b632"], [35.1, 5.9, 7, "#6f7f86", "RECORDS", "#e0367a"],
-    [41.6, 6.6, 6.8, "#7a6f5c", "PAWN", "#f2b632"], [48.8, 7.4, 7.4, "#5f7f79", "DOLLAR STORE", "#fbf6ec"], [56.8, 7.2, 6.2, "#8a5a6a", "VACUUM REPAIR", "#fbf6ec"],
-  ];
-  for (const [x, w, h, col, name, fg] of shops) {
-    b.box([x, 0, -16.5], [x + w, h, -11], col, "outdoors", { collide: false, ink: 0.8 });
-    const s = new THREE.Mesh(new THREE.PlaneGeometry(w - 1, 0.8), toon("#fff", { map: signTex(name, "#1e1a18", fg), ink: 0.5 }));
-    s.position.set(x + w / 2, 3.4, -10.98); scene.add(s); tagOutdoors(s);
-    for (let k = 0; k < Math.floor(w / 1.6); k++) b.box([x + 0.5 + k * 1.6, 1.0, -10.99], [x + 1.6 + k * 1.6, 2.6, -10.97], "#8fb0b5", "outdoors", { collide: false, ink: 0.4 });
-    b.box([x + 0.3, 2.8, -10.9], [x + w - 0.3, 3.0, -10.1], ["#c8312d", "#2aa6a1", "#e8b23a", "#2f6e4f"][((Math.floor(x) % 4) + 4) % 4], "outdoors", { collide: false, ink: 0.5 });
-  }
-  const streetcar = makeStreetcar();
-  streetcar.position.set(60, 0, -7.9);
-  scene.add(streetcar); tagOutdoors(streetcar);
-
   /* ---------- a raccoon on the bins ---------- */
   const raccoon = makeRaccoon();
   const raccoonHome = new THREE.Vector3(22.1, 1.12, 16.05);
@@ -289,7 +264,7 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   return {
     builder: b,
     roofs,
-    streetcar,
+    wallDecor,
     raccoon,
     raccoonHome,
     itemSpawns: [{ id: "speakAndSpell", at: PRIZE_AT.clone() }],
@@ -329,17 +304,6 @@ function car(b: StaticBuilder, phys: Physics, cx: number, cz: number, color: str
   b.box([cx - 0.76, 1.0, cz - 0.9], [cx + 0.76, 1.4, cz + 1.0], "#8fb0b5", "outdoors", { collide: false, ink: 0.3 });
   for (const sx of [-0.8, 0.8]) for (const sz of [-1.35, 1.35]) b.geo(new THREE.CylinderGeometry(0.3, 0.3, 0.22, 14), P.plastic, "outdoors", [cx + sx, 0.3, cz + sz], [0, 0, Math.PI / 2], undefined, 0.6);
   phys.box([cx - 0.9, 0, cz - 2.15], [cx + 0.9, 1.45, cz + 2.15]);
-}
-
-function makeStreetcar() {
-  const g = new THREE.Group();
-  const red = toon("#c8312d", { ink: 1 }), white = toon("#f2f5f7", { ink: 0.8 }), glass = toon("#8fb0b5", { ink: 0.4 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(15, 2.3, 2.5), red); body.position.y = 1.55; g.add(body);
-  const band = new THREE.Mesh(new THREE.BoxGeometry(15.02, 0.9, 2.52), glass); band.position.y = 2.0; g.add(band);
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(14.6, 0.35, 2.3), white); roof.position.y = 2.88; g.add(roof);
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.9, 4), toon(P.ink, { ink: 0 }));
-  pole.position.set(-3, 4.2, 0); pole.rotation.z = -0.9; g.add(pole);
-  return g;
 }
 
 function makeRaccoon() {

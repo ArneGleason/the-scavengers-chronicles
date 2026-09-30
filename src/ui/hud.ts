@@ -33,6 +33,7 @@ export class Hud {
   /** Called when the player clicks the photo card away. */
   onCardClick: (() => void) | null = null;
   private lastSoup = "";
+  private itemMarks: HTMLDivElement[] = [];
   private lastGas = "";
   private captionUntil = 0;
   private captionQueue: { text: string; seconds: number }[] = [];
@@ -45,7 +46,8 @@ export class Hud {
       <span><kbd>Space</kbd> toot dash</span><span><kbd>E</kbd> grab / mash</span>
       <span><kbd>R</kbd> drop</span><span><kbd>Z</kbd> zoom</span>
       <span><kbd>T</kbd> tune feel</span><span><kbd>N</kbd> mute</span>`;
-    this.marker.innerHTML = `<span>&#9660;</span>`;
+    // a big chunky arrow that bobs and pulses, with a label under it saying where it's pointing
+    this.marker.innerHTML = `<i class="ring"></i><svg viewBox="0 0 60 64" aria-hidden="true"><path d="M18 4h24v26h14L30 60 4 30h14z" /></svg><span class="label"></span>`;
     this.challengeEl.innerHTML = `<b></b><div class="meter"><i></i><em></em></div><span class="mash">MASH <kbd>E</kbd>!</span>`;
     this.jamEl.innerHTML = `<b></b><div class="notes"><i>&#9834;</i><i>&#9834;</i><i>&#9834;</i></div><span class="press">PRESS <kbd></kbd></span>`;
     this.phoneEl.innerHTML = `<div class="screen"><small>SOUP UPDATE</small><b></b><div class="photo"><i></i></div><div class="send"><span></span><em><i></i></em></div><ul></ul></div>`;
@@ -96,7 +98,7 @@ export class Hud {
    * @param target the interaction prompt, if any
    * @param goal where the objective marker points (screen px), or null
    */
-  update(now: number, anchors: Record<string, Pt | null>, target: (Pt & { label: string }) | null, goal: Pt | null) {
+  update(now: number, anchors: Record<string, Pt | null>, target: (Pt & { label: string }) | null, goal: (Pt & { label: string; dist: number }) | null) {
     const placed: { x: number; y: number; w: number; h: number }[] = [];
     for (const [speaker, b] of this.balloons) {
       if (now > b.until) b.el.hidden = true;
@@ -125,9 +127,9 @@ export class Hud {
 
     // objective marker: bob over the goal, or pin to the screen edge and point at it
     if (goal && !target) {
-      const m = 34, bob = Math.sin(now * 5) * 5;
-      const inside = goal.x > m && goal.x < innerWidth - m && goal.y > m + 40 && goal.y < innerHeight - m;
-      let x = goal.x, y = goal.y - 58 + bob, rot = 0;
+      const m = 56, bob = Math.abs(Math.sin(now * 4)) * 12;
+      const inside = goal.x > m && goal.x < innerWidth - m && goal.y > m + 70 && goal.y < innerHeight - m;
+      let x = goal.x, y = goal.y - 70 - bob, rot = 0;
       if (!inside) {
         const cx = innerWidth / 2, cy = innerHeight / 2, dx = goal.x - cx, dy = goal.y - cy;
         const k = Math.min((innerWidth / 2 - m) / Math.abs(dx || 1e-3), (innerHeight / 2 - m) / Math.abs(dy || 1e-3));
@@ -136,8 +138,28 @@ export class Hud {
       }
       this.marker.hidden = false;
       this.marker.classList.toggle("edge", !inside);
-      this.marker.style.transform = `translate(${Math.round(x - 16)}px, ${Math.round(y - 16)}px) rotate(${rot}deg)`;
+      this.marker.style.transform = `translate(${Math.round(x - 30)}px, ${Math.round(y - 32)}px)`;
+      (this.marker.querySelector("svg") as SVGElement).style.transform = `rotate(${rot}deg)`;
+      const label = this.marker.querySelector(".label") as HTMLElement;
+      label.textContent = inside ? goal.label : `${goal.label} \u00b7 ${Math.round(goal.dist)} m`;
     } else this.marker.hidden = true;
+  }
+
+  /** Little markers over errand items lying around (dropped, or grabbed back by someone). */
+  setItemMarks(marks: (Pt & { label: string })[]) {
+    while (this.itemMarks.length < marks.length) {
+      const e = el("div", "itemmark") as HTMLDivElement;
+      e.innerHTML = `<b>!</b><span></span>`;
+      this.root.append(e);
+      this.itemMarks.push(e);
+    }
+    this.itemMarks.forEach((e, i) => {
+      const m = marks[i];
+      e.hidden = !m;
+      if (!m) return;
+      e.querySelector("span")!.textContent = m.label;
+      e.style.transform = `translate(${Math.round(m.x - 14)}px, ${Math.round(m.y - 58)}px)`;
+    });
   }
 
   setInventory(inv: Inventory) {
