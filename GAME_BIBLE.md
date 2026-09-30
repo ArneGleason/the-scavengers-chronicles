@@ -165,11 +165,11 @@ Bill's front door opens onto an overgrown front yard of tall weeds, a sidewalk h
 
 ### The Route (built as greybox)
 
-Bill's back gate opens onto a Toronto-style laneway. Along the lane are a parking lot, the back of a corner variety store with the dumpster Gary guards, and a boxing gym. A streetcar street with shopfronts runs along the north edge. Layout, errands and Gary's rules: [docs/design/areas/the-route.md](docs/design/areas/the-route.md).
+Bill's back gate opens onto a Toronto-style laneway. Along the lane are a parking lot, the back of a corner variety store with the dumpster Gary guards, and a boxing gym. The residential street runs along the north edge (see The Street). Layout, errands and Gary's rules: [docs/design/areas/the-route.md](docs/design/areas/the-route.md).
 
 ### Finale beats (draft)
 
-Played as an in-engine cutscene.
+Played as an in-engine cutscene. A fuller road to the finale, from the factory and Kevin's last favour to page ten and "Page two?", is in [docs/design/story.md](docs/design/story.md); where the two differ, `story.md` is newer.
 
 1. At the airfield, Bill fits the Final Adapter into the jet's panel. Aximandra's head pops out of the satchel.
 2. In the cockpit, sunglasses on, he patches the basement synth rig into the jet's PA with the Final Adapter. No one asks why this works.

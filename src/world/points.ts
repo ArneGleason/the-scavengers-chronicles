@@ -4,7 +4,7 @@ import type { ItemId } from "../content/items";
 import { BASEMENT_Y } from "./stairs";
 import { PRIZE_AT } from "./route";
 import { GRATE_AT } from "./junkyard";
-import { WORKBENCH_AT, TYPEWRITER_AT, STICKY_AT, MANUSCRIPT_AT } from "./props";
+import { WORKBENCH_AT, TYPEWRITER_AT, STICKY_AT, MANUSCRIPT_AT, RESERVE_AT, FRAME_AT } from "./props";
 import { BILL_STOOP, KEVIN_STOOP } from "./street";
 
 /**
@@ -27,6 +27,11 @@ export const POINTS: Record<PointId, { at: THREE.Vector3; reach: number }> = {
   stickyWall: { at: STICKY_AT.clone().setY(0), reach: 1.2 },
   kevinDoor: { at: KEVIN_STOOP.clone(), reach: 1.6 },
   kitchenTable: { at: MANUSCRIPT_AT.clone().setY(0), reach: 1.3 },
+  cornerStore: { at: new THREE.Vector3(23.9, 0, 7.6), reach: 1.3 },
+  reserveShelf: { at: RESERVE_AT.clone(), reach: 1.2 },
+  garyDumpster: { at: new THREE.Vector3(27.5, 0, 14.2), reach: 1.3 },
+  frame: { at: FRAME_AT.clone(), reach: 1.2 },
+  students: { at: new THREE.Vector3(28.3, 0, -8.6), reach: 2.0 },
 };
 
 /** Where each delivered item ends up in the house, and which way it faces. */
@@ -42,4 +47,8 @@ export const INSTALL: Partial<Record<ItemId, { at: THREE.Vector3; rotY: number }
   parcels: { at: new THREE.Vector3(-0.1, 0.42, -5.65), rotY: 0.35 },
   movieIdeas: { at: new THREE.Vector3(0.9, 0.44, -24.3), rotY: 0.4 },
   manuscript: { at: new THREE.Vector3(-0.6, 0.39, -24.5), rotY: -0.3 },
+  // the reserve on its shelf; the cheesecloth vanishes into the frame; page one ends up on the students' wall
+  vinegarJug: { at: new THREE.Vector3(-4.35, 1.63, 0.24), rotY: 0.3 },
+  cheesecloth: { at: new THREE.Vector3(FRAME_AT.x, 1.5, 0.14), rotY: 0 },
+  firstPage: { at: new THREE.Vector3(28.3, 0.52, -6.4), rotY: 0.2 },
 };

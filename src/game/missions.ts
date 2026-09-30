@@ -18,7 +18,7 @@ export interface MissionState {
 }
 
 export const newMissionState = (): MissionState => ({
-  stages: { cablePilgrimage: "find", stumpProphecy: "locked", dumpsterDiplomacy: "locked", grateShelf: "locked", grateVault: "locked", noiseComplaint: "locked", parcelProtection: "locked", thePitch: "locked", theManuscript: "locked" },
+  stages: { cablePilgrimage: "find", stumpProphecy: "locked", dumpsterDiplomacy: "locked", grateShelf: "locked", grateVault: "locked", noiseComplaint: "locked", parcelProtection: "locked", thePitch: "locked", vinegarReserve: "locked", cheesecloth: "locked", theManuscript: "locked", firstPage: "locked" },
   active: "cablePilgrimage",
 });
 

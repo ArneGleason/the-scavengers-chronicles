@@ -6,9 +6,9 @@
 import type { BillRig } from "./billModel";
 import { clamp, smoothstep } from "../../core/math";
 
-export type Fall = "stagger" | "faceplant" | "buttflop" | "flung" | "tug" | "dig";
+export type Fall = "stagger" | "teeter" | "faceplant" | "buttflop" | "flung" | "tug" | "dig";
 
-const DURATION: Record<Fall, number> = { stagger: 1.3, faceplant: 1.7, buttflop: 1.5, flung: 0.75, tug: 99, dig: 99 };
+const DURATION: Record<Fall, number> = { stagger: 1.3, teeter: 1.6, faceplant: 1.7, buttflop: 1.5, flung: 0.75, tug: 99, dig: 99 };
 
 export class Slapstick {
   state: Fall | null = null;
@@ -43,6 +43,13 @@ export class Slapstick {
         const k = 1 - smoothstep(0.3, DURATION.stagger, t);
         sq.rotation.x += -0.45 * k * (t < 0.12 ? t / 0.12 : 1);
         sq.rotation.z += 0.18 * k * Math.sin(t * 13);
+        break;
+      }
+      case "teeter": {
+        // the world has turned round and he hasn't: wobbling on the spot like a man on a ledge
+        const k = smoothstep(0, 0.2, t) * (1 - smoothstep(1.1, DURATION.teeter, t));
+        sq.rotation.z += 0.3 * k * Math.sin(t * 7.5);
+        sq.rotation.x += 0.14 * k * Math.sin(t * 5 + 1);
         break;
       }
       case "faceplant": {

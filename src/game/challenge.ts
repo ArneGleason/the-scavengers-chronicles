@@ -30,6 +30,12 @@ export const INSULT_VOLLEY: TugConfig = { start: 0.2, gain: 0.075, pull: 0.05, s
 export const THE_PITCH: TugConfig = { start: 0.05, gain: 0.045, pull: 0.03, surgeEvery: 2.0, surge: 0.08, canLose: false };
 /** Life lessons at his former students, who groan in waves. Can't be lost. */
 export const LIFE_LESSONS: TugConfig = { start: 0.1, gain: 0.06, pull: 0.04, surgeEvery: 1.9, surge: 0.08, canLose: false };
+/** Pouring the vinegar reserve through a wobbling funnel. Can't be lost. */
+export const RESERVE_TRANSFER: TugConfig = { start: 0.05, gain: 0.07, pull: 0.035, surgeEvery: 2.2, surge: 0.08, canLose: false };
+/** Stretching the cheesecloth into its frame; it keeps wrapping round him instead. Can't be lost. */
+export const CURATE: TugConfig = { start: 0.05, gain: 0.06, pull: 0.035, surgeEvery: 2.0, surge: 0.08, canLose: false };
+/** Page one, caught in a gust, in front of his former students. Can't be lost. */
+export const PROTECT_THE_TEXT: TugConfig = { start: 0.1, gain: 0.07, pull: 0.04, surgeEvery: 1.8, surge: 0.1, canLose: false };
 export const DUMPSTER_DUEL: TugConfig = { start: 0.5, gain: 0.08, pull: 0.17, surgeEvery: 1.4, surge: 0.07, canLose: true };
 
 export type TugState = "running" | "won" | "lost";

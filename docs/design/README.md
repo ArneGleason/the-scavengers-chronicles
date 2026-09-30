@@ -12,7 +12,9 @@ The audit and planning pass that led here: [The Scavenger Goes 3D](https://claud
 | [characters/bill.md](characters/bill.md) | Bill: who he is, voice, look, palette, expressions, gaits, sound | v0 |
 | [prompts/bill.md](prompts/bill.md) | Image-model prompts for Bill's sheets and the Phase 0 style frames; turnaround-to-3D spec | v0 |
 | [comedy.md](comedy.md) | The comedy direction: the gag clock, easy guided play, Bill's comedy verbs, world gags, and an action challenge at every plot beat. Outranks earlier pacing assumptions | v0, first pass built |
+| [story.md](story.md) | The plot from the neighbourhood errands to Vegas: the memory ledger, corrections, the finale beats, running gags with Vegas payoffs, the errand backlog, and questions only the user can answer | v0, three errands built |
 | [gags.md](gags.md) | The gag catalogue: what's built, what's next, what waits on other systems, mini-games against the plot beats, and canon from the brainstorm | Living |
+| [briefs/story-brainstorm.md](briefs/story-brainstorm.md) | Round 2 brief for the outside brainstorm (ChatGPT): a memory ledger first, then story, errands, Kevin, the students, Rob, area one-liners and the road to Vegas, grounded in it | v0 |
 | [briefs/gag-brainstorm.md](briefs/gag-brainstorm.md) | A self-contained brief for brainstorming gags with an outside partner (ChatGPT): story, cast, rules, verbs, what's built, and the answer format | v0 |
 | [areas/the-street.md](areas/the-street.md) | The Street: Bill's overgrown front yard and front door, the residential street, Kevin, the Lug Nutz, the joggers, and the errands there. The camera turns round in the front yard | v0, built |
 | [areas/the-route.md](areas/the-route.md) | The Route: inspiration, layout, the three starter errands, Gary's rules, ambient life | v0, built as greybox |
@@ -42,10 +44,12 @@ The audit and planning pass that led here: [The Scavenger Goes 3D](https://claud
 | 2026-09-28 | The cat is **Aximandra** |
 | 2026-09-29 | The house is a hoarder shambles, not a pristine period home; Bill calls himself an archivist (`gags.md`, "Canon from the brainstorm") |
 | 2026-09-29 | A ridiculously slapstick, crude interactive comedy: easy to play, guided along one main plot, a silly action challenge at each key beat, and a gag every 10–15 seconds (`comedy.md`) |
+| 2026-09-30 | The road to Vegas runs through one useful photo reply, the factory, Kevin's final favour and Rob's trailer; the third note becomes the hook of the eight bars; Mina asks for page two (`story.md`) |
 
 ## Open
 
 - Scope of v1 (recommended: the five errands, refined).
 - Voices (recommended: pre-rendered narrator plus gibberish barks).
 - Phones (recommended: desktop first, touch in Phase 5).
-- Story hooks 2 to 6 in `characters/bill.md`.
+- Story hooks 2, 4, 5 and 6 in `characters/bill.md`.
+- The eight questions for the user in `story.md` (what Bill taught, his albums, the Vinegar Wolf, and more).

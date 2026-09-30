@@ -443,6 +443,7 @@ if (want("street: the pitch, sticky note by sticky note")) {
   await page.close();
 }
 const DONE8 = `${DONE5},noiseComplaint,parcelProtection,thePitch`;
+const DONE10 = `${DONE8},vinegarReserve,cheesecloth`;
 if (want("neighbours: Wanda's gate is locked until the cable and the stump are done")) {
   // neighbours: Wanda's gate is locked until the cable and the stump are done
   const page = await open("at=48,0,17.6&face=180&zoom=game");
@@ -467,14 +468,41 @@ if (want("neighbours: the camera faces Bill's side of the street until he crosse
   check(a.reversed && !b.reversed, `on the sidewalk by the store it faces his side; across the road it turns back (${a.reversed} -> ${b.reversed})`);
   await page.close();
 }
+for (const kind of ["flat", "teeter"]) {
+  if (!want(`street: the camera swing makes Bill wobble (${kind}), and he has an excuse`)) continue;
+  // street: crossing the middle of the road swings the camera round, and Bill loses his balance
+  const page = await open(`at=23.5,0,-12&face=0&zoom=game&wobble=${kind}`);
+  await page.waitForTimeout(500);
+  const walking = walkTo(page, 23.5, -17.4, { timeout: 9000 });
+  const t0 = Date.now();
+  while (!((await scav(page)).wobbles >= 1) && Date.now() - t0 < 8000) await page.waitForTimeout(50);
+  await page.waitForTimeout(kind === "flat" ? 450 : 300);
+  await page.screenshot({ path: `shots/e2e-wobble-${kind}.png` });
+  const locked = (await scav(page)).locked;
+  await walking;
+  await page.waitForTimeout(kind === "flat" ? 1200 : 900);
+  const a = await scav(page);
+  const said = await page.$eval(".balloon-bill", (e) => (e.hidden ? "" : e.textContent)).catch(() => "");
+  await page.screenshot({ path: `shots/e2e-wobble-${kind}-excuse.png` });
+  check(a.wobbles === 1 && !a.reversed && locked, `crossing the road, the camera swings round and Bill ${kind === "flat" ? "falls flat on his face" : "teeters"}, which stops him for a moment (locked ${locked})`);
+  check(said.length > 12, `then he explains it ("${said}")`);
+  if (kind === "flat") {
+    await walkTo(page, 23.5, -12, { timeout: 8000 });
+    const b = await scav(page);
+    check(b.reversed && b.wobbles === 1, `crossing straight back, he keeps his feet (${b.wobbles} wobble)`);
+  }
+  await page.close();
+}
 if (want("neighbours: Captain Caffeine to Kevin, then his pointless favours")) {
   // neighbours: Captain Caffeine to Kevin, then his pointless favours
-  const page = await open(`at=0.2,0,-23.2&face=180&zoom=game&${DONE8}&give=manuscript`);
+  const page = await open(`at=0.2,0,-23.2&face=180&zoom=game&${DONE10}&give=manuscript`);
   await page.waitForTimeout(900);
   await page.keyboard.press("KeyE");
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(5500); // the photo card
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(2500);
   const a = await scav(page);
-  check(a.stages.theManuscript === "complete" && a.favours.stage === "doing", `the manuscript goes to Kevin, and Kevin asks a favour (${a.favours.stage})`);
+  check(a.stages.theManuscript === "complete" && a.inv.includes("firstPage"), `the manuscript goes to Kevin, who hands back page one ("Good opening") (${a.inv})`);
   await page.close();
   const p2 = await open(`at=-0.7,0,-6.3&face=0&zoom=game&${DONE8},theManuscript&favour=0`);
   await p2.waitForTimeout(6000);
@@ -513,6 +541,54 @@ if (want("neighbours: Bill has something to say about where he is")) {
   const s = await scav(page);
   const said = await page.$eval(".balloon-bill", (e) => !e.hidden && e.textContent.length > 0).catch(() => false);
   check(s.zone === "kitchen" && said, `in the kitchen, he says something about the kitchen (${s.zone})`);
+  await page.close();
+}
+/** Mash until the current challenge is over. */
+async function mashOut(page, max = 14000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < max && (await scav(page)).challenge) await mash(page, 0.5);
+}
+if (want("round2: the vinegar reserve, the cheesecloth retrospective, and first-page proof")) {
+  // round2: the vinegar reserve, the cheesecloth retrospective, and first-page proof
+  let page = await open(`at=-4.5,0,0.95&face=180&zoom=close&${DONE8}&give=vinegarJug`);
+  await page.waitForTimeout(900);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(500);
+  check((await scav(page)).challenge?.kind === "reserve", "delivering the vinegar to the RESERVE shelf starts RESERVE TRANSFER!");
+  await mash(page, 1.2);
+  await page.screenshot({ path: "shots/e2e-reserve.png" });
+  await mashOut(page);
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: "shots/e2e-reserve-hat.png" });
+  check((await scav(page)).stages.vinegarReserve === "complete", "the reserve is transferred (and the funnel is a hat)");
+  await page.close();
+
+  page = await open(`at=1.2,0,0.95&face=180&zoom=close&${DONE8},vinegarReserve&give=cheesecloth`);
+  await page.waitForTimeout(900);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(500);
+  check((await scav(page)).challenge?.kind === "curate", "delivering the cheesecloth to the frame starts CURATE!");
+  await mash(page, 1.8);
+  await page.screenshot({ path: "shots/e2e-curate.png" });
+  await mashOut(page);
+  await page.waitForTimeout(1500);
+  check((await scav(page)).stages.cheesecloth === "complete", "the Cheesecloth Period is on display");
+  await page.close();
+
+  page = await open(`at=28.3,0,-9.4&face=0&zoom=game&${DONE10},theManuscript&give=firstPage`);
+  await page.waitForTimeout(900);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(500);
+  check((await scav(page)).challenge?.kind === "proof", "taking page one to the students starts PROTECT THE TEXT!");
+  await mash(page, 1.2);
+  await page.screenshot({ path: "shots/e2e-proof.png" });
+  await mashOut(page);
+  await page.waitForTimeout(5500);
+  await page.keyboard.press("KeyE"); // put the photo card away
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: "shots/e2e-proof-after.png" });
+  const s = await scav(page);
+  check(s.stages.firstPage === "complete" && s.favours.stage === "doing", `Mina reads page one; then Kevin texts a favour (${s.favours.stage})`);
   await page.close();
 }
 if (want('the old way still works: lure Gary down the lane and beat him back to the prize')) {

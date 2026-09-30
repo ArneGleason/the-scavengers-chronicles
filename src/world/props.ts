@@ -25,6 +25,10 @@ export const TYPEWRITER_AT = new THREE.Vector3(-3.3, 0, -1.5);
 export const STICKY_AT = new THREE.Vector3(-5.55, 1.0, 3.55);
 /** Captain Caffeine, the masterpiece novel, lives on the kitchen table next to the soup bowl. */
 export const MANUSCRIPT_AT = new THREE.Vector3(-3.6, 0.82, 2.75);
+/** The kitchen shelf marked RESERVE, on the wall to the front hall; he stands south of it. */
+export const RESERVE_AT = new THREE.Vector3(-4.5, 0, 0.9);
+/** The empty frame in the living room awaiting a historically significant cloth. */
+export const FRAME_AT = new THREE.Vector3(1.2, 0, 0.9);
 
 const newsTex = canvasTex(64, 48, (g, w, h) => {
   g.fillStyle = "#ece2c8"; g.fillRect(0, 0, w, h);
@@ -46,6 +50,8 @@ export interface Props {
   adapterBox: THREE.Group;
   bench: THREE.Group;
   legal: THREE.Group;
+  reserve: THREE.Group;
+  frame: THREE.Group;
 }
 
 export function buildProps(scene: THREE.Scene, phys: Physics): Props {
@@ -195,7 +201,46 @@ export function buildProps(scene: THREE.Scene, phys: Physics): Props {
   }
   tagged(notes, "ground", scene);
 
-  return { hoard, toaster, toast, adapterBox, bench, legal };
+  /* ---------- the RESERVE shelf (with a funnel), and the empty frame ---------- */
+  const reserve = new THREE.Group();
+  const plank = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 0.3), toon(P.walnut, { ink: 0.8 }));
+  plank.position.set(0, 1.42, 0.24);
+  plank.rotation.z = 0.05; // crooked
+  const tag2 = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.14), toon("#fff", {
+    map: canvasTex(200, 56, (g, w, h) => { g.fillStyle = "#f2d88a"; g.fillRect(0, 0, w, h); g.fillStyle = P.ink; g.font = "900 34px 'Arial Black', Impact, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("RESERVE", w / 2, h / 2 + 2); }),
+    ink: 0.3,
+  }));
+  tag2.position.set(0, 1.33, 0.395);
+  const funnel = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.22, 14, 1, true), toon("#c8312d", { ink: 0.9, side: THREE.DoubleSide }));
+  funnel.rotation.x = Math.PI;
+  funnel.position.set(0.32, 1.58, 0.24);
+  funnel.name = "funnel";
+  reserve.add(plank, tag2, funnel);
+  reserve.position.set(RESERVE_AT.x, 0, 0);
+  tagged(reserve, "ground", scene);
+
+  const frame = new THREE.Group();
+  const frameWood = toon("#8a6446", { ink: 0.9 });
+  for (const [w, h, x, y] of [[1.1, 0.08, 0, 1.92], [1.1, 0.08, 0, 1.08], [0.08, 0.92, -0.51, 1.5], [0.08, 0.92, 0.51, 1.5]] as const) {
+    const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.06), frameWood);
+    piece.position.set(x, y, 0.12);
+    frame.add(piece);
+  }
+  const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.94, 0.76), toon("#efe8d4", { ink: 0.2, transparent: true, opacity: 0.85, side: THREE.DoubleSide }));
+  cloth.position.set(0, 1.5, 0.11);
+  cloth.name = "cloth";
+  cloth.visible = false;
+  frame.add(cloth);
+  const exhibitCard = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.12), toon("#fff", {
+    map: canvasTex(180, 60, (g, w, h) => { g.fillStyle = "#fbf6ec"; g.fillRect(0, 0, w, h); g.fillStyle = P.ink; g.font = "700 18px 'Courier New', monospace"; g.textAlign = "center"; g.fillText("THE CHEESECLOTH", w / 2, 24); g.fillText("PERIOD (ORIG.)", w / 2, 46); }),
+    ink: 0.2,
+  }));
+  exhibitCard.position.set(0.75, 1.2, 0.09);
+  frame.add(exhibitCard);
+  frame.position.set(FRAME_AT.x, 0, 0);
+  tagged(frame, "ground", scene);
+
+  return { hoard, toaster, toast, adapterBox, bench, legal, reserve, frame };
 }
 
 /**

@@ -65,7 +65,7 @@ describe("mission chain", () => {
     deliver(s, "grateVault");
     // then the street: the noise complaint, Kevin's parcels, and the pitch
     expect(objective(s)).toMatchObject({ mission: "noiseComplaint", point: "typewriter" });
-    for (const [id, item, drop] of [["noiseComplaint", "complaint", "gymDoor"], ["parcelProtection", "parcels", "billStoop"], ["thePitch", "movieIdeas", "kevinDoor"], ["theManuscript", "manuscript", "kevinDoor"]] as const) {
+    for (const [id, item, drop] of [["noiseComplaint", "complaint", "gymDoor"], ["parcelProtection", "parcels", "billStoop"], ["thePitch", "movieIdeas", "kevinDoor"], ["vinegarReserve", "vinegarJug", "reserveShelf"], ["cheesecloth", "cheesecloth", "frame"], ["theManuscript", "manuscript", "kevinDoor"], ["firstPage", "firstPage", "students"]] as const) {
       expect(s.active).toBe(id);
       onPickup(s, item);
       expect(deliverable(s, drop, [item])).toBe(id);

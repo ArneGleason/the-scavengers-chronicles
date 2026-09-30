@@ -226,12 +226,24 @@ export class Hud {
   /** The phone: a soup photo going out to everyone, and the replies coming back. */
   phoneShow(title: string, sending: string) {
     this.phoneEl.hidden = false;
-    this.phoneEl.classList.remove("sent");
+    this.phoneEl.classList.remove("sent", "text");
+    this.phoneEl.querySelector("small")!.textContent = "SOUP UPDATE";
     this.phoneEl.querySelector("b")!.textContent = title;
     this.phoneEl.querySelector(".send span")!.textContent = sending;
     this.phoneEl.querySelector("ul")!.innerHTML = "";
     void this.phoneEl.offsetWidth; // restart the progress-bar animation
     this.phoneEl.classList.add("sending");
+  }
+
+  /** A text message arriving on his phone (no photo this time). */
+  phoneText(from: string, text: string) {
+    this.phoneEl.hidden = false;
+    this.phoneEl.classList.remove("sending", "sent");
+    this.phoneEl.classList.add("text");
+    this.phoneEl.querySelector("small")!.textContent = "NEW MESSAGE";
+    this.phoneEl.querySelector("b")!.textContent = from;
+    this.phoneEl.querySelector("ul")!.innerHTML = "";
+    this.phoneReply(from, text);
   }
 
   phoneSent(text: string) {

@@ -77,6 +77,24 @@ export const PHOTOS: Partial<Record<PhotoKey, PhotoDef>> = {
     replies: [["Kevin", "thanks bill!!"], ["Rob", "what favours"], ["Big Wanda", "you can do favours for ME"]],
     narrator: "Kevin now owes Bill three favours, by Bill's count. Kevin's count is zero, and he'd like his packages back.",
   },
+  vinegarReserve: {
+    caption: "Domestic preparedness restored. (One jug.)",
+    pose: "The reserve. Say 'acetic'.",
+    replies: [["Corner store", "you bought one jug"], ["Former student", "is there a final exam"], ["Kevin", "please stop putting things on my porch"]],
+    narrator: "He photographs the reserve: one jug, on a shelf, labelled RESERVE. It goes to everyone.",
+  },
+  cheesecloth: {
+    caption: "The Cheesecloth Period. Original material.",
+    pose: "The retrospective. Hold still.",
+    replies: [["Former student", "we remember the smell"], ["Gary", "that was holding the lid shut"], ["Kevin", "no opening reception please"]],
+    narrator: "The retrospective opens and closes on the same afternoon, attended by Bill.",
+  },
+  firstPage: {
+    caption: "A readership established. (Mina. She liked the page.)",
+    pose: "Author and reader. Say 'page two'.",
+    replies: [["Mina", "the first page is actually good"], ["Kevin", "that was not a commission"], ["Rob", "I can promise you a bigger part"]],
+    narrator: "It is the first time anyone has read page one. It will not be the last. There is, technically, only one page.",
+  },
   soup: {
     caption: "Distillation eleven: consumed.",
     pose: "The final distillation. For posterity.",

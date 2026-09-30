@@ -2,7 +2,7 @@
  * Item definitions for the walking toy. Names and lines are ported verbatim from the
  * v0.2 prototype (classic/app.js) where they exist.
  */
-export type ItemId = "dinCable" | "powerBrick" | "cableBundle" | "speakAndSpell" | "newspaperBundle" | "personalityStump" | "rustyGrate" | "grateShelf" | "complaint" | "parcels" | "movieIdeas" | "manuscript";
+export type ItemId = "dinCable" | "powerBrick" | "cableBundle" | "speakAndSpell" | "newspaperBundle" | "personalityStump" | "rustyGrate" | "grateShelf" | "complaint" | "parcels" | "movieIdeas" | "manuscript" | "vinegarJug" | "cheesecloth" | "firstPage";
 export type CarryKind = "satchel" | "heavy";
 export type Surface = "carpet" | "linoleum" | "hardwood" | "concrete" | "grass" | "dirt" | "stairs" | "asphalt";
 
@@ -151,6 +151,39 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     accent: "#f2d547",
     pickupText: "Captain Caffeine: twenty-seven sticky notes and one full page of a lined notepad. Thirty years of work. The first page is excellent.",
     dropText: "He sets down the manuscript gently. A sticky note falls off. It says 'CHAPTER TWO?'",
+  },
+  vinegarJug: {
+    id: "vinegarJug",
+    name: "Jug of White Vinegar",
+    shortName: "Vinegar",
+    carry: "satchel",
+    mass: 4,
+    color: "#f4f1e6",
+    accent: "#2a6fb5",
+    pickupText: "One jug of white vinegar, paid for in exact change and a short lecture on its uses.",
+    dropText: "He sets the vinegar down with the care of a man handling a national reserve.",
+  },
+  cheesecloth: {
+    id: "cheesecloth",
+    name: "Cheesecloth (Period Original)",
+    shortName: "Cheesecloth",
+    carry: "satchel",
+    mass: 0.1,
+    color: "#efe8d4",
+    accent: "#c9b79a",
+    pickupText: "Cheesecloth. The defining textile of an educational era. It smells of that era.",
+    dropText: "The cheesecloth settles like a retired flag.",
+  },
+  firstPage: {
+    id: "firstPage",
+    name: "Captain Caffeine, Page One",
+    shortName: "Page One",
+    carry: "satchel",
+    mass: 0.01,
+    color: "#fbf8f1",
+    accent: "#f2d547",
+    pickupText: "The first page of Captain Caffeine, with a sticky note from Kevin: 'Good opening.' Bill reads this as a commission.",
+    dropText: "He sets down page one. It is excellent. It is the only one.",
   },
 };
 
