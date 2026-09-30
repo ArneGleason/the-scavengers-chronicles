@@ -46,6 +46,17 @@ Third pass (30 September 2026):
 | **LIFE LESSONS!** | His former students, at the corner store | Vinegar and prog rock, until one grudgingly thanks him. TENURE! |
 | **The locked gate** | Big Wanda's Junkyard | CLOSED: Wanda is at lunch. A long lunch. |
 
+Fourth pass (30 September 2026, from the round-2 brainstorm; the story is in [story.md](story.md)):
+
+| Gag | Where / trigger | What happens |
+|---|---|---|
+| **RESERVE TRANSFER!** | The RESERVE shelf, with the vinegar jug | Pour through an oversized funnel; the jug glugs and he counterweights it. The funnel ends up on his head for a while. "Containment achieved." |
+| **CURATE!** | The empty frame, with the cheesecloth | Stretch it over the frame; it wraps round him instead, and he becomes the exhibit. The Cheesecloth Period goes on display. |
+| **PROTECT THE TEXT!** | His students, with page one | A gust takes the page; he lunges, faceplants; Mina catches it and reads it: "You wrote this?" |
+| **The students, named** | The corner store | Mina, Jules, Dev and Tess, each with their own insult and groan |
+| **Kevin nearly admits it** | Every third favour report | "I just need you out of... outside." / "The project expands." |
+| **The street spins** | Whenever the camera turns round on the street | He teeters (WHOA-OA-OA!) or faceplants (SPLAT!), which gives the player a moment to reorient, then blames the Earth's orbit, his vagus nerve, a bylaw scan, low soup or the gym noise. At most every ten seconds; excuses don't repeat until he's used them all. |
+
 Earlier, from `comedy.md`: the Stump Wrestle, the Dumpster Duel, the toot dash, the rake, the skateboard, bird poop, the comb-over gust, the nose audit, the burp, the trip and the raccoon faint.
 
 ## Next

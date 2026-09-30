@@ -2,6 +2,19 @@
 
 All notable prototype milestones for The Scavenger's Chronicles are tracked here.
 
+## 0.9.0 - Page One (in progress)
+
+- Added the story plan (`docs/design/story.md`): a memory ledger from the second outside brainstorm, the road from the neighbourhood to Vegas, running gags that pay off there, a backlog of errands, and questions only the user can answer.
+- Added three errands after The Pitch:
+  - **The Vinegar Reserve:** fetch the reserve jug from the corner store for the crooked RESERVE shelf in the kitchen. **RESERVE TRANSFER!** ends with the funnel on his head.
+  - **The Cheesecloth Retrospective:** fetch the cheesecloth snagged on Gary's dumpster and mount it in the living-room frame. In **CURATE!** it mostly goes round him.
+  - **First-Page Proof:** Kevin hands back page one of *Captain Caffeine* ("Good opening"). Bill takes it to his former students for a public reading. In **PROTECT THE TEXT!** a gust takes it, and Mina catches it and reads it. Kevin's favours start after this.
+- The former students have names (Mina, Jules, Dev and Tess) and insults of their own.
+- Kevin has ten more favours (eighteen in all), and every third time Bill reports back he very nearly admits what they're for.
+- Bill has about forty more one-liners and stall hints across the house, the street and the Route.
+- Kevin can text Bill; texts arrive on the same phone as the soup replies.
+- When the camera swings round on the street, Bill teeters or falls flat on his face, then makes an excuse (his vagus nerve, the Earth's orbit, low soup, the gym noise). The pause gives the player a moment to reorient, and afterwards the controls follow the new view.
+
 ## 0.8.0 - Neighbours (in progress)
 
 - The camera faces whichever side of the street Bill is on, anywhere along it. On his side it turns round to show the fronts of his house, the corner store and the gym (which now have street signs), and it turns back when he crosses the road.

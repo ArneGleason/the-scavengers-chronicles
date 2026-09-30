@@ -18,8 +18,11 @@ References:
 | Age | 54 in 2026. He has been "preparing" for forty years, which freezes his taste at 14, in 1986, the year he bought the DIN sync cable. |
 | Home | His late mother's 1955 house, now a hoarder shambles. Mint cabinets, rose curtains, chrome and Formica, all original because he never replaces anything, under heaps of stored objects waiting for their future use. The basement is the 1986 synth altar. |
 | Self-image | An **archivist**. The modern world will eventually realise these old things were the best they could ever be. |
-| Before | A **teacher**. His former students still live in the neighbourhood. He taught them to clean a classroom with white vinegar and to name prog rock albums in order, and he's still waiting for them to thank him. |
+| Before | A **teacher** (subject and years unknown). His former students (Mina, Jules, Dev and Tess, all invented) still hang around the neighbourhood. He taught them to clean a classroom with white vinegar and to name prog rock albums in order, and he's still waiting for them to thank him. Mina is the first to read his first page. |
 | The novel | ***Captain Caffeine***: over two dozen sticky notes collected over thirty years, plus one filled-in page of a lined notepad. The first page is excellent. |
+| Captain Caffeine | The hero of the novel, from an earlier imagined film: a young Bill in long johns, a towel cape and a coffee-bean emblem. Old lore adds Pedro, "The Coffee Sage" and coffee gadgets (a percolator grappling hook, a latte laser pen), but nobody has confirmed they're in the manuscript. |
+| Vinegar | White vinegar is a lifelong cause. The grocery vinegar aisle mesmerises him ("The vinegar aisle understands me"). He keeps a strategic RESERVE on a crooked kitchen shelf. |
+| The Cheesecloth Period | An era of his life, exactly that phrase: homemade vinegar strained through cheesecloth. In the game a scrap of it hangs in a frame in the living room as a retrospective. |
 | Lives with | Aximandra, a tabby cat. The fridge note says "At least the cat gets me." |
 | Obsessions (game) | Vintage synths, mystery cables and adapters, newspapers, antiques, wood with "tone", grates with "shelf potential". |
 | Obsessions (references) | Soup (the enamel bowl marked BILL ONLY), comics (stacks of *Mega Vegas Elvis*), Elvis (an ELVIS LIVES ashtray, a photo on the fridge, a Las Vegas magnet), his unfinished novel *Captain Caffeine*, and lawsuits (a typewriter, "Bill's Legal Department"). |
@@ -215,20 +218,21 @@ An orange-brown tabby named **Aximandra**, drawn from the reference's chair and 
 
 ## Story hooks from the references
 
-Hook 1 was adopted on 28 September 2026. The others are still proposals.
+Hook 1 was adopted on 28 September 2026 and hook 3 on 30 September. The others are still proposals.
 
 1. **Adopted, as a light touch: the escape is to Las Vegas.** The private jet plan points to Vegas, where Mega Vegas Elvis headlines, wearing what Bill insists is his face.
    - Mega Vegas Elvis stays mostly in the background: the comic stacks on the kitchen table, the photo and Las Vegas magnet on the fridge, the ELVIS LIVES ashtray, and his idle lip curl.
    - It comes to the front only in the finale. See the finale beat sheet in `GAME_BIBLE.md`.
 2. **Bill's Legal Department.** Scoldings, blocked gates and Gary's taunts get answered with legal threats. Cease-and-desist letters become collectibles, typed on the typewriter in the house.
-3. ***Captain Caffeine*** sits unfinished beside the unfinished album. Two monuments to preparation.
-4. **A cameo from Rob.** He rides through Act 2 on the cruiser with the parrot dome, promising Bill a bigger role. This sets up "oversold" as a running gag.
+3. **Adopted: *Captain Caffeine*** sits unfinished beside the unfinished album. Two monuments to preparation. Kevin reads page one ("Good opening"), and Mina asks for page two in the finale. See [story.md](../story.md).
+4. **A cameo from Rob.** He rides through Act 2 on the cruiser with the parrot dome, promising Bill a bigger role. This sets up "oversold" as a running gag. [story.md](../story.md) has a proposed entrance: the fried-pigeon sign prank, given away by his birds.
 5. ***Mega Vegas Elvis* issues as collectibles** in the comics hoard. Each one unlocks a panel in the Research Log.
 6. **A running sign format** across every zone: "X KEEPS ME SANE (BARELY)" and "SAME X DIFFERENT Y" on mugs, napkin holders and signs.
 
 ## Open questions
 
-- Which of hooks 2 to 6 to adopt.
+- Which of hooks 2, 4, 5 and 6 to adopt.
+- The facts only the user can supply (what he taught, his albums, the Vinegar Wolf): [story.md](../story.md), "Questions for the user".
 
 ## Maquette v0 findings
 

@@ -24,7 +24,7 @@ import { Townie, type TownieMode } from "./actors/townie";
 import { regionOf } from "./game/wayfinding";
 import { Wanda } from "./actors/wanda";
 import { applaudWanda, isWinded, type WandaMode } from "./game/wanda";
-import { buildProps, PaperTrain, Pantry, HOARD_AT, TOASTER_AT, FRIDGE_AT, ADAPTER_BOX_AT, WORKBENCH_AT, TYPEWRITER_AT, STICKY_AT, MANUSCRIPT_AT } from "./world/props";
+import { buildProps, PaperTrain, Pantry, HOARD_AT, TOASTER_AT, FRIDGE_AT, ADAPTER_BOX_AT, WORKBENCH_AT, TYPEWRITER_AT, STICKY_AT, MANUSCRIPT_AT, RESERVE_AT, FRAME_AT } from "./world/props";
 import { BASEMENT_Y } from "./world/stairs";
 import { newJam, press as jamPress, nextKey, type Jam, type JamKey } from "./game/jam";
 import { newSoup, collect, distill, canDistill, isReady, eat } from "./game/soup";
@@ -46,13 +46,13 @@ import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cyc
 import { PHOTOS, type PhotoKey } from "./content/photos";
 import { nextWaypoint } from "./game/wayfinding";
 import { isGuarded, gagGary, type GaryMode } from "./game/gary";
-import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL, HOARD_DIVE, HAMMER_TIME, LEGAL_DEPT, INSULT_VOLLEY, THE_PITCH, LIFE_LESSONS } from "./game/challenge";
+import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL, HOARD_DIVE, HAMMER_TIME, LEGAL_DEPT, INSULT_VOLLEY, THE_PITCH, LIFE_LESSONS, RESERVE_TRANSFER, CURATE, PROTECT_THE_TEXT } from "./game/challenge";
 import { newFavours, assign as assignFavour, stepFavour, report as reportFavour, currentFavour } from "./game/favours";
-import { KEVIN_FAVOUR_SAYS } from "./content/favours";
+import { KEVIN_FAVOUR_SAYS, KEVIN_ADMITS } from "./content/favours";
 import { zoneOf, MUSINGS, HINTS, type Zone } from "./content/musings";
 import { GagDirector } from "./game/gags";
 import { ITEMS, QUIPS, type ItemId, type Surface } from "./content/items";
-import { MISSIONS, MISSION_ORDER, MISSION_QUIPS, GARY_SAYS, BILL_GAGS, JAM_LINES, WANDA_SAYS, LUGNUTZ_SAYS, KEVIN_SAYS, JOGGER_SAYS, MOVIE_IDEAS, KIDS_SAYS, LESSONS, type MissionId, type PointId } from "./content/missions";
+import { MISSIONS, MISSION_ORDER, MISSION_QUIPS, GARY_SAYS, BILL_GAGS, JAM_LINES, WANDA_SAYS, LUGNUTZ_SAYS, KEVIN_SAYS, JOGGER_SAYS, MOVIE_IDEAS, KIDS_SAYS, KIDS, LESSONS, type MissionId, type PointId } from "./content/missions";
 import { LIGHTING } from "./content/palette";
 import { GameAudio } from "./audio/audio";
 import { Hud } from "./ui/hud";
@@ -70,6 +70,9 @@ const BILL_SAYS: Record<ItemId, string> = {
   parcels: "Protected.",
   movieIdeas: "Forty years of genius.",
   manuscript: "Captain Caffeine. The first page is excellent.",
+  vinegarJug: "The reserve.",
+  cheesecloth: "Period original.",
+  firstPage: "A commission, essentially.",
 };
 
 async function boot() {
@@ -112,6 +115,11 @@ async function boot() {
   items.spawn("parcels", PARCELS_AT.clone());
   items.spawn("movieIdeas", STICKY_AT.clone());
   items.spawn("manuscript", MANUSCRIPT_AT.clone());
+  items.spawn("vinegarJug", new THREE.Vector3(23.9, 1.3, 6.6));
+  items.spawn("cheesecloth", new THREE.Vector3(27.5, 1.45, 13.3));
+  const firstPageItem = items.spawn("firstPage", new THREE.Vector3(KEVIN.door, 0.5, ACROSS.front + 0.6));
+  items.hold(firstPageItem);
+  let pageGiven = false, clothHung = false;
   const complaint = items.spawn("complaint", new THREE.Vector3(TYPEWRITER_AT.x, 0.95, TYPEWRITER_AT.z - 0.75));
   items.hold(complaint);
   let complaintTyped = false;
@@ -134,10 +142,12 @@ async function boot() {
   for (const j of joggers) { j.t.mode = "run"; scene.add(j.t.root); }
   // his former students, loitering in front of the corner store (he taught them; they remember)
   const KIDS_AT = new THREE.Vector3(28.3, 0, -7.4);
+  // Mina (practical), Jules (reasonable questions), Dev (counts the notes), Tess (corrects his vocabulary)
   const kids = [
-    { t: new Townie({ size: 0.9, skin: "#e0b08f", shirt: "#6f7f86", pants: "#2a2350", shoes: "#f4f1e6", cap: "#c8312d" }), at: [27.0, -7.0], face: Math.PI + 0.4 },
-    { t: new Townie({ size: 0.88, skin: "#8a5a3a", shirt: "#e8b23a", pants: "#1e1a18", shoes: "#2aa6a1", hair: "#1e1a18" }), at: [28.3, -6.8], face: Math.PI },
-    { t: new Townie({ size: 0.92, skin: "#d69a7a", shirt: "#2f6e4f", pants: "#3a3d42", shoes: "#e0367a", hair: "#7a5238" }), at: [29.6, -7.1], face: Math.PI - 0.4 },
+    { t: new Townie({ size: 0.9, skin: "#8a5a3a", shirt: "#2f6e4f", pants: "#3a3d42", shoes: "#f4f1e6", hair: "#1e1a18" }), at: [27.0, -7.0], face: Math.PI + 0.4 },
+    { t: new Townie({ size: 0.92, skin: "#e0b08f", shirt: "#6f7f86", pants: "#2a2350", shoes: "#f4f1e6", cap: "#c8312d" }), at: [28.1, -6.8], face: Math.PI },
+    { t: new Townie({ size: 0.88, skin: "#d69a7a", shirt: "#e8b23a", pants: "#1e1a18", shoes: "#2aa6a1", hair: "#7a5238", earbuds: true }), at: [29.2, -7.0], face: Math.PI - 0.3 },
+    { t: new Townie({ size: 0.86, skin: "#b9805f", shirt: "#e0367a", pants: "#2b2826", shoes: "#e8b23a", hair: "#6b4a2e" }), at: [30.4, -7.6], face: Math.PI - 0.6 },
   ];
   for (const k of kids) { k.t.root.position.set(k.at[0], 0, k.at[1]); k.t.facing = k.face; scene.add(k.t.root); }
   {
@@ -146,6 +156,11 @@ async function boot() {
     wall.position.set(KIDS_AT.x, 0.25, -6.4);
     wall.userData.tag = "outdoors";
     scene.add(wall);
+    // Tess's empty crate
+    const crate = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.36, 0.4), toonShared("#2a6fb5", 0.8));
+    crate.position.set(30.4, 0.18, -8.2);
+    crate.userData.tag = "outdoors";
+    scene.add(crate);
     phys.box([KIDS_AT.x - 1.8, 0, -6.58], [KIDS_AT.x + 1.8, 0.5, -6.22]);
   }
   ensureInkNormals(scene);
@@ -217,6 +232,8 @@ async function boot() {
   }
   if (shelf.state !== "world") shelfHidden = false;
   if (complaint.state !== "world") complaintTyped = true;
+  if (firstPageItem.state !== "world") pageGiven = true;
+  if (ms.stages.cheesecloth === "complete") { clothHung = true; props.frame.getObjectByName("cloth")!.visible = true; }
 
   // the stump starts rooted in the dig patch: E starts the Stump Wrestle instead of a pickup
   const stump = itemOf("personalityStump");
@@ -292,6 +309,9 @@ async function boot() {
     if (d.mission === "noiseComplaint") { startChallenge("insults"); return; }
     if (d.mission === "thePitch") { startChallenge("pitch"); return; }
     if (d.mission === "theManuscript") { handOverManuscript(); return; }
+    if (d.mission === "vinegarReserve") { startChallenge("reserve"); return; }
+    if (d.mission === "cheesecloth") { startChallenge("curate"); return; }
+    if (d.mission === "firstPage") { startChallenge("proof"); return; }
     if (d.mission === "grateShelf") {
       // the grate goes on the bench, and then it has to be hammered into a shelf
       const from = new THREE.Vector3();
@@ -597,11 +617,66 @@ async function boot() {
     gags.mark(now(), "trip");
   }
 
+  // When the camera swings round on the street, Bill's balance goes with it. He teeters or goes
+  // flat on his face, which stops him long enough for the player to get their bearings, and then
+  // he explains it. The stick takes the new view's meaning straight away.
+  let wobbles = 0, lastWobble = -99, lastExcuse = "";
+  const excused = new Set<string>();
+  const forcedWobble = hash.get("wobble"); // "teeter" or "flat", for tests and screenshots
+  function streetWobble(): boolean {
+    const t = now();
+    if (t - lastWobble < 10 || player.speed < 0.4 || player.lockTimer > 0) return false;
+    if (challenge || ride || jam || toss || soupBusy || cardAge >= 0 || posing > 0) return false;
+    lastWobble = t;
+    const flat = forcedWobble ? forcedWobble === "flat" : !inv.hands && (wobbles === 0 || pick() < 0.4);
+    wobbles++;
+    if (flat) {
+      audio.slide(false, 0.35);
+      fall("faceplant");
+      later(0.28, () => {
+        audio.whump(0.8);
+        loop.hitStop(90);
+        cam.zoomPunch(0.05);
+        fx.letter("SPLAT!", above(-0.6), "#f7d547", 0.85, 0.8);
+        fx.puff(player.pos.clone().setY(player.pos.y + 0.1), "#d8cdb4", 5, { spread: 0.6, up: 0.3, size: 0.3, life: 0.8 });
+      });
+    } else {
+      audio.slide(true, 0.4);
+      later(0.4, () => audio.slide(false, 0.4));
+      fall("teeter");
+      fx.letter("WHOA-OA-OA!", above(0.3), "#f7d547", 0.75, 1.0);
+      fx.daze(() => headAt(_b).setY(_b.y + 0.2), 1.6, t);
+    }
+    // excuses to suit the moment: out of soup, near the gym, or just generally cosmic
+    const pool: string[] = [...BILL_GAGS.dizzy];
+    if (gas === 0) pool.push(...BILL_GAGS.dizzySoup, ...BILL_GAGS.dizzySoup);
+    if (player.pos.x > 28 && player.pos.x < 46) pool.push(...BILL_GAGS.dizzyGym, ...BILL_GAGS.dizzyGym);
+    if (flat) pool.push(...BILL_GAGS.dizzyFloor);
+    // he works through all his excuses before he repeats one
+    let fresh = pool.filter((l) => !excused.has(l));
+    if (!fresh.length) { excused.clear(); fresh = pool.filter((l) => l !== lastExcuse); }
+    lastExcuse = quip(fresh);
+    excused.add(lastExcuse);
+    later(flat ? 1.5 : 1.1, () => billSay([lastExcuse], 3.6));
+    gags.mark(t, "trip");
+    return true;
+  }
+
   // ---------- action challenges: the Stump Wrestle and the Dumpster Duel ----------
-  type ChallengeKind = "stump" | "duel" | "hoard" | "hammer" | "legal" | "insults" | "pitch" | "lessons";
+  type ChallengeKind = "stump" | "duel" | "hoard" | "hammer" | "legal" | "insults" | "pitch" | "lessons" | "reserve" | "curate" | "proof";
   const TITLES: Record<ChallengeKind, string> = {
     stump: "STUMP WRESTLE!", duel: "DUMPSTER DUEL!", hoard: "HOARD DIVE!", hammer: "SHELF-IFY!", legal: "LEGAL DEPARTMENT!", insults: "INSULT VOLLEY!", pitch: "THE PITCH!", lessons: "LIFE LESSONS!",
+    reserve: "RESERVE TRANSFER!", curate: "CURATE!", proof: "PROTECT THE TEXT!",
   };
+  const SHELF = new THREE.Vector3(RESERVE_AT.x + 0.32, 1.6, 0.24), FRAME = new THREE.Vector3(FRAME_AT.x, 1.5, 0.12);
+  // the cheesecloth wraps round him while he curates; page one flies about in a gust
+  const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.38, 1, 16, 1, true), toonShared("#efe8d4", 0.4));
+  wrap.visible = false;
+  bill.root.add(wrap);
+  const gustPage = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.29), new THREE.MeshBasicNodeMaterial({ color: "#fbf8f1", side: THREE.DoubleSide }));
+  gustPage.visible = false;
+  scene.add(gustPage);
+  let funnelHat = 0;
   const LEGAL_DESK = new THREE.Vector3(TYPEWRITER_AT.x, 0, TYPEWRITER_AT.z - 0.75);
   const lugMid = new THREE.Vector3(35.6, 0, 11.4);
   let lastInsult = -99;
@@ -616,10 +691,10 @@ async function boot() {
   function startChallenge(kind: ChallengeKind) {
     if (challenge || ride) return;
     const t = now();
-    const cfg = { stump: STUMP_WRESTLE, duel: DUMPSTER_DUEL, hoard: HOARD_DIVE, hammer: HAMMER_TIME, legal: LEGAL_DEPT, insults: INSULT_VOLLEY, pitch: THE_PITCH, lessons: LIFE_LESSONS }[kind];
+    const cfg = { stump: STUMP_WRESTLE, duel: DUMPSTER_DUEL, hoard: HOARD_DIVE, hammer: HAMMER_TIME, legal: LEGAL_DEPT, insults: INSULT_VOLLEY, pitch: THE_PITCH, lessons: LIFE_LESSONS, reserve: RESERVE_TRANSFER, curate: CURATE, proof: PROTECT_THE_TEXT }[kind];
     challenge = { kind, tug: new Tug(cfg), title: TITLES[kind], mashes: 0, jolt: 0, surges: 0, brawl: 0, slapT: 0.4, insultT: 2.2, billsTurn: false };
     if (kind === "hoard" || kind === "hammer" || kind === "legal") slap.start("dig");
-    else if (kind === "insults" || kind === "pitch" || kind === "lessons") slap.stop();
+    else if (kind === "insults" || kind === "pitch" || kind === "lessons" || kind === "proof") slap.stop();
     else slap.start("tug");
     player.stun(0.3);
     player.vel.x = player.vel.y = 0;
@@ -637,6 +712,19 @@ async function boot() {
       for (const l of lugnutz) l.t.mode = "flex";
       hud.narrate("The Lug Nutz gather round, delighted. Mash E to read them the complaint's main points.", 4.5, t);
       later(0.4, () => lugSay("Bill! Our guy!"));
+    } else if (kind === "reserve") {
+      billSay(BILL_GAGS.reserveStart, 2);
+      hud.narrate("The reserve must be transferred through the funnel. The funnel has its own ideas. Mash E.", 4.5, t);
+    } else if (kind === "curate") {
+      billSay(BILL_GAGS.curateStart, 2);
+      wrap.visible = true;
+      hud.narrate("The cheesecloth goes in the frame. Mash E to stretch it. Mostly it goes round him.", 4.5, t);
+    } else if (kind === "proof") {
+      billSay(BILL_GAGS.proofStart, 2);
+      for (const k of kids) k.t.mode = "idle";
+      gustPage.visible = true;
+      audio.whoosh(0.8);
+      hud.narrate("A gust takes page one. Mash E to lunge for it. The students watch with interest, for once.", 4.5, t);
     } else if (kind === "lessons") {
       billSay(BILL_GAGS.lessonsStart, 2);
       for (const k of kids) k.t.mode = "laugh";
@@ -665,7 +753,7 @@ async function boot() {
     const c = challenge, t = now();
     player.stun(0.2);
     // face what he's pulling on
-    const face = { stump: STUMP_ROOT, hoard: HOARD_AT, hammer: BENCH_TOP, legal: LEGAL_DESK, insults: lugMid, pitch: kevin.root.position, duel: gary.pos, lessons: KIDS_AT }[c.kind];
+    const face = { stump: STUMP_ROOT, hoard: HOARD_AT, hammer: BENCH_TOP, legal: LEGAL_DESK, insults: lugMid, pitch: kevin.root.position, duel: gary.pos, lessons: KIDS_AT, reserve: SHELF, curate: FRAME, proof: KIDS_AT }[c.kind];
     player.facing = dampAngle(player.facing, Math.atan2(face.x - player.pos.x, face.z - player.pos.z), 10, dt);
     if (input.consume("interact")) {
       c.tug.mash();
@@ -687,6 +775,17 @@ async function boot() {
         }
       } else if (c.kind === "pitch") {
         pitchNote();
+      } else if (c.kind === "reserve") {
+        audio.blub();
+        if (c.mashes % 2) fx.letter(quip(["GLUG!", "GLUG-GLUG!", "GLOOP!"]), SHELF.clone().add(new THREE.Vector3((pick() - 0.5) * 0.4, 0.4, 0.2)), "#8fd0f0", 0.45, 0.45);
+        fx.puff(SHELF.clone().setY(1.5), "#f4f1e6", 1, { spread: 0.1, up: -0.2, size: 0.1, life: 0.4 });
+      } else if (c.kind === "curate") {
+        if (c.mashes % 2) fx.letter(quip(["STRETCH!", "TAUT!", "CURATE!"]), FRAME.clone().add(new THREE.Vector3((pick() - 0.5) * 0.6, 0.6, 0.3)), "#efe8d4", 0.45, 0.45);
+        audio.rustle(0.8);
+      } else if (c.kind === "proof") {
+        anim.bump(-0.6);
+        audio.whoosh(0.2);
+        if (c.mashes % 2) fx.letter(quip(["GRAB!", "MISS!", "ALMOST!", "COME BACK!"]), above(0.5), "#fff7e3", 0.45, 0.4);
       } else if (c.kind === "lessons") {
         fx.letter(quip(LESSONS), above(0.5 + pick() * 0.3), "#f2b632", 0.5, 0.55);
         if (c.mashes % 4 === 1) audio.speak("wipe in circles");
@@ -728,10 +827,26 @@ async function boot() {
         audio.grunt(0.6);
         later(0.1, () => audio.grunt(0.55));
         if (c.surges === 1) hud.narrate("The Lug Nutz flex in unison. It is less a rebuttal than a weather event.", 3.5, t);
+      } else if (c.kind === "reserve") {
+        // the funnel tips and the jug glugs everywhere
+        audio.splat();
+        fx.letter("SPLOSH!", SHELF.clone().setY(1.2), "#8fd0f0", 0.7, 0.6);
+        fx.puff(SHELF.clone().setY(1.2), "#f4f1e6", 5, { spread: 0.3, up: -0.6, size: 0.18, life: 0.6 });
+        if (c.surges === 1) hud.narrate("The funnel tips. The reserve is briefly also a floor treatment.", 3.5, t);
+      } else if (c.kind === "curate") {
+        // another loop round Bill
+        audio.rustle(2);
+        fx.letter("RRRIP-", above(0.3), "#efe8d4", 0.6, 0.5);
+        if (c.surges === 1) hud.narrate("The cloth prefers him to the frame. He is briefly the exhibit.", 3.5, t);
+      } else if (c.kind === "proof") {
+        // the gust takes it higher
+        audio.whoosh(0.7);
+        fx.letter("WHOOSH!", gustPage.position.clone().setY(gustPage.position.y + 0.4), "#fff7e3", 0.6, 0.5);
+        kidsSay(quip(["It's getting away, Mr. B.", "Is that the novel?", "Left! LEFT!"]));
       } else if (c.kind === "lessons") {
         // the groan
         for (const k of kids) fx.letter("UGHHH", k.t.headWorld(_a).clone(), "#b8b0a0", 0.45, 0.5);
-        kidsSay(quip(KIDS_SAYS.groan));
+        { const who = Math.floor(pick() * kids.length); kidsSay(quip(KIDS_SAYS.groan[who]), who); }
       } else if (c.kind === "pitch") {
         // Kevin tries to close the door; Bill's foot is in it
         audio.thunk(2);
@@ -750,7 +865,19 @@ async function boot() {
         fx.letter("YOINK!", gary.headWorld(_a).clone(), "#f7d547", 0.7, 0.6);
       }
     }
-    if (c.kind === "legal" || c.kind === "insults" || c.kind === "pitch" || c.kind === "lessons") {
+    if (c.kind === "reserve") {
+      props.reserve.getObjectByName("funnel")!.rotation.z = Math.sin(t * 18) * 0.25 * (0.3 + c.tug.progress);
+    } else if (c.kind === "curate") {
+      const h = 0.2 + 1.4 * c.tug.progress + (c.tug.sinceSurge < 0.3 ? 0.15 : 0);
+      wrap.scale.set(1, h, 1);
+      wrap.position.y = h / 2 + 0.1;
+      wrap.rotation.y += dt * 6;
+    } else if (c.kind === "proof") {
+      // the page loops about between him and the students, higher after each gust
+      const a = t * 2.3, lift = c.tug.sinceSurge < 0.8 ? 1.2 : 0;
+      gustPage.position.set(28.3 + Math.cos(a) * 1.3, 1.6 + lift + Math.sin(a * 1.7) * 0.4, -8.2 + Math.sin(a) * 0.8);
+      gustPage.rotation.set(a * 1.3, a, a * 0.7);
+    } else if (c.kind === "legal" || c.kind === "insults" || c.kind === "pitch" || c.kind === "lessons") {
       // nothing to shake
     } else if (c.kind === "hammer") {
       rusty.obj.rotation.z = Math.sin(t * 50) * 0.02 * (0.2 + c.tug.progress);
@@ -833,10 +960,64 @@ async function boot() {
       announce(deliver(ms, "noiseComplaint", carrying()));
       return;
     }
+    if (c.kind === "reserve") {
+      // the reserve is transferred; the funnel is transferred to his head
+      const funnel = props.reserve.getObjectByName("funnel")!;
+      funnel.rotation.set(0, 0, 0);
+      bill.head.add(funnel);
+      funnel.position.set(0, 0.24, 0);
+      funnelHat = 6;
+      audio.boing();
+      fx.letter("CONTAINMENT ACHIEVED.", above(0.9), "#8fd0f0", 0.7, 1.4);
+      fall("buttflop");
+      later(0.18, () => audio.whump());
+      later(1.2, () => billSay(BILL_GAGS.reserveWon, 2));
+      deliverFromSatchel(itemOf("vinegarJug"));
+      announce(deliver(ms, "vinegarReserve", carrying()));
+      return;
+    }
+    if (c.kind === "curate") {
+      // the cloth snaps into the frame, and he's left spinning
+      wrap.visible = false;
+      clothHung = true;
+      props.frame.getObjectByName("cloth")!.visible = true;
+      fx.puff(above(-0.3), "#efe8d4", 8, { spread: 0.5, up: 0.6, size: 0.3, life: 0.8 });
+      fx.letter("CURATED!", FRAME.clone().setY(2.3), "#f2b632", 0.9, 1.1);
+      audio.jingle();
+      fall("faceplant");
+      later(0.28, () => audio.whump(0.8));
+      later(1.6, () => billSay(BILL_GAGS.curateWon, 2));
+      deliverFromSatchel(itemOf("cheesecloth"));
+      announce(deliver(ms, "cheesecloth", carrying()));
+      return;
+    }
+    if (c.kind === "proof") {
+      // Mina catches it. She reads it. She reads it again.
+      gustPage.visible = false;
+      fall("faceplant");
+      later(0.28, () => audio.whump(0.8));
+      fx.letter("CAUGHT!", kids[0].t.headWorld(_a).clone(), "#f2b632", 0.8, 0.9);
+      kids[0].t.mode = "shocked";
+      later(0.8, () => kidsSay(KIDS_SAYS.mina.read, 0));
+      later(2.6, () => kidsSay(KIDS_SAYS.mina.like, 0));
+      later(4.2, () => billSay(BILL_GAGS.proofWon, 2.4));
+      deliverFromSatchel(firstPageItem);
+      announce(deliver(ms, "firstPage", carrying()));
+      // and only now does Kevin get in touch: a text, a favour
+      assignFavour(favours);
+      afterCard = () => {
+        hud.phoneText("Kevin", `hey bill!! quick favour? ${currentFavour(favours).ask}`);
+        audio.bloop(1);
+        later(1.6, () => billSay(KEVIN_FAVOUR_SAYS.bill, 2.4));
+        later(6, () => hud.phoneHide());
+        refreshObjective();
+      };
+      return;
+    }
     if (c.kind === "lessons") {
       // a grudging compliment, at last
       for (const k of kids) k.t.mode = "idle";
-      later(0.3, () => kidsSay(quip(KIDS_SAYS.grudging)));
+      later(0.3, () => kidsSay(quip(KIDS_SAYS.grudging), pick() < 0.5 ? 0 : 1));
       later(1.8, () => { billSay(BILL_GAGS.lessonsWon, 2); anim.flash("elvis", 2, now()); fx.letter("TENURE!", above(0.6), "#f2b632", 1.0, 1.1); audio.jingle(); });
       lastLessons = now();
       if (!kidsPhoto) { kidsPhoto = true; commemorate("kids", "Life Lessons"); }
@@ -1337,9 +1518,11 @@ async function boot() {
 
   // ---------- his former students ----------
   let lastLessons = -99, kidsPhoto = false, kidsMet = false, lastKidsLine = -99;
-  function kidsSay(line: string) {
-    hud.say(line, 2.2, now(), "kids");
-    audio.speak(line, 190);
+  let kidSpeaker = 1;
+  function kidsSay(line: string, who = Math.floor(pick() * kids.length)) {
+    kidSpeaker = who;
+    hud.say(line, 2.4, now(), "kids");
+    audio.speak(line, 180 + who * 12);
   }
   pokes.push({
     id: "kids", at: KIDS_AT.clone().setZ(-7.9), reach: 2.0, label: "E  Remind them of your life lessons",
@@ -1356,9 +1539,13 @@ async function boot() {
     later(1.6, () => { fx.letter("...hm.", kevin.headWorld(_a).clone(), "#fff7e3", 0.5, 0.8); });
     later(2.4, () => { fx.letter("FLIP FLIP", kevin.headWorld(_a).clone().setY(_a.y - 0.4), "#f2d547", 0.5, 0.6); audio.rustle(); });
     announce(deliver(ms, "theManuscript", carrying()));
-    // Kevin's first favour: he asks once the photo card's been put away
-    assignFavour(favours);
-    afterCard = () => { kevinSay(currentFavour(favours).ask); later(2.8, () => billSay(KEVIN_FAVOUR_SAYS.bill, 2.4)); kevin.mode = "idle"; refreshObjective(); };
+    // once the photo card's been put away, Kevin hands back page one with a sticky note
+    afterCard = () => {
+      kevin.mode = "idle";
+      kevinSay("Good opening. Here... you keep this one.");
+      later(1.2, () => { pageGiven = true; tryPickup(firstPageItem); if (firstPageItem.state === "world") items.settle(firstPageItem, KEVIN_STOOP.clone().setY(0.4)); });
+      later(3.4, () => billSay(["Good opening. That's a commission, essentially.", "He's in media. 'Good opening' means 'green light'."], 2.8));
+    };
     refreshObjective();
     gags.mark(t);
   }
@@ -1366,7 +1553,11 @@ async function boot() {
     id: "kevinFavour", at: KEVIN_STOOP, reach: 1.7, label: "E  Report back to Kevin",
     ready: () => favours.stage === "report" && kevinHome && !challenge, use: () => {
       reportFavour(favours);
-      kevinSay(quip(KEVIN_FAVOUR_SAYS.thanks));
+      if (favours.n % 3 === 2) {
+        const [k, b] = KEVIN_ADMITS[Math.floor(favours.n / 3) % KEVIN_ADMITS.length];
+        kevinSay(k);
+        later(1.0, () => billSay([b], 1.8));
+      } else kevinSay(quip(KEVIN_FAVOUR_SAYS.thanks));
       later(1.6, () => kevinSay(`${quip(KEVIN_FAVOUR_SAYS.more)} ${currentFavour(favours).ask}`));
       later(4.4, () => billSay(KEVIN_FAVOUR_SAYS.bill, 2.4));
       if (favours.owed === 3) later(6.5, () => commemorate("favours", "Kevin's Favours"));
@@ -1374,7 +1565,7 @@ async function boot() {
       refreshObjective();
     },
   });
-  const KEVIN_FAVOUR_LOOP = 8;
+  const KEVIN_FAVOUR_LOOP = 18;
   function stepFavours(dt: number) {
     if (favours.stage !== "doing") return;
     if (stepFavour(favours, player.pos, dt) === "done") {
@@ -1565,11 +1756,12 @@ async function boot() {
     // The camera faces whichever side of the street he's on, so it always looks at the entrances:
     // on Bill's side (his front yard, the sidewalk, the near half of the road) it turns round to
     // show the fronts of his house, the store and the gym; across the road it looks back at the
-    // houses opposite. The stick keeps its old meaning until it's let go, so the flip doesn't turn
-    // him round mid-stride.
-    const m = cam.reversed ? 0.3 : -0.3, midRoad = (ROAD.z0 + ROAD.z1) / 2;
+    // houses opposite. The swing makes him wobble (streetWobble), which gives the player a moment
+    // to reorient; if he's too busy to wobble, the stick keeps its old meaning until it's let go.
+    const m = cam.reversed ? 0.3 : -0.3, midRoad = (ROAD.z0 + ROAD.z1) / 2, wasReversed = cam.reversed;
     cam.reversed = player.pos.y > -1 && player.pos.z < FRONT_YARD.z1 - 0.05 + m && player.pos.z > midRoad - m;
     const wantYaw = CAM.yaw + (cam.reversed ? Math.PI : 0);
+    if (cam.reversed !== wasReversed && streetWobble()) inputYaw = wantYaw;
     stickIdle = Math.hypot(move.x, move.y) > 0.15 ? 0 : stickIdle + dt;
     if (stickIdle > 0.12 || Math.abs(angleDelta(inputYaw, wantYaw)) < 1e-3) inputYaw = wantYaw;
     player.step(dt, move, analog, hurry, inputYaw);
@@ -1644,7 +1836,7 @@ async function boot() {
     stepMusings(dt, t0, busy || cardAge >= 0 || posing > 0);
     if (!challenge && player.pos.distanceTo(KIDS_AT) < 7 && t0 - lastKidsLine > 15) {
       lastKidsLine = t0;
-      kidsSay(quip(KIDS_SAYS.taunt));
+      { const who = Math.floor(pick() * kids.length); kidsSay(quip(KIDS_SAYS.taunt[who]), who); }
       if (!kidsMet) { kidsMet = true; later(2.5, () => hud.narrate("His former students. He taught them for years. They remember him mostly as the vinegar guy.", 5, now(), true)); }
     }
     if (!junkyard.gateIsOpen() && ms.stages.cablePilgrimage === "complete" && ms.stages.stumpProphecy === "complete") {
@@ -1710,7 +1902,7 @@ async function boot() {
     }
 
     const candidates = items.list
-      .filter((i) => i.state === "world" && !(i === cable && cableBuried) && !(i === shelf && shelfHidden) && !(i === complaint && !complaintTyped))
+      .filter((i) => i.state === "world" && !(i === cable && cableBuried) && !(i === shelf && shelfHidden) && !(i === complaint && !complaintTyped) && !(i === firstPageItem && !pageGiven))
       .map((i) => ({ id: i, x: i.obj.position.x, z: i.obj.position.z, y: i.obj.position.y, reach: ITEMS[i.id].carry === "heavy" ? 1.3 : 1.2 }));
     target = pickTarget({ x: player.pos.x, y: player.pos.y + 0.3, z: player.pos.z, facing: player.facing }, candidates)?.id ?? null;
     delivery = deliveryHere();
@@ -1912,6 +2104,10 @@ async function boot() {
     }
     fx.update(frameDt, t);
     if (jam) { jam.pressL = Math.max(0, jam.pressL - frameDt * 7); jam.pressR = Math.max(0, jam.pressR - frameDt * 7); }
+    if (funnelHat > 0) {
+      funnelHat -= frameDt;
+      if (funnelHat <= 0) { const f = props.reserve.getObjectByName("funnel") ?? bill.head.getObjectByName("funnel")!; props.reserve.add(f); f.position.set(0.32, 1.58, 0.24); f.rotation.set(Math.PI, 0, 0); }
+    }
     if (phone.visible) {
       // held up in front of his face, pointed at the pot
       headAt(_a);
@@ -1962,7 +2158,7 @@ async function boot() {
       o.visible = tag === "basement" ? g.basement.visible : tag === "ground" ? g.ground.visible : roof ? roof.obj.visible : onWall ? g.outdoors.visible && !inRect(pos, onWall.rect) : g.outdoors.visible;
     }
     const onThisFloor = (y: number) => (mode === "basement" ? y < -1 : y > -1 || inside);
-    for (const it of items.list) if (it.state === "world" || it.state === "installed") it.obj.visible = onThisFloor(it.obj.position.y) && !(it === cable && cableBuried) && !(it === shelf && shelfHidden) && !(it === rusty && rustyGone) && !(it === complaint && !complaintTyped);
+    for (const it of items.list) if (it.state === "world" || it.state === "installed") it.obj.visible = onThisFloor(it.obj.position.y) && !(it === cable && cableBuried) && !(it === shelf && shelfHidden) && !(it === rusty && rustyGone) && !(it === complaint && !complaintTyped) && !(it === firstPageItem && !pageGiven) && !(it.id === "cheesecloth" && clothHung);
     for (const m of props.toast) if (m.parent === scene) m.visible = g.ground.visible;
     for (let i = toastFlights.length - 1; i >= 0; i--) {
       const f = toastFlights[i];
@@ -2004,7 +2200,7 @@ async function boot() {
     cam.project(kevin.headWorld(headW), kevinPx);
     cam.project(lugnutz[lugSpeaker].t.headWorld(headW), lugPx);
     cam.project(joggers[jogSpeaker].t.headWorld(headW), jogPx);
-    cam.project(kids[1].t.headWorld(headW), kidsPx);
+    cam.project(kids[kidSpeaker].t.headWorld(headW), kidsPx);
     let tgt: { x: number; y: number; label: string } | null = null;
     if (delivery) {
       const m = MISSIONS[delivery.mission];
@@ -2096,6 +2292,8 @@ async function boot() {
     w.__scav.tossed = !!toss;
     w.__scav.kevin = kevin.root.visible;
     w.__scav.reversed = cam.reversed;
+    w.__scav.wobbles = wobbles;
+    w.__scav.locked = player.lockTimer > 0;
     w.__scav.waypoint = waypoint?.label ?? null;
     w.__scav.junkGate = junkyard.gateIsOpen() ? "open" : "closed";
     w.__scav.favours = { stage: favours.stage, n: favours.n, owed: favours.owed };
@@ -2168,7 +2366,7 @@ async function boot() {
     __scav: {
       ready: boolean; frames: number; backend: string; pos: number[]; gary: string; stages: Record<string, string>; active: string | null;
       challenge?: { kind: string; progress: number } | null; slap?: string | null; gas?: number; ride?: boolean; rooted?: boolean; inv?: string[]; hits?: Record<string, number>; buried?: boolean; poke?: string | null;
-      jam?: { active: boolean; takes: number; step: number }; soup?: { distilled: number; pocket: number; eaten: boolean }; wanda?: string; tossed?: boolean; kevin?: boolean; reversed?: boolean; waypoint?: string | null; junkGate?: string; favours?: { stage: string; n: number; owed: number }; zone?: string | null; yaw?: number; album?: string[]; card?: boolean; photoOk?: boolean;
+      jam?: { active: boolean; takes: number; step: number }; soup?: { distilled: number; pocket: number; eaten: boolean }; wanda?: string; tossed?: boolean; kevin?: boolean; reversed?: boolean; wobbles?: number; locked?: boolean; waypoint?: string | null; junkGate?: string; favours?: { stage: string; n: number; owed: number }; zone?: string | null; yaw?: number; album?: string[]; card?: boolean; photoOk?: boolean;
     };
   };
   w.__scav = { ready: false, frames: 0, backend: gfx.backend, pos: [0, 0, 0], gary: "guard", stages: {}, active: null };

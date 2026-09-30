@@ -6,10 +6,11 @@
  */
 import type { ItemId } from "./items";
 
-export type MissionId = "cablePilgrimage" | "stumpProphecy" | "dumpsterDiplomacy" | "grateShelf" | "grateVault" | "noiseComplaint" | "parcelProtection" | "thePitch" | "theManuscript";
+export type MissionId = "cablePilgrimage" | "stumpProphecy" | "dumpsterDiplomacy" | "grateShelf" | "grateVault" | "noiseComplaint" | "parcelProtection" | "thePitch" | "vinegarReserve" | "cheesecloth" | "theManuscript" | "firstPage";
 export type PointId =
   | "basementHoard" | "synthAltar" | "backyardDig" | "shelfZone" | "dumpster" | "junkyard" | "workbench" | "vault"
-  | "typewriter" | "gymDoor" | "kevinStoop" | "billStoop" | "stickyWall" | "kevinDoor" | "kitchenTable";
+  | "typewriter" | "gymDoor" | "kevinStoop" | "billStoop" | "stickyWall" | "kevinDoor" | "kitchenTable"
+  | "cornerStore" | "reserveShelf" | "garyDumpster" | "frame" | "students";
 
 export interface MissionDef {
   id: MissionId;
@@ -157,6 +158,39 @@ export const MISSIONS: Record<MissionId, MissionDef> = {
     completeGuide: "Hollywood has been notified, via Kevin, via a mattress store.",
     pickupText: "Picked up the movie ideas: a brick of sticky notes, some of them still sticky.",
     completeText: "Mission complete: Kevin will pass it along. To whom is unclear. Kevin runs social media for a mattress store.",
+    unlocks: ["vinegarReserve"],
+  },
+  // round 2 of the outside brainstorm (docs/design/story.md), grounded in the vinegar and the Cheesecloth Period
+  vinegarReserve: {
+    id: "vinegarReserve",
+    title: "The Vinegar Reserve",
+    summary: "He has promoted the last inch of white vinegar from household supply to strategic deficiency.",
+    item: "vinegarJug",
+    pickup: "cornerStore",
+    drop: "reserveShelf",
+    pickupLabel: "white vinegar",
+    dropLabel: "the RESERVE shelf",
+    pickupGuide: "The vinegar reserve is down to its last inch. Buy a jug at the corner store: on the counter, inside.",
+    returnGuide: "Bring the vinegar home to the kitchen shelf marked RESERVE.",
+    completeGuide: "Domestic preparedness restored.",
+    pickupText: "He buys one jug of white vinegar with exact change and a short lecture on its uses.",
+    completeText: "Mission complete: the reserve is replenished. The kitchen now smells like a science fair that won.",
+    unlocks: ["cheesecloth"],
+  },
+  cheesecloth: {
+    id: "cheesecloth",
+    title: "The Cheesecloth Retrospective",
+    summary: "He has promoted an unidentified rag to the defining textile of an educational era.",
+    item: "cheesecloth",
+    pickup: "garyDumpster",
+    drop: "frame",
+    pickupLabel: "the cheesecloth",
+    dropLabel: "the living-room frame",
+    pickupGuide: "The frame in the living room requires a historically significant cloth. There's cheesecloth snagged on Gary's dumpster.",
+    returnGuide: "Mount the cheesecloth in the frame in the living room. The Cheesecloth Period deserves a retrospective.",
+    completeGuide: "The Cheesecloth Period is on display. Admission is free. Nobody comes.",
+    pickupText: "Picked up the cheesecloth. It was holding the dumpster lid shut. History has a price.",
+    completeText: "Mission complete: the Cheesecloth Period, original material, now hangs in the living room. Mostly the cloth is in the frame.",
     unlocks: ["theManuscript"],
   },
   theManuscript: {
@@ -172,12 +206,28 @@ export const MISSIONS: Record<MissionId, MissionDef> = {
     returnGuide: "Take Captain Caffeine across the street to Kevin. He's in media. Basically publishing.",
     completeGuide: "Kevin is reading it. Kevin would also like a small favour.",
     pickupText: "Picked up Captain Caffeine. Thirty years of sticky notes and one excellent page.",
-    completeText: "Mission complete: Kevin holds the manuscript at arm's length, says it's 'a lot', and asks Bill for a small favour. Bill accepts. Kevin now owes him enormously.",
+    completeText: "Mission complete: Kevin holds the manuscript at arm's length, says it's 'a lot', and hands back the first page with a sticky note: 'Good opening.'",
+    unlocks: ["firstPage"],
+  },
+  firstPage: {
+    id: "firstPage",
+    title: "First-Page Proof",
+    summary: "Kevin said 'good opening'. He has promoted a favourable comment to editorial commissioning.",
+    item: "firstPage",
+    pickup: "kevinDoor",
+    drop: "students",
+    pickupLabel: "page one",
+    dropLabel: "his former students",
+    pickupGuide: "Kevin has page one. It came back with a sticky note: 'Good opening.'",
+    returnGuide: "Take page one to his former students outside the corner store. A public reading.",
+    completeGuide: "A readership is established. Her name is Mina.",
+    pickupText: "Page one, with a sticky note from Kevin: 'Good opening.' Bill reads this as a commission.",
+    completeText: "Mission complete: Mina reads page one. She stays on it a beat longer than anyone expected.",
     unlocks: [],
   },
 };
 
-export const MISSION_ORDER: MissionId[] = ["cablePilgrimage", "stumpProphecy", "dumpsterDiplomacy", "grateShelf", "grateVault", "noiseComplaint", "parcelProtection", "thePitch", "theManuscript"];
+export const MISSION_ORDER: MissionId[] = ["cablePilgrimage", "stumpProphecy", "dumpsterDiplomacy", "grateShelf", "grateVault", "noiseComplaint", "parcelProtection", "thePitch", "vinegarReserve", "cheesecloth", "theManuscript", "firstPage"];
 
 /** v0.2 quip pools for the mission layer and Gary (verbatim). */
 export const MISSION_QUIPS = {
@@ -272,12 +322,20 @@ export const MOVIE_IDEAS = ["SOUP: THE MUSICAL", "DIE HARD, BUT IN A BASEMENT", 
  * His former students (Bill was a teacher). They hang out in front of the corner store and
  * insult him; he keeps trying to get them to thank him for his life lessons.
  */
+export const KIDS = ["Mina", "Jules", "Dev", "Tess"] as const;
+/** Fictional stand-ins (docs/design/story.md): Mina is practical, Jules asks reasonable questions, Dev measures how little changes, Tess corrects his vocabulary. */
 export const KIDS_SAYS = {
-  taunt: ["Mr. B! Still teaching vinegar?", "Is that the prog rock guy?", "Mr. B, you still owe me a grade.", "Did you ever finish the album, Mr. B?", "Mr. B! Name every Yes album! ...Kidding. Please don't."],
-  groan: ["UGHHH.", "We KNOW, Mr. B.", "zzz", "He's doing the thing again."],
-  grudging: ["...The vinegar thing actually works. My mom says.", "Okay. Close to the Edge is pretty good.", "Fine. Thanks, Mr. B. For the vinegar."],
+  taunt: [
+    ["Mr. B! Still teaching vinegar?", "You've done more forewords than afterwards."],
+    ["Is vinegar still worth half the grade?", "Mr. B, you still owe me a grade."],
+    ["New song, sir? The other note?", "Did you ever finish the album, Mr. B?"],
+    ["You've archived another bin.", "Is that the prog rock guy?"],
+  ],
+  groan: [["UGHHH."], ["So is the lesson."], ["We've had the preparation."], ["Now we see the floor."]],
+  grudging: ["...The cleaning part works.", "Okay. The desk IS clean.", "Fine. Thanks, Mr. B. For the vinegar."],
+  mina: { read: "You wrote this?", like: "The page. I like the page.", more: "What happens next?" },
 } as const;
-export const LESSONS = ["WHITE VINEGAR!", "BAKING SODA!", "FRAGILE!", "CLOSE TO THE EDGE!", "TARKUS!", "THICK AS A BRICK!", "2112!", "SELLING ENGLAND BY THE POUND!", "WIPE IN CIRCLES!"] as const;
+export const LESSONS = ["WHITE VINEGAR!", "BAKING SODA!", "WIPE IN CIRCLES!", "DISCIPLINE IS CIRCULAR!", "IDENTIFICATION PRECEDES CIVILISATION!", "NOT EVERY HOLE IS A DEFECT!", "THE TITLE IS PART OF THE WORK!", "FRAGILE!", "CLOSE TO THE EDGE!", "TARKUS!"] as const;
 
 /** The joggers, cheerfully using the public sidewalk that Bill has claimed. */
 export const JOGGER_SAYS = { reply: ["Morning!", "On your left!", "Love the yard!", "Beautiful day!"], toot: ["EW!", "WHY?!", "My lungs!"] } as const;
@@ -293,6 +351,21 @@ export const BILL_GAGS = {
   nose: ["Just auditing.", "Quality control."],
   burp: ["Soup's still with me.", "Pardon the bouillon."],
   trip: ["Nobody saw that.", "Gravity's been extra lately.", "The ground started it."],
+  // when the camera swings round on the street, so does Bill's head; he has reasons
+  dizzy: [
+    "The Earth is at a peculiar point in its orbit. My vagus nerve felt it first.",
+    "Perihelion. Look it up. It's very hard on the inner ear.",
+    "I turned my head too quickly. Scanning for bylaw infractions. There were several.",
+    "A disturbance. In the municipal field.",
+    "Magnetic north moved. I'm very sensitive to north.",
+    "Who turned the street round? I didn't approve that.",
+    "The weeds released something. Pollen, or opinions.",
+    "My inner ear is an archive. It's at capacity.",
+    "The sidewalk tilted. The city will be hearing from me.",
+  ],
+  dizzySoup: ["Low on soup. Lightheaded. It's a known condition. Known to me.", "Soup levels critical. The balance goes first."],
+  dizzyGym: ["Accumulated gym noise. It builds up in the inner ear. I have documentation.", "The Lug Nutz. Their grunting has a frequency. It found me."],
+  dizzyFloor: ["Ground inspection. Thorough.", "Planned descent.", "I was checking the pavement for bylaw violations. Found one."],
   noGas: ["Running on fumes. Literally.", "The soup is still processing."],
   stumpStart: ["Come to Bill.", "You have presence. You also have roots."],
   duelStart: ["Unhand my phonics!", "It's for the masterpiece!"],
@@ -312,6 +385,12 @@ export const BILL_GAGS = {
   lugInsults: ["Your grunting is registered with my legal department.", "I can hear every rep. From my house.", "Some of us are composing.", "Cease and desist. The lifting.", "Your protein smells like a lawsuit."],
   lugNoise: ["I can hear them.", "The Lug Nutz. Grunting. At this hour.", "Every rep. I hear every rep.", "That's a deadlift. I can tell."],
   legalStart: ["Bill's Legal Department is now in session.", "To whom it may concern. Which is them."],
+  reserveStart: ["Strategic reserve. Stand back.", "Containment protocol."],
+  reserveWon: ["Containment achieved.", "Domestic preparedness restored."],
+  curateStart: ["The Cheesecloth Period. A retrospective.", "Hold still, history."],
+  curateWon: ["Curated.", "Not every hole is a defect."],
+  proofStart: ["A public reading. Page one.", "Gather round. Literature."],
+  proofWon: ["A readership.", "She'll want page two. They always want page two."],
   lessonsStart: ["Class is in session.", "Pop quiz. Name the second Genesis album. Anyone.", "You'll thank me for this. Eventually. Now."],
   lessonsWon: ["HE REMEMBERS.", "Tenure.", "That's what we call a teachable moment."],
   jamStart: ["From the top.", "This is the one.", "Okay. Now with feeling.", "Quiet, everyone. Genius is happening."],

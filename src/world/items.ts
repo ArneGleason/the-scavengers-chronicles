@@ -134,6 +134,27 @@ function makeModel(id: ItemId): { g: THREE.Group; half: [number, number, number]
       for (const [x, z, r] of [[0.1, 0.1, 0.4], [-0.09, 0.12, -0.3], [0.12, -0.05, 0.9], [-0.11, -0.08, -0.7], [0.02, 0.15, 0.1]] as const) add(new THREE.BoxGeometry(0.07, 0.004, 0.07), note, [x, 0.02, z], [0, r, 0]);
       return { g, half: [0.11, 0.02, 0.15], mats };
     }
+    case "vinegarJug": {
+      // a four-litre jug, store brand, with a blue label and a handle
+      add(new THREE.CylinderGeometry(0.1, 0.11, 0.3, 16), m(def.color, { transparent: true, opacity: 0.92 }));
+      add(new THREE.CylinderGeometry(0.03, 0.04, 0.06, 10), m("#2a6fb5"), [0, 0.18, 0]);
+      add(new THREE.BoxGeometry(0.2, 0.1, 0.005), m(def.accent), [0, 0, 0.1]);
+      add(new THREE.TorusGeometry(0.05, 0.012, 6, 12, Math.PI), m(def.color), [0.07, 0.08, 0], [0, Math.PI / 2, Math.PI / 2]);
+      return { g, half: [0.11, 0.18, 0.11], mats };
+    }
+    case "cheesecloth": {
+      // a wad of loose-weave cloth, still vaguely dumpster-shaped
+      add(new THREE.IcosahedronGeometry(0.12, 1), m(def.color), [0, 0, 0], [0.3, 0.2, 0.1]).scale.set(1.3, 0.55, 1);
+      add(new THREE.BoxGeometry(0.3, 0.004, 0.08), m(def.accent), [0.05, 0.06, 0.02], [0.2, 0.5, 0.1]);
+      return { g, half: [0.15, 0.07, 0.12], mats };
+    }
+    case "firstPage": {
+      // one lined page, excellent, with Kevin's sticky note on it
+      add(new THREE.BoxGeometry(0.21, 0.004, 0.29), m(def.color));
+      for (let i = 0; i < 8; i++) add(new THREE.BoxGeometry(0.17, 0.002, 0.004), m("#8fb0b5", { ink: 0 }), [0, 0.004, -0.11 + i * 0.03]);
+      add(new THREE.BoxGeometry(0.07, 0.003, 0.07), m(def.accent, { ink: 0.3 }), [0.06, 0.006, 0.09], [0, 0.3, 0]);
+      return { g, half: [0.11, 0.01, 0.15], mats };
+    }
     case "movieIdeas": {
       // a brick of sticky notes, with the top ones curling
       add(new THREE.BoxGeometry(0.16, 0.12, 0.16), m(def.color));

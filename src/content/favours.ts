@@ -75,6 +75,22 @@ export const FAVOURS: FavourDef[] = [
     done: "I stood there. It mattered. He'll owe me.",
     narrator: "Bill stands at the end of the lane. It helps Kevin enormously, in the sense that Bill is not at Kevin's door.",
   },
+  // round 2 of the outside brainstorm
+  { ask: "Could you check how far my gate opens? From over there.", guide: "Stand well back from Kevin's gate while he checks how far it opens.", at: [-2.5, 0, -19.8], label: "BY KEVIN'S GATE", kind: "wait", secs: 5, reach: 1.4, waiting: "A BOUNDARY STUDY...", done: "A boundary study. Complete.", narrator: "While Bill studies the boundary, Kevin slips inside and locks it." },
+  { ask: "Tell me if that sign in my window falls down.", guide: "Watch Kevin's front window for a sign that isn't there.", at: [2.5, 0, -21.8], label: "KEVIN'S WINDOW", kind: "wait", secs: 9, reach: 1.5, waiting: "PREVENTIVE OVERSIGHT...", done: "It did not fall. There was no sign. Oversight successful.", narrator: "Nothing falls, because nothing is there. Bill logs it as a success." },
+  { ask: "Which bit of the parking lot sounds quietest? For... acoustics.", guide: "Find the quietest bit of the parking lot.", at: [17, 0, 1.5], label: "PARKING LOT", kind: "go", reach: 2.5, done: "I have mapped the silence. It's all the same silence.", narrator: "Bill stamps on three patches of asphalt. They make the same scrape. He writes down all three." },
+  { ask: "Could you see if there's a queue at the corner store?", guide: "Check the corner store for a queue.", at: [25.5, 0, -6.4], label: "CORNER STORE", kind: "go", reach: 1.7, done: "Public demand assessed. There is no public.", narrator: "There is no queue. Bill photographs the lack of a queue and sends it to 214 people." },
+  { ask: "Is it cloudy at the other end of the lane, too?", guide: "Go and see whether it's cloudy at the east end of the lane.", at: [40, 0, 17.6], label: "EAST END OF THE LANE", kind: "go", reach: 2, done: "Cloudy. A second opinion confirms the first.", narrator: "It is cloudy there as well. Kevin receives this news through a closed door." },
+  { ask: "Could you check whether the bell on the junkyard fence works?", guide: "Try the bell on Big Wanda's fence, by her gate.", at: [45.5, 0, 16], label: "WANDA'S BELL", kind: "go", reach: 1.6, done: "It clunks. The communications audit is complete.", narrator: "The bell is not attached to anything. It makes a sad clunk. Somewhere, Wanda says 'Hello?'" },
+  { ask: "Make sure the lines in the parking lot are still there.", guide: "Make sure the parking lot's lines are still there.", at: [15.2, 0, 10], label: "PARKING LINES", kind: "wait", secs: 6, reach: 2, waiting: "CONTINUITY CHECK...", done: "Continuity confirmed. All lines present.", narrator: "Bill counts the same three lines several times. They remain, as lines do." },
+  { ask: "Could you practise leaving after ringing? My doorbell. For deliveries.", guide: "Stand at the bottom of Kevin's stoop and practise leaving after ringing.", at: [0.2, 0, -22.4], label: "KEVIN'S DOORBELL", kind: "wait", secs: 5, reach: 1.3, waiting: "RING. LEAVE. RING. LEAVE...", done: "Finally, a clear brief.", narrator: "Bill practises ringing and leaving. He is especially good at ringing." },
+];
+
+/** Kevin, very nearly admitting that the favours are to get rid of him; and Bill, missing it. */
+export const KEVIN_ADMITS: [string, string][] = [
+  ["I just need you out of... outside. More exterior work.", "The project expands."],
+  ["You don't have to report back.", "You trust my discretion."],
+  ["I do mattress posts, Bill.", "A platform."],
 ];
 
 export const KEVIN_FAVOUR_SAYS = {
