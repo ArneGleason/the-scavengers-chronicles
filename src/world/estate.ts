@@ -113,7 +113,7 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
 
   /* ---------- basement ---------- */
   b.box([-6, BASEMENT_Y - 0.2, -5], [6, BASEMENT_Y, 5], concrete, "basement", { tile: 2 });
-  const bw = { base: BASEMENT_Y, height: 2.4, level: "basement" as const, color: P.basementWall };
+  const bw = { base: BASEMENT_Y, height: 2.4, level: "basement" as const, color: P.basementWall, owner: HOUSE };
   walls.add("x", -5, -6, 6, bw);
   walls.add("z", -6, -5, 5, bw);
   walls.add("z", 6, -5, 5, bw);
@@ -140,9 +140,10 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
   rail(STAIRS.xBottom - 0.05, STAIRS.xBottom + 0.05, STAIRS.z0, STAIRS.z1);
 
   /* ---------- ground floor walls ---------- */
-  const ext = { base: 0, height: WALL_H, level: "ground" as const, color: P.cream };
-  const int = { base: 0, height: WALL_H, level: "ground" as const, color: P.wallpaper };
-  walls.add("x", -5, -6, 6, ext);
+  const ext = { base: 0, height: WALL_H, level: "ground" as const, color: P.cream, owner: HOUSE };
+  const int = { base: 0, height: WALL_H, level: "ground" as const, color: P.wallpaper, owner: HOUSE };
+  // the front wall, with the front door onto the overgrown front yard (see world/street.ts)
+  walls.add("x", -5, -6, 6, { ...ext, openings: [{ from: -1.3, to: -0.1, kind: "door" }] });
   walls.add("z", -6, -5, 5, { ...ext, openings: [{ from: 1.5, to: 3.5, kind: "window" }] });
   walls.add("z", 6, -5, 5, { ...ext, openings: [{ from: 1.5, to: 3.5, kind: "window" }] });
   walls.add("x", 5, -6, 6, { ...ext, openings: [{ from: -4.2, to: -3.0, kind: "door" }, { from: 1.0, to: 4.5, kind: "window" }] });
@@ -227,7 +228,7 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
   }
   b.box([-5.9, 0, -3.6], [-5.1, 0.9, -2.8], "#4d5a4e", "ground"); // the safe
   b.geo(new THREE.CylinderGeometry(0.09, 0.09, 0.03, 16), P.chrome, "ground", [-5.08, 0.55, -3.2], [0, 0, Math.PI / 2], undefined, 0.4);
-  for (const [x, z, n] of [[-0.6, -4.5, 12], [-0.1, -4.55, 8], [5.5, -0.5, 10]] as const) newspapers(b, news, x, 0, z, n, "ground");
+  for (const [x, z, n] of [[-5.45, -1.3, 12], [-5.45, -1.95, 8], [5.5, -0.5, 10]] as const) newspapers(b, news, x, 0, z, n, "ground");
 
   /* ---------- basement (1986): the synth altar ---------- */
   const by = BASEMENT_Y;

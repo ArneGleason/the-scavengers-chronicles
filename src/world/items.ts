@@ -107,6 +107,31 @@ function makeModel(id: ItemId): { g: THREE.Group; half: [number, number, number]
       }
       return { g, half: [0.45, 0.03, 0.3], mats };
     }
+    case "complaint": {
+      // four pages, stapled, with a red LEGAL stamp
+      add(new THREE.BoxGeometry(0.22, 0.02, 0.29), m(def.color));
+      add(new THREE.BoxGeometry(0.2, 0.004, 0.02), m("#1e1a18", { ink: 0 }), [0, 0.012, -0.1]);
+      for (let i = 0; i < 4; i++) add(new THREE.BoxGeometry(0.16 - (i % 2) * 0.03, 0.004, 0.01), m("#8a8274", { ink: 0 }), [-0.01, 0.012, -0.05 + i * 0.035]);
+      add(new THREE.CylinderGeometry(0.035, 0.035, 0.006, 14), m(def.accent), [0.06, 0.013, 0.09]);
+      return { g, half: [0.11, 0.015, 0.145], mats };
+    }
+    case "parcels": {
+      // three boxes, stacked, taped, addressed to someone else
+      const card = m(def.color), tape = m(def.accent), label = m("#fbf6ec");
+      add(new THREE.BoxGeometry(0.5, 0.26, 0.4), card, [0, -0.17, 0]);
+      add(new THREE.BoxGeometry(0.4, 0.2, 0.34), card, [0.03, 0.06, 0.01], [0, 0.25, 0]);
+      add(new THREE.BoxGeometry(0.26, 0.14, 0.22), card, [-0.02, 0.23, 0], [0, -0.3, 0]);
+      add(new THREE.BoxGeometry(0.51, 0.01, 0.08), tape, [0, -0.04, 0]);
+      add(new THREE.BoxGeometry(0.14, 0.09, 0.005), label, [0.1, -0.16, 0.203]);
+      return { g, half: [0.25, 0.3, 0.2], mats };
+    }
+    case "movieIdeas": {
+      // a brick of sticky notes, with the top ones curling
+      add(new THREE.BoxGeometry(0.16, 0.12, 0.16), m(def.color));
+      add(new THREE.BoxGeometry(0.16, 0.004, 0.16), m("#e8b23a"), [0.01, 0.063, 0.01], [0.15, 0.2, 0.05]);
+      add(new THREE.BoxGeometry(0.14, 0.004, 0.14), m("#f7e27a"), [-0.03, 0.08, 0.02], [-0.25, -0.4, 0.1]);
+      return { g, half: [0.08, 0.07, 0.08], mats };
+    }
   }
 }
 
@@ -129,7 +154,7 @@ function junkModel(kind: "box" | "crate" | "bucket"): { g: THREE.Group; half: [n
   return { g, half: [0.16, 0.16, 0.16], mass: 1.5 };
 }
 
-const HANDS_OFFSET: Partial<Record<ItemId, number>> = { personalityStump: 0.158, rustyGrate: 0.3, grateShelf: 0.3 };
+const HANDS_OFFSET: Partial<Record<ItemId, number>> = { personalityStump: 0.158, rustyGrate: 0.3, grateShelf: 0.3, parcels: 0.25 };
 
 export class Items {
   readonly list: WorldItem[] = [];

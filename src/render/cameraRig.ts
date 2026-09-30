@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu";
-import { DEG, damp, SecondOrder } from "../core/math";
+import { DEG, damp, dampAngle, SecondOrder } from "../core/math";
 
 export const CAM = {
   yaw: 45 * DEG,
@@ -29,6 +29,10 @@ export class CameraRig {
   private frac = CAM.closeFrac;
   private punch = new SecondOrder(5, 0.35);
   zoomMode: ZoomMode = "auto";
+  /** Turned round to look from -X-Z (his front yard, so we can see the front of the house). */
+  reversed = false;
+  /** The camera's current yaw; it swings toward CAM.yaw (+180 degrees when reversed). */
+  yaw = CAM.yaw;
   /** Current frustum half-height in world units. */
   halfH = 5;
 
@@ -39,6 +43,12 @@ export class CameraRig {
   snap(target: THREE.Vector3) {
     this.focus.copy(target);
     this.look.set(0, 0, 0);
+    this.yaw = CAM.yaw + (this.reversed ? Math.PI : 0);
+  }
+
+  /** 1 when looking from +X+Z, -1 when turned round (for cutaways and roof lifting). */
+  get dir(): 1 | -1 {
+    return this.reversed ? -1 : 1;
   }
 
   /** Brief zoom-in pop (pickups, heavy drops). */
@@ -78,11 +88,12 @@ export class CameraRig {
     c.right = this.halfH * aspect;
     c.updateProjectionMatrix();
 
+    this.yaw = dampAngle(this.yaw, CAM.yaw + (this.reversed ? Math.PI : 0), 5, dt);
     const R = 60, cp = Math.cos(CAM.pitch);
     c.position.set(
-      this.focus.x + Math.sin(CAM.yaw) * cp * R,
+      this.focus.x + Math.sin(this.yaw) * cp * R,
       this.focus.y + Math.sin(CAM.pitch) * R,
-      this.focus.z + Math.cos(CAM.yaw) * cp * R,
+      this.focus.z + Math.cos(this.yaw) * cp * R,
     );
     c.lookAt(this.focus);
   }

@@ -332,11 +332,11 @@ if (want('errand 4: grab the grate and Big Wanda gives chase; shuffle away and s
   check(!b.inv.includes("rustyGrate") && b.pos[2] > 16, `she catches a shuffling Bill, keeps the grate, and throws him into the lane (z ${b.pos[2].toFixed(1)})`);
   await page.close();
 }
-if (want('hurrying out of the gate with the grate: she gives up')) {
-  // hurrying out of the gate with the grate: she gives up
-  const page = await open(`at=48,0,13.2&face=0&zoom=game&${DONE3}&give=rustyGrate`);
+if (want('hurrying out of the gate with the grate: a winded Wanda gives up')) {
+  // hurrying out of the gate with the grate: a winded Wanda gives up
+  const page = await open(`at=48,0,13.2&face=0&zoom=game&${DONE3}&give=rustyGrate&wanda=winded`);
   await page.waitForTimeout(800);
-  await walkTo(page, 48, 17.6, { hurry: true, timeout: 6000 });
+  await walkTo(page, 47.5, 19.2, { hurry: true, timeout: 7000 });
   await page.waitForTimeout(2500);
   const s = await scav(page);
   check(s.inv.includes("rustyGrate") && s.wanda !== "chase", `a hurrying Bill gets out of the gate with the grate (Wanda ${s.wanda})`);
@@ -368,6 +368,77 @@ if (want('the vault: the shelf goes on top of the antique vault')) {
   await page.waitForTimeout(1500);
   await page.screenshot({ path: "shots/e2e-vault.png" });
   check((await scav(page)).stages.grateVault === "complete", "delivering the shelf to the vault completes the Grate Shelf Revelation");
+  await page.close();
+}
+const DONE5 = `${DONE3},grateShelf,grateVault`;
+if (want("street: the camera turns round in the front yard, and the arrow goes via the doors")) {
+  // street: the camera turns round in the front yard, and the arrow goes via the doors
+  const page = await open("at=-0.7,0,-8&face=0&zoom=game");
+  await page.waitForTimeout(600);
+  const a = await scav(page);
+  check(a.reversed === true, "in the front yard the camera turns round to show the front of the house");
+  await page.close();
+  const p2 = await open("at=-3,0,10&face=200&zoom=game");
+  await p2.waitForTimeout(400);
+  const b = await scav(p2);
+  check(b.reversed === false && b.waypoint === "BACK DOOR", `from the back yard, the arrow to the basement goes via the back door (${b.waypoint})`);
+  await p2.close();
+}
+if (want("street: the noise complaint, typed at the Legal Department and delivered to the Lug Nutz")) {
+  // street: the noise complaint, typed at the Legal Department and delivered to the Lug Nutz
+  const page = await open(`at=-3.3,0,-1.35&face=180&zoom=close&${DONE5}`);
+  await page.waitForTimeout(500);
+  const a = await scav(page);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(500);
+  check(a.poke === "typewriter" && (await scav(page)).challenge?.kind === "legal", `E at the typewriter opens the Legal Department (poke ${a.poke})`);
+  let t0 = Date.now();
+  while (Date.now() - t0 < 12000 && (await scav(page)).challenge) await mash(page, 0.5);
+  await page.waitForTimeout(1200);
+  check((await scav(page)).inv.includes("complaint"), "mashing types the complaint into the satchel");
+  await page.close();
+  const p2 = await open(`at=35.4,0,11.6&face=180&zoom=game&${DONE5}&give=complaint`);
+  await p2.waitForTimeout(700);
+  await p2.keyboard.press("KeyE");
+  await p2.waitForTimeout(600);
+  check((await scav(p2)).challenge?.kind === "insults", "delivering the complaint at the gym starts the Insult Volley");
+  await mash(p2, 1.2);
+  await p2.screenshot({ path: "shots/e2e-insults.png" });
+  t0 = Date.now();
+  while (Date.now() - t0 < 12000 && (await scav(p2)).challenge) await mash(p2, 0.5);
+  await p2.waitForTimeout(1500);
+  check((await scav(p2)).stages.noiseComplaint === "complete", "the Lug Nutz accept the complaint (as a doormat)");
+  await p2.close();
+}
+if (want("street: Kevin's parcels, protected")) {
+  // street: Kevin's parcels, protected
+  const page = await open(`at=0.2,0,-23.3&face=180&zoom=game&${DONE5},noiseComplaint`);
+  await page.waitForTimeout(700);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(1200);
+  check((await scav(page)).inv.includes("parcels"), "E on Kevin's stoop takes his parcels");
+  await page.close();
+  const p2 = await open(`at=-0.7,0,-6.6&face=0&zoom=game&${DONE5},noiseComplaint&give=parcels`);
+  await p2.waitForTimeout(900);
+  await p2.keyboard.press("KeyE");
+  await p2.waitForTimeout(1500);
+  check((await scav(p2)).stages.parcelProtection === "complete", "delivering them to Bill's own stoop protects them");
+  await p2.close();
+}
+if (want("street: the pitch, sticky note by sticky note")) {
+  // street: the pitch, sticky note by sticky note
+  const page = await open(`at=0.2,0,-23.2&face=180&zoom=game&${DONE5},noiseComplaint,parcelProtection&give=movieIdeas`);
+  await page.waitForTimeout(900);
+  const a = await scav(page);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(600);
+  check(a.kevin && (await scav(page)).challenge?.kind === "pitch", "Kevin is home, and E at his door starts The Pitch");
+  await mash(page, 1.5);
+  await page.screenshot({ path: "shots/e2e-pitch.png" });
+  const t0 = Date.now();
+  while (Date.now() - t0 < 12000 && (await scav(page)).challenge) await mash(page, 0.5);
+  await page.waitForTimeout(1500);
+  check((await scav(page)).stages.thePitch === "complete", "Kevin is pitched: The Pitch is complete");
   await page.close();
 }
 if (want('the old way still works: lure Gary down the lane and beat him back to the prize')) {

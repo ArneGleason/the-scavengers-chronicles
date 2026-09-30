@@ -89,6 +89,8 @@ interface WallPiece {
 }
 
 interface WallLine {
+  /** The building footprint this wall belongs to: inside it, its camera-side walls drop. */
+  owner?: { x0: number; x1: number; z0: number; z1: number };
   axis: "x" | "z";
   /** Fixed coordinate (z for an x-running wall, x for a z-running wall). */
   at: number;
@@ -102,11 +104,15 @@ interface WallLine {
 }
 
 const STUB = 0.42;
+/** How much the view ray toward the camera climbs per metre along one axis (32 degree pitch, 45 degree yaw). */
+export const RAY_CLIMB = Math.tan((32 * Math.PI) / 180) * Math.SQRT2;
 
 /**
  * Walls between Bill and the camera drop to capped stubs (a dollhouse cutaway). The camera
- * looks from +X+Z, so a wall occludes Bill when it lies on his +X or +Z side and the view
- * ray from him toward the camera crosses it.
+ * normally looks from +X+Z (dir 1), and turns round to look from -X-Z (dir -1) in his front
+ * yard; a wall occludes Bill when it lies on his camera side and the view ray toward the
+ * camera crosses it. Inside a building, all of that building's camera-side walls drop, and
+ * only that building's.
  */
 export class Walls {
   readonly lines: WallLine[] = [];
@@ -117,9 +123,9 @@ export class Walls {
     scene.add(this.root);
   }
 
-  add(axis: "x" | "z", at: number, from: number, to: number, o: { base: number; height: number; level: "ground" | "basement"; color: string; openings?: Opening[]; thick?: number }) {
+  add(axis: "x" | "z", at: number, from: number, to: number, o: { base: number; height: number; level: "ground" | "basement"; color: string; openings?: Opening[]; thick?: number; owner?: WallLine["owner"] }) {
     const t = o.thick ?? 0.15;
-    const line: WallLine = { axis, at, from, to, base: o.base, height: o.height, level: o.level, pieces: [], cut: 0 };
+    const line: WallLine = { owner: o.owner, axis, at, from, to, base: o.base, height: o.height, level: o.level, pieces: [], cut: 0 };
     const openings = [...(o.openings ?? [])].sort((a, b) => a.from - b.from);
     const segs: { a: number; b: number; lift: number; h: number }[] = [];
     let cur = from;
@@ -155,21 +161,26 @@ export class Walls {
   /**
    * @param bill Bill's feet position
    * @param mode which floor is being viewed
-   * @param insideHouse Bill is inside the building footprint (cut every front wall)
+   * @param dir 1 when the camera looks from +X+Z, -1 when it looks from -X-Z
    */
-  update(bill: THREE.Vector3, mode: "ground" | "basement", insideHouse: boolean, dt: number) {
+  update(bill: THREE.Vector3, mode: "ground" | "basement", dir: 1 | -1, dt: number) {
     for (const L of this.lines) {
       let target = 0;
       const visibleLevel = L.level === mode;
       if (visibleLevel) {
-        const front = L.axis === "x" ? L.at > bill.z + 0.05 : L.at > bill.x + 0.05;
-        if (front) {
-          if (insideHouse) target = 1;
+        // how far the wall lies from Bill toward the camera
+        const along = ((L.axis === "x" ? L.at - bill.z : L.at - bill.x) * dir);
+        if (along > 0.05) {
+          const o = L.owner, m = 0.05;
+          const inside = !!o && bill.x > o.x0 - m && bill.x < o.x1 + m && bill.z > o.z0 - m && bill.z < o.z1 + m;
+          if (inside) target = 1;
           else {
-            // follow the view ray from Bill toward the camera (+X+Z) until it reaches the wall
-            const along = L.axis === "x" ? L.at - bill.z : L.at - bill.x;
-            const cross = (L.axis === "x" ? bill.x : bill.z) + along;
-            target = along < 7 && cross > L.from - 1.2 && cross < L.to + 1.2 ? 1 : 0;
+            // Follow the view ray from Bill's chest toward the camera. The camera is on a diagonal
+            // and pitched down, so the ray climbs as it goes; only drop the wall if the ray still
+            // meets it below the top (otherwise he's plainly visible over it).
+            const cross = (L.axis === "x" ? bill.x : bill.z) + along * dir;
+            const rayY = bill.y + 1.2 + along * RAY_CLIMB;
+            target = rayY < L.base + L.height && cross > L.from - 1.2 && cross < L.to + 1.2 ? 1 : 0;
           }
         }
       }

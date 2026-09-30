@@ -73,9 +73,22 @@
       }
       .objective small { font: 700 10px/1 "Atkinson Hyperlegible Next", sans-serif; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; }
       .objective b { font: 700 16px/1.15 "Shantell Sans", sans-serif; }
-      .marker { position: absolute; left: 0; top: 0; width: 32px; height: 32px; display: grid; place-items: center; }
-      .marker span { font-size: 26px; line-height: 1; color: var(--salvage); -webkit-text-stroke: 2px var(--ink); text-shadow: 0 2px 0 var(--ink); }
-      .marker.edge span { font-size: 30px; }
+      .marker { position: absolute; left: 0; top: 0; width: 60px; height: 64px; display: grid; justify-items: center; }
+      .marker svg { width: 60px; height: 64px; overflow: visible; filter: drop-shadow(0 3px 0 var(--ink)); animation: marker-pulse 0.9s ease-in-out infinite; transform-origin: 50% 50%; }
+      .marker svg path { fill: var(--salvage); stroke: var(--ink); stroke-width: 4; stroke-linejoin: round; }
+      .marker .ring { position: absolute; left: 50%; top: 64px; width: 44px; height: 16px; margin-left: -22px; border: 3px solid var(--salvage); border-radius: 50%; animation: marker-ring 1.1s ease-out infinite; }
+      .marker .label {
+        margin-top: 2px; white-space: nowrap; background: var(--ink); color: #fff7e3; border-radius: 999px; padding: 3px 10px 4px;
+        font: 400 17px/1 Bangers, Impact, sans-serif; letter-spacing: 0.06em; box-shadow: 0 0 0 2px var(--salvage);
+      }
+      .marker.edge .ring { display: none; }
+      .marker.edge svg { width: 48px; height: 52px; animation-duration: 0.6s; }
+      @keyframes marker-pulse { 50% { scale: 1.14; } }
+      @keyframes marker-ring { from { transform: scale(0.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+      .itemmark { position: absolute; left: 0; top: 0; display: grid; justify-items: center; gap: 2px; pointer-events: none; }
+      .itemmark b { width: 28px; height: 28px; border-radius: 50%; background: #fff7e3; border: 3px solid var(--ink); display: grid; place-items: center;
+        font: 400 20px/1 Bangers, Impact, sans-serif; color: #c8312d; animation: marker-pulse 1.2s ease-in-out infinite; }
+      .itemmark span { white-space: nowrap; background: rgba(30, 26, 24, 0.8); color: #fff7e3; border-radius: 999px; padding: 2px 7px; font: 700 10px/1.2 "Atkinson Hyperlegible Next", sans-serif; }
       .debug { position: absolute; left: 16px; top: 130px; font: 12px/1.4 ui-monospace, Menlo, monospace; background: rgba(30,26,24,.8); color: #f4efe4; padding: 6px 9px; border-radius: 6px; white-space: pre; }
       .gas {
         position: absolute; left: 16px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 5px;

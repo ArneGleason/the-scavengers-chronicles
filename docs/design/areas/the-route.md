@@ -21,8 +21,8 @@ The camera looks from +X+Z, so the lane runs across the foreground and the build
 | Parking lot | x 12.5–21.5 | Three parked cars, stall lines, a pay machine, the green P sign, bollards along the sidewalk |
 | Corner store | x 22–31 | Back wall on the lane with a "DELIVERIES ONLY" door, graffiti, the store name on the lane-side parapet, shelves and a till inside for the cutaway |
 | Store yard | between the store and the lane | **The dumpster**, the cardboard heap with the Speak & Spell, milk crates, a tagged shed, a raccoon on the bins |
-| Boxing gym | x 32–40 | Roll-up door onto the yard, a heavy bag and ring inside, a lion mural |
-| Main street | z −10.5 to −6.6, the full width | Streetcar tracks and wires, a streetcar every 45 seconds, and a row of shopfronts across it (video rentals, barber, fruit and veg, café, bakery, hardware, records) |
+| Boxing gym | x 32–40 | LUG NUTZ BOXING & IRON: a roll-up door onto the yard, a heavy bag and ring inside, a lion mural, and the Lug Nutz ([the-street.md](the-street.md)) |
+| The street out front | north of the house | Replaced on 30 September 2026 by a residential street with houses on both sides: see [the-street.md](the-street.md) |
 
 **Why the store's name is on the parapet:** the camera only sees faces pointing +X or +Z, so every sign and mural in the Route faces the lane or the street edge.
 

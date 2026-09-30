@@ -367,6 +367,22 @@ export class GameAudio {
     this.noiseBurst("sfx", t, 0.03, "highpass", 3500, 0.7, 0.4);
   }
 
+  /** A typewriter key. */
+  clack() {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.noiseBurst("sfx", t, 0.025, "bandpass", 2400 + this.rand() * 1200, 3, 0.5);
+    this.tone("sfx", t, "square", 1200, 900, 0.02, 0.08, 0.001);
+  }
+
+  /** The typewriter's bell at the end of the line. */
+  ding() {
+    if (!this.ctx) return;
+    const t = this.now;
+    this.tone("sfx", t, "sine", 2640, 2640, 0.6, 0.3, 0.001);
+    this.tone("sfx", t, "sine", 5280, 5280, 0.3, 0.08, 0.001);
+  }
+
   /** A cat-fight slap. */
   slap() {
     if (!this.ctx) return;

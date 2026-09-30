@@ -6,6 +6,7 @@ import { newJam, press, nextKey } from "../src/game/jam";
 import { newSoup, collect, distill, canDistill, isReady, eat } from "../src/game/soup";
 import { INGREDIENTS, DISTILLATIONS, type IngredientId } from "../src/content/soup";
 import { newWanda, stepWanda, applaudWanda, WANDA } from "../src/game/wanda";
+import { nextWaypoint, regionOf } from "../src/game/wayfinding";
 import { GagDirector } from "../src/game/gags";
 
 describe("mission chain", () => {
@@ -58,6 +59,14 @@ describe("mission chain", () => {
     onPickup(s, "grateShelf");
     expect(deliverable(s, "vault", ["grateShelf"])).toBe("grateVault");
     deliver(s, "grateVault");
+    // then the street: the noise complaint, Kevin's parcels, and the pitch
+    expect(objective(s)).toMatchObject({ mission: "noiseComplaint", point: "typewriter" });
+    for (const [id, item, drop] of [["noiseComplaint", "complaint", "gymDoor"], ["parcelProtection", "parcels", "billStoop"], ["thePitch", "movieIdeas", "kevinDoor"]] as const) {
+      expect(s.active).toBe(id);
+      onPickup(s, item);
+      expect(deliverable(s, drop, [item])).toBe(id);
+      deliver(s, id);
+    }
     expect(allDone(s)).toBe(true);
     expect(s.active).toBeNull();
   });
@@ -255,9 +264,8 @@ describe("the soup's ten distillations", () => {
 
 describe("Big Wanda", () => {
   const home = { x: 0, z: 0 };
-  const run = (billSpeed: number, carrying = true, seconds = 8) => {
-    const w = newWanda(home);
-    const bill = { x: 4, z: 0 };
+  const run = (billSpeed: number, carrying = true, seconds = 8, w = newWanda(home), start = 4) => {
+    const bill = { x: start, z: 0 };
     for (let i = 0; i < seconds * 60; i++) {
       bill.x += billSpeed / 60; // running away from her
       const r = stepWanda(w, { bill, carryingGrate: carrying, billInside: true }, 1 / 60);
@@ -266,12 +274,19 @@ describe("Big Wanda", () => {
     return { caught: false, w };
   };
 
-  it("catches a man shuffling off with the grate, but not one hurrying", () => {
+  it("fresh, she catches a man running off with the grate, even hurrying (after a HEY!, she lunges)", () => {
     expect(run(1.4).caught).toBe(true);
-    expect(run(2.6).caught).toBe(false);
+    // she's been crowding him, so she starts about her crowding distance away
+    expect(run(2.6, true, 12, newWanda(home), WANDA.admireStop).caught).toBe(true);
   });
 
-  it("only admires him, from a respectful distance, when he isn't carrying the grate", () => {
+  it("after two catches she's winded, and a hurrying man gets away", () => {
+    const w = newWanda(home);
+    w.catches = WANDA.windedAfter;
+    expect(run(2.6, true, 8, w, WANDA.admireStop).caught).toBe(false);
+  });
+
+  it("without the grate she crowds him, but never catches him", () => {
     const { caught, w } = run(0, false, 10);
     expect(caught).toBe(false);
     expect(w.mode).toBe("admire");
@@ -284,17 +299,48 @@ describe("Big Wanda", () => {
     const bill = { x: 3, z: 0 };
     for (let i = 0; i < 30; i++) stepWanda(w, { bill, carryingGrate: true, billInside: true }, 1 / 60);
     expect(w.x).toBe(0);
-    for (let i = 0; i < 60; i++) stepWanda(w, { bill, carryingGrate: true, billInside: true }, 1 / 60);
+    for (let i = 0; i < 90; i++) stepWanda(w, { bill, carryingGrate: true, billInside: true }, 1 / 60); // "HEY!", then the charge
     expect(w.mode).toBe("chase");
     expect(w.x).toBeGreaterThan(0);
   });
 
-  it("gives up and goes home when he leaves the junkyard", () => {
+  it("gives up and goes home when he's out of reach", () => {
     const w = newWanda(home);
     w.x = 5;
     let last = null;
     for (let i = 0; i < 60 * 8; i++) last = stepWanda(w, { bill: { x: 20, z: 0 }, carryingGrate: true, billInside: false }, 1 / 60);
     expect(w.mode).toBe("home");
     expect(last?.caught).toBe(false);
+  });
+});
+
+describe("wayfinding: the arrow goes through doors, not walls", () => {
+  it("knows which region he's in", () => {
+    expect(regionOf({ x: 0, y: -2.6, z: 0 })).toBe("basement");
+    expect(regionOf({ x: 0, y: 0, z: 0 })).toBe("house");
+    expect(regionOf({ x: 0, y: 0, z: -8 })).toBe("yard");
+    expect(regionOf({ x: 0, y: 0, z: -15 })).toBe("outside");
+    expect(regionOf({ x: 54, y: 0, z: 7 })).toBe("junkyard");
+  });
+  it("points straight at a goal in the same region", () => {
+    expect(nextWaypoint({ x: 0, y: 0, z: 10 }, { x: -3, y: 0, z: 11 })).toBeNull();
+  });
+  it("from the back yard to the basement: the back door first", () => {
+    expect(nextWaypoint({ x: -3, y: 0, z: 10 }, { x: -2, y: -2.6, z: 0.8 })?.label).toBe("BACK DOOR");
+  });
+  it("from inside the house to the basement: the stairs", () => {
+    expect(nextWaypoint({ x: 3, y: 0, z: 2 }, { x: -2, y: -2.6, z: 0.8 })?.label).toBe("STAIRS");
+  });
+  it("from the basement to the lane: the stairs first", () => {
+    expect(nextWaypoint({ x: -2, y: -2.6, z: 0 }, { x: 25, y: 0, z: 14 })?.label).toBe("STAIRS");
+  });
+  it("from the street to the house: the front gate; from the lane: the back gate", () => {
+    expect(nextWaypoint({ x: 0, y: 0, z: -16 }, { x: 0, y: 0, z: 1 })?.label).toBe("FRONT GATE");
+    expect(nextWaypoint({ x: 0, y: 0, z: 17 }, { x: 0, y: 0, z: 1 })?.label).toBe("BACK GATE");
+  });
+  it("into the junkyard through its gate", () => {
+    const w = nextWaypoint({ x: 40, y: 0, z: 18 }, { x: 54.5, y: 0, z: 7.4 });
+    expect(w?.label).toBe("JUNKYARD GATE");
+    expect(w?.at.z).toBeGreaterThan(15);
   });
 });

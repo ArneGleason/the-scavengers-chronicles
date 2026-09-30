@@ -159,6 +159,10 @@ Decided on 2026-09-28. The design documents are in [docs/design/](docs/design/RE
 - Every cutscene and comic panel renders in-engine in the game's own look.
 - Bill lives with **Aximandra**, a tabby who knows the soup will boil over before he does. She rides to the airfield in the satchel.
 
+### The Street (built as greybox)
+
+Bill's front door opens onto an overgrown front yard of tall weeds, a sidewalk he considers his property, and a quiet residential street of semis. Across the street lives Kevin, who works at a media company (Bill says media mogul) and whose parcels Bill "protects". The Lug Nutz train at the gym down the block; Bill says he can hear them from his house. Joggers use his sidewalk. The camera turns round in the front yard to show the front of the house. Layout, people and errands: [docs/design/areas/the-street.md](docs/design/areas/the-street.md).
+
 ### The Route (built as greybox)
 
 Bill's back gate opens onto a Toronto-style laneway. Along the lane are a parking lot, the back of a corner variety store with the dumpster Gary guards, and a boxing gym. A streetcar street with shopfronts runs along the north edge. Layout, errands and Gary's rules: [docs/design/areas/the-route.md](docs/design/areas/the-route.md).

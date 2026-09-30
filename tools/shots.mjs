@@ -34,6 +34,18 @@ const SHOTS = [
   ["junkyard", "at=48,0,17&face=160&skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy"],
   ["junkyard-wanda", "at=53,0,6&face=90&zoom=game&skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy", null, 2500],
   ["workbench", "at=7.8,0,7.6&face=20&zoom=close"],
+  ["guide-house", "at=2.4,0,2.2&face=200"],
+  ["guide-yard", "at=-3,0,10&face=200&zoom=game"],
+  ["guide-street", "at=6,0,-16&face=90&zoom=game"],
+  ["hood-legal", "at=-3.3,0,-1.3&face=180&zoom=close"],
+  ["hood-lugnutz", "at=35.5,0,14&face=180&zoom=game", null, 1500],
+  ["hood-kevin", "at=0.2,0,-22&face=180&zoom=game&skip=cablePilgrimage,stumpProphecy,dumpsterDiplomacy,grateShelf,grateVault,noiseComplaint,parcelProtection", null, 1500],
+  ["hood-joggers", "at=-4,0,-12.5&face=90&zoom=game", null, 6000],
+  ["front-yard", "at=-0.7,0,-8.5&face=0&zoom=game", null, 1200],
+  ["front-street", "at=0,0,-16&face=180&zoom=game"],
+  ["front-kevin", "at=0.2,0,-22.4&face=180&zoom=game"],
+  ["gym-inside", "at=36,0,4&face=200&zoom=game"],
+  ["gym-front", "at=36,0,-9&face=180&zoom=game"],
 ];
 
 const filter = process.argv[2];
