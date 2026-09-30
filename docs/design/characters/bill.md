@@ -18,6 +18,8 @@ References:
 | Age | 54 in 2026. He has been "preparing" for forty years, which freezes his taste at 14, in 1986, the year he bought the DIN sync cable. |
 | Home | His late mother's 1955 house, now a hoarder shambles. Mint cabinets, rose curtains, chrome and Formica, all original because he never replaces anything, under heaps of stored objects waiting for their future use. The basement is the 1986 synth altar. |
 | Self-image | An **archivist**. The modern world will eventually realise these old things were the best they could ever be. |
+| Before | A **teacher**. His former students still live in the neighbourhood. He taught them to clean a classroom with white vinegar and to name prog rock albums in order, and he's still waiting for them to thank him. |
+| The novel | ***Captain Caffeine***: over two dozen sticky notes collected over thirty years, plus one filled-in page of a lined notepad. The first page is excellent. |
 | Lives with | Aximandra, a tabby cat. The fridge note says "At least the cat gets me." |
 | Obsessions (game) | Vintage synths, mystery cables and adapters, newspapers, antiques, wood with "tone", grates with "shelf potential". |
 | Obsessions (references) | Soup (the enamel bowl marked BILL ONLY), comics (stacks of *Mega Vegas Elvis*), Elvis (an ELVIS LIVES ashtray, a photo on the fridge, a Las Vegas magnet), his unfinished novel *Captain Caffeine*, and lawsuits (a typewriter, "Bill's Legal Department"). |

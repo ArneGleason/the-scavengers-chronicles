@@ -4,7 +4,7 @@ import type { ItemId } from "../content/items";
 import { BASEMENT_Y } from "./stairs";
 import { PRIZE_AT } from "./route";
 import { GRATE_AT } from "./junkyard";
-import { WORKBENCH_AT, TYPEWRITER_AT, STICKY_AT } from "./props";
+import { WORKBENCH_AT, TYPEWRITER_AT, STICKY_AT, MANUSCRIPT_AT } from "./props";
 import { BILL_STOOP, KEVIN_STOOP } from "./street";
 
 /**
@@ -26,6 +26,7 @@ export const POINTS: Record<PointId, { at: THREE.Vector3; reach: number }> = {
   billStoop: { at: BILL_STOOP.clone(), reach: 1.4 },
   stickyWall: { at: STICKY_AT.clone().setY(0), reach: 1.2 },
   kevinDoor: { at: KEVIN_STOOP.clone(), reach: 1.6 },
+  kitchenTable: { at: MANUSCRIPT_AT.clone().setY(0), reach: 1.3 },
 };
 
 /** Where each delivered item ends up in the house, and which way it faces. */
@@ -40,4 +41,5 @@ export const INSTALL: Partial<Record<ItemId, { at: THREE.Vector3; rotY: number }
   complaint: { at: new THREE.Vector3(35.4, 0.03, 10.75), rotY: 0.2 },
   parcels: { at: new THREE.Vector3(-0.1, 0.42, -5.65), rotY: 0.35 },
   movieIdeas: { at: new THREE.Vector3(0.9, 0.44, -24.3), rotY: 0.4 },
+  manuscript: { at: new THREE.Vector3(-0.6, 0.39, -24.5), rotY: -0.3 },
 };

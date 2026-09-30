@@ -6,10 +6,10 @@
  */
 import type { ItemId } from "./items";
 
-export type MissionId = "cablePilgrimage" | "stumpProphecy" | "dumpsterDiplomacy" | "grateShelf" | "grateVault" | "noiseComplaint" | "parcelProtection" | "thePitch";
+export type MissionId = "cablePilgrimage" | "stumpProphecy" | "dumpsterDiplomacy" | "grateShelf" | "grateVault" | "noiseComplaint" | "parcelProtection" | "thePitch" | "theManuscript";
 export type PointId =
   | "basementHoard" | "synthAltar" | "backyardDig" | "shelfZone" | "dumpster" | "junkyard" | "workbench" | "vault"
-  | "typewriter" | "gymDoor" | "kevinStoop" | "billStoop" | "stickyWall" | "kevinDoor";
+  | "typewriter" | "gymDoor" | "kevinStoop" | "billStoop" | "stickyWall" | "kevinDoor" | "kitchenTable";
 
 export interface MissionDef {
   id: MissionId;
@@ -157,11 +157,27 @@ export const MISSIONS: Record<MissionId, MissionDef> = {
     completeGuide: "Hollywood has been notified, via Kevin, via a mattress store.",
     pickupText: "Picked up the movie ideas: a brick of sticky notes, some of them still sticky.",
     completeText: "Mission complete: Kevin will pass it along. To whom is unclear. Kevin runs social media for a mattress store.",
+    unlocks: ["theManuscript"],
+  },
+  theManuscript: {
+    id: "theManuscript",
+    title: "Captain Caffeine",
+    summary: "Kevin is in media, which is basically publishing. Get him the masterpiece novel: twenty-seven sticky notes and one page.",
+    item: "manuscript",
+    pickup: "kitchenTable",
+    drop: "kevinDoor",
+    pickupLabel: "Captain Caffeine",
+    dropLabel: "Kevin's front door",
+    pickupGuide: "Captain Caffeine, the masterpiece novel (twenty-seven sticky notes and one page of a notepad), is on the kitchen table.",
+    returnGuide: "Take Captain Caffeine across the street to Kevin. He's in media. Basically publishing.",
+    completeGuide: "Kevin is reading it. Kevin would also like a small favour.",
+    pickupText: "Picked up Captain Caffeine. Thirty years of sticky notes and one excellent page.",
+    completeText: "Mission complete: Kevin holds the manuscript at arm's length, says it's 'a lot', and asks Bill for a small favour. Bill accepts. Kevin now owes him enormously.",
     unlocks: [],
   },
 };
 
-export const MISSION_ORDER: MissionId[] = ["cablePilgrimage", "stumpProphecy", "dumpsterDiplomacy", "grateShelf", "grateVault", "noiseComplaint", "parcelProtection", "thePitch"];
+export const MISSION_ORDER: MissionId[] = ["cablePilgrimage", "stumpProphecy", "dumpsterDiplomacy", "grateShelf", "grateVault", "noiseComplaint", "parcelProtection", "thePitch", "theManuscript"];
 
 /** v0.2 quip pools for the mission layer and Gary (verbatim). */
 export const MISSION_QUIPS = {
@@ -225,7 +241,7 @@ export const JAM_LINES = [
 
 /** Big Wanda's lines, from the v0.2 pools where they fit (her admiration is for his salvage taste). */
 export const WANDA_SAYS = {
-  intro: ["Big Wanda's Junkyard is open. Down the lane, a trailer door bangs like a warning made of plywood."],
+  intro: ["Somewhere down the lane, a junkyard gate creaks open. Big Wanda is back from lunch. A trailer door bangs like a warning made of plywood."],
   admire: ["There he is, my magnificent little scrap prophet.", "I admire a man who looks at garbage and sees furniture.", "Come let Wanda catalogue your pockets."],
   chase: ["Quit running, antique snack!", "I have a trailer, a label maker, and feelings bigger than zoning allows!", "That grate is catalogued, sweetie!"],
   applaud: ["Now THAT'S a digestive system.", "Bravo! Bravo!", "What a man. What a smell."],
@@ -251,6 +267,17 @@ export const KEVIN_SAYS = {
 
 /** Bill's movie ideas, one per sticky note, pitched at Kevin one at a time. */
 export const MOVIE_IDEAS = ["SOUP: THE MUSICAL", "DIE HARD, BUT IN A BASEMENT", "THE GRATE ESCAPE", "CAPTAIN CAFFEINE", "A SYNTH THAT SOLVES CRIMES", "ELVIS STOLE MY FACE", "STUMP WARS", "THE DIN SYNC CODE", "GARY: ORIGINS", "SEQUEL"] as const;
+
+/**
+ * His former students (Bill was a teacher). They hang out in front of the corner store and
+ * insult him; he keeps trying to get them to thank him for his life lessons.
+ */
+export const KIDS_SAYS = {
+  taunt: ["Mr. B! Still teaching vinegar?", "Is that the prog rock guy?", "Mr. B, you still owe me a grade.", "Did you ever finish the album, Mr. B?", "Mr. B! Name every Yes album! ...Kidding. Please don't."],
+  groan: ["UGHHH.", "We KNOW, Mr. B.", "zzz", "He's doing the thing again."],
+  grudging: ["...The vinegar thing actually works. My mom says.", "Okay. Close to the Edge is pretty good.", "Fine. Thanks, Mr. B. For the vinegar."],
+} as const;
+export const LESSONS = ["WHITE VINEGAR!", "BAKING SODA!", "FRAGILE!", "CLOSE TO THE EDGE!", "TARKUS!", "THICK AS A BRICK!", "2112!", "SELLING ENGLAND BY THE POUND!", "WIPE IN CIRCLES!"] as const;
 
 /** The joggers, cheerfully using the public sidewalk that Bill has claimed. */
 export const JOGGER_SAYS = { reply: ["Morning!", "On your left!", "Love the yard!", "Beautiful day!"], toot: ["EW!", "WHY?!", "My lungs!"] } as const;
@@ -285,6 +312,8 @@ export const BILL_GAGS = {
   lugInsults: ["Your grunting is registered with my legal department.", "I can hear every rep. From my house.", "Some of us are composing.", "Cease and desist. The lifting.", "Your protein smells like a lawsuit."],
   lugNoise: ["I can hear them.", "The Lug Nutz. Grunting. At this hour.", "Every rep. I hear every rep.", "That's a deadlift. I can tell."],
   legalStart: ["Bill's Legal Department is now in session.", "To whom it may concern. Which is them."],
+  lessonsStart: ["Class is in session.", "Pop quiz. Name the second Genesis album. Anyone.", "You'll thank me for this. Eventually. Now."],
+  lessonsWon: ["HE REMEMBERS.", "Tenure.", "That's what we call a teachable moment."],
   jamStart: ["From the top.", "This is the one.", "Okay. Now with feeling.", "Quiet, everyone. Genius is happening."],
   jamExcuse: ["Genius. This keyboard can't capture it.", "It needs more parameters. More dynamics.", "The gear isn't ready for me.", "That third note was the synth's fault. Clearly.", "Too much genius for sixty-one keys.", "The velocity curve is wrong. I'm not."],
 } as const;

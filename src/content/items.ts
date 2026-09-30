@@ -2,7 +2,7 @@
  * Item definitions for the walking toy. Names and lines are ported verbatim from the
  * v0.2 prototype (classic/app.js) where they exist.
  */
-export type ItemId = "dinCable" | "powerBrick" | "cableBundle" | "speakAndSpell" | "newspaperBundle" | "personalityStump" | "rustyGrate" | "grateShelf" | "complaint" | "parcels" | "movieIdeas";
+export type ItemId = "dinCable" | "powerBrick" | "cableBundle" | "speakAndSpell" | "newspaperBundle" | "personalityStump" | "rustyGrate" | "grateShelf" | "complaint" | "parcels" | "movieIdeas" | "manuscript";
 export type CarryKind = "satchel" | "heavy";
 export type Surface = "carpet" | "linoleum" | "hardwood" | "concrete" | "grass" | "dirt" | "stairs" | "asphalt";
 
@@ -140,6 +140,17 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     accent: "#e8b23a",
     pickupText: "Forty years of movie ideas, one per sticky note, mostly about soup.",
     dropText: "He sets the movie ideas down. The top one just says SEQUEL.",
+  },
+  manuscript: {
+    id: "manuscript",
+    name: "Captain Caffeine (the Manuscript)",
+    shortName: "Manuscript",
+    carry: "satchel",
+    mass: 0.3,
+    color: "#e9e2cc",
+    accent: "#f2d547",
+    pickupText: "Captain Caffeine: twenty-seven sticky notes and one full page of a lined notepad. Thirty years of work. The first page is excellent.",
+    dropText: "He sets down the manuscript gently. A sticky note falls off. It says 'CHAPTER TWO?'",
   },
 };
 

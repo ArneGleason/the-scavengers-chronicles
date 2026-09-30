@@ -37,6 +37,15 @@ Second pass (29 September 2026, from playtest feedback):
 | **Big Wanda** | Her junkyard | Waves and admires from a respectful distance; chases him once he has the grate; stops to applaud a toot; if she catches him, CATALOGUED!, and he's thrown back over the fence |
 | **SHELF-IFY!** | The backyard workbench | Mash to hammer the grate into a shelf; every few seconds, the thumb (YEOWCH!) |
 
+Third pass (30 September 2026):
+
+| Gag | Where / trigger | What happens |
+|---|---|---|
+| **Musings** | Everywhere | A one-liner for each of about twenty areas, a second or two after he arrives, never too often: "The front yard. Wild on purpose. It's a statement. The statement is 'go away'." When the player stalls, he mutters a hint for the current errand before the narrator gets snide. (`src/content/musings.ts`) |
+| **Kevin's favours** | Kevin's door | Endless pointless errands; Bill thinks each one means Kevin owes him more |
+| **LIFE LESSONS!** | His former students, at the corner store | Vinegar and prog rock, until one grudgingly thanks him. TENURE! |
+| **The locked gate** | Big Wanda's Junkyard | CLOSED: Wanda is at lunch. A long lunch. |
+
 Earlier, from `comedy.md`: the Stump Wrestle, the Dumpster Duel, the toot dash, the rake, the skateboard, bird poop, the comb-over gust, the nose audit, the burp, the trip and the raccoon faint.
 
 ## Next

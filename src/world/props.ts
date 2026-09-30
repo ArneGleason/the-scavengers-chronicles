@@ -23,6 +23,8 @@ export const WORKBENCH_AT = new THREE.Vector3(7.8, 0, 7.8);
 export const TYPEWRITER_AT = new THREE.Vector3(-3.3, 0, -1.5);
 /** The movie ideas live on the counter by the fridge, which is also covered in them. */
 export const STICKY_AT = new THREE.Vector3(-5.55, 1.0, 3.55);
+/** Captain Caffeine, the masterpiece novel, lives on the kitchen table next to the soup bowl. */
+export const MANUSCRIPT_AT = new THREE.Vector3(-3.6, 0.82, 2.75);
 
 const newsTex = canvasTex(64, 48, (g, w, h) => {
   g.fillStyle = "#ece2c8"; g.fillRect(0, 0, w, h);

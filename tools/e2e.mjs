@@ -22,7 +22,7 @@ const only = process.argv[2];
 const want = (what) => !only || only.split(",").some((w) => what.toLowerCase().includes(w.trim().toLowerCase()));
 let failures = 0;
 const check = (ok, msg) => { console.log(`${ok ? "pass" : "FAIL"} ${msg}`); if (!ok) failures++; };
-/** Steer Bill to (x, z) by holding the right keys (camera yaw 45°: D+S is +X, S+A is +Z). */
+/** Steer Bill to (x, z) by holding the right keys, whichever way the camera is facing. */
 async function walkTo(page, x, z, { hurry = false, timeout = 20000, near = 0.35 } = {}) {
   const t0 = Date.now();
   let held = new Set();
@@ -33,10 +33,11 @@ async function walkTo(page, x, z, { hurry = false, timeout = 20000, near = 0.35 
   };
   try {
     while (Date.now() - t0 < timeout) {
-      const [px, , pz] = await page.evaluate(() => window.__scav.pos);
+      const { pos: [px, , pz], yaw = Math.PI / 4 } = await page.evaluate(() => window.__scav);
       const dx = x - px, dz = z - pz, d = Math.hypot(dx, dz);
       if (d < near) return true;
-      const right = (dx - dz) * Math.SQRT1_2, up = (-dx - dz) * Math.SQRT1_2;
+      // screen right is (cos yaw, -sin yaw) in world x/z; screen up is (-sin yaw, -cos yaw)
+      const right = dx * Math.cos(yaw) - dz * Math.sin(yaw), up = -dx * Math.sin(yaw) - dz * Math.cos(yaw);
       const keys = new Set(hurry ? ["ShiftLeft"] : []);
       if (right > 0.38 * d) keys.add("KeyD"); else if (right < -0.38 * d) keys.add("KeyA");
       if (up > 0.38 * d) keys.add("KeyW"); else if (up < -0.38 * d) keys.add("KeyS");
@@ -439,6 +440,79 @@ if (want("street: the pitch, sticky note by sticky note")) {
   while (Date.now() - t0 < 12000 && (await scav(page)).challenge) await mash(page, 0.5);
   await page.waitForTimeout(1500);
   check((await scav(page)).stages.thePitch === "complete", "Kevin is pitched: The Pitch is complete");
+  await page.close();
+}
+const DONE8 = `${DONE5},noiseComplaint,parcelProtection,thePitch`;
+if (want("neighbours: Wanda's gate is locked until the cable and the stump are done")) {
+  // neighbours: Wanda's gate is locked until the cable and the stump are done
+  const page = await open("at=48,0,17.6&face=180&zoom=game");
+  await page.waitForTimeout(400);
+  check((await scav(page)).junkGate === "closed", "at the start, Big Wanda's gate is padlocked");
+  await walkTo(page, 48, 12.5, { timeout: 3500 });
+  check((await scav(page)).pos[2] > 14.8, "and Bill can't get through it");
+  await page.close();
+  const p2 = await open("at=48,0,17.6&face=180&zoom=game&skip=cablePilgrimage,stumpProphecy");
+  await p2.waitForTimeout(1800);
+  check((await scav(p2)).junkGate === "open", "with the cable and the stump done, it's open");
+  await p2.close();
+}
+if (want("neighbours: the camera faces Bill's side of the street until he crosses the road")) {
+  // neighbours: the camera faces Bill's side of the street until he crosses the road
+  const page = await open("at=23.5,0,-12&face=0&zoom=game");
+  await page.waitForTimeout(500);
+  const a = await scav(page);
+  await walkTo(page, 23.5, -21, { timeout: 8000 }); // between the parked cars
+  await page.waitForTimeout(500);
+  const b = await scav(page);
+  check(a.reversed && !b.reversed, `on the sidewalk by the store it faces his side; across the road it turns back (${a.reversed} -> ${b.reversed})`);
+  await page.close();
+}
+if (want("neighbours: Captain Caffeine to Kevin, then his pointless favours")) {
+  // neighbours: Captain Caffeine to Kevin, then his pointless favours
+  const page = await open(`at=0.2,0,-23.2&face=180&zoom=game&${DONE8}&give=manuscript`);
+  await page.waitForTimeout(900);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(1500);
+  const a = await scav(page);
+  check(a.stages.theManuscript === "complete" && a.favours.stage === "doing", `the manuscript goes to Kevin, and Kevin asks a favour (${a.favours.stage})`);
+  await page.close();
+  const p2 = await open(`at=-0.7,0,-6.3&face=0&zoom=game&${DONE8},theManuscript&favour=0`);
+  await p2.waitForTimeout(6000);
+  await p2.screenshot({ path: "shots/e2e-favour-wait.png" });
+  await p2.waitForTimeout(8000);
+  check((await scav(p2)).favours.stage === "report", "standing on his stoop long enough counts as watching for Kevin's van");
+  await p2.close();
+  const p3 = await open(`at=0.2,0,-23.2&face=180&zoom=game&${DONE8},theManuscript&favour=0:report`);
+  await p3.waitForTimeout(900);
+  await p3.keyboard.press("KeyE");
+  await p3.waitForTimeout(1200);
+  const c = await scav(p3);
+  check(c.favours.stage === "doing" && c.favours.n === 1, `reporting back gets him another favour (#${c.favours.n + 1})`);
+  await p3.close();
+}
+if (want("neighbours: his former students, and life lessons")) {
+  // neighbours: his former students, and life lessons
+  const page = await open("at=28.3,0,-9.3&face=0&zoom=game");
+  await page.waitForTimeout(800);
+  const a = await scav(page);
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(500);
+  check(a.poke === "kids" && (await scav(page)).challenge?.kind === "lessons", `E by the kids starts LIFE LESSONS (poke ${a.poke})`);
+  await mash(page, 1.2);
+  await page.screenshot({ path: "shots/e2e-lessons.png" });
+  const t0 = Date.now();
+  while (Date.now() - t0 < 12000 && (await scav(page)).challenge) await mash(page, 0.5);
+  await page.waitForTimeout(5500);
+  check((await scav(page)).album.includes("kids"), "a grudging compliment, and a class photo");
+  await page.close();
+}
+if (want("neighbours: Bill has something to say about where he is")) {
+  // neighbours: Bill has something to say about where he is
+  const page = await open("at=-3,0,2.4&face=270&zoom=close");
+  await page.waitForTimeout(3500);
+  const s = await scav(page);
+  const said = await page.$eval(".balloon-bill", (e) => !e.hidden && e.textContent.length > 0).catch(() => false);
+  check(s.zone === "kitchen" && said, `in the kitchen, he says something about the kitchen (${s.zone})`);
   await page.close();
 }
 if (want('the old way still works: lure Gary down the lane and beat him back to the prize')) {

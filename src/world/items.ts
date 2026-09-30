@@ -125,6 +125,15 @@ function makeModel(id: ItemId): { g: THREE.Group; half: [number, number, number]
       add(new THREE.BoxGeometry(0.14, 0.09, 0.005), label, [0.1, -0.16, 0.203]);
       return { g, half: [0.25, 0.3, 0.2], mats };
     }
+    case "manuscript": {
+      // a lined notepad, one page filled in, bristling with sticky notes
+      add(new THREE.BoxGeometry(0.22, 0.03, 0.3), m(def.color));
+      for (let i = 0; i < 7; i++) add(new THREE.BoxGeometry(0.18, 0.002, 0.006), m("#8fb0b5", { ink: 0 }), [0, 0.016, -0.11 + i * 0.035]);
+      add(new THREE.BoxGeometry(0.22, 0.008, 0.03), m("#c8312d", { ink: 0.3 }), [0, 0.018, -0.14]);
+      const note = m(def.accent, { ink: 0.3 });
+      for (const [x, z, r] of [[0.1, 0.1, 0.4], [-0.09, 0.12, -0.3], [0.12, -0.05, 0.9], [-0.11, -0.08, -0.7], [0.02, 0.15, 0.1]] as const) add(new THREE.BoxGeometry(0.07, 0.004, 0.07), note, [x, 0.02, z], [0, r, 0]);
+      return { g, half: [0.11, 0.02, 0.15], mats };
+    }
     case "movieIdeas": {
       // a brick of sticky notes, with the top ones curling
       add(new THREE.BoxGeometry(0.16, 0.12, 0.16), m(def.color));

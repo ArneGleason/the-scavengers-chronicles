@@ -24,9 +24,11 @@ North is −Z. The camera normally looks from +X+Z, so it sees the fronts of the
 | Across the street | front yards z −25..−21, houses z −33..−25 | A row of semis with porches and stoops. Kevin's is straight across from Bill's. |
 | Forecourt | x 11 onwards, z −11..−5.2 | Concrete in front of the lot, the corner store and the gym |
 
-### The camera turns round in the front yard
+### The camera faces the entrances on his side of the street
 
-In the front yard the camera swings round to look from −X−Z, so the player sees Bill's front door and the weeds. When he steps out of the gate, it swings back. While it's turned round, the houses across the street are hidden, since they'd be between the camera and Bill. The stick keeps its old meaning until it's let go, so he doesn't walk straight back out of the yard when the view flips.
+On Bill's side of the street (his front yard, the sidewalk and forecourt, and the near half of the road, anywhere along the street) the camera swings round to look from −X−Z. That shows the fronts of his house, the corner store and the gym. Once he crosses the middle of the road, it swings back to look at the houses opposite. While it's turned round, the houses across the street are hidden, since they'd be between the camera and Bill. The stick keeps its old meaning until it's let go, so the flip never turns him round mid-stride.
+
+The corner store, the gym and the junkyard's north fence have street-side signs for the turned-round view.
 
 ## The people
 
@@ -34,6 +36,7 @@ In the front yard the camera swings round to look from −X−Z, so the player s
 |---|---|---|
 | **Kevin** | Across the street | Works at a media company (social media for a mattress store). Bill believes he's a media mogul and his way into writing movies. Kevin is "away" (he is not away), so Bill protects his parcels by taking them. Kevin appears at his door once his parcels are gone. |
 | **The Lug Nutz** | The boxing gym ("LUG NUTZ BOXING & IRON") | Three enormous gym guys: one on the heavy bag inside, one skipping rope in the yard, one doing curls. Menacing, and relentlessly encouraging ("Looking swole, Bill!"). They laugh off insults. Bill claims he can hear them from his house, a quarter of a kilometre away; really he just disapproves of people doing things. |
+| **His former students** | In front of the corner store | Bill was a teacher. They loiter by the store and insult him ("Mr. B! Still teaching vinegar?"). He keeps trying to get them to thank him for his life lessons: cleaning a classroom with white vinegar, and naming prog rock albums in order. E starts **LIFE LESSONS!**: mash to lecture while they groan in waves, until one of them admits the vinegar thing works. The first time, there's a class photo. |
 | **Joggers** | Both sidewalks, in a loop | Cheerful, with earbuds. Bill shouts "PRIVATE SIDEWALK!" when they pass his house. They reply "Morning!" A toot sends them sprinting ("EW!"). They swerve round him if he stands in their way. |
 
 ## The errands here
@@ -46,4 +49,25 @@ They follow the Grate Shelf Revelation in the chain (`src/content/missions.ts`).
 | Parcel Protection Program | Kevin's parcels, on his stoop | Bill's own front stoop | None: it's the crime. |
 | The Pitch | The movie ideas, a brick of sticky notes by the fridge (which is also covered in them) | Kevin's front door | **THE PITCH!**: every mash sticks one idea on Kevin ("SOUP: THE MUSICAL", "THE GRATE ESCAPE", "DIE HARD, BUT IN A BASEMENT"); he keeps trying to close the door (SLAM-, OW!). He ends up covered: "I'll... pass it along." |
 
+| Captain Caffeine | The masterpiece novel on the kitchen table: over two dozen sticky notes, collected over thirty years, and one filled page of a lined notepad | Kevin's front door | None. Kevin holds it at arm's length ("Captain... Caffeine?"), then asks for a small favour. |
+
 Each ends with the commemorative photo card.
+
+## Kevin's favours
+
+After Captain Caffeine, Kevin keeps sending Bill on pointless errands. He doesn't need them done; he just wants Bill away from his door. Bill takes every one seriously, because every favour means Kevin owes him more, and Kevin is in media, so fame is imminent. The objective card and the arrow follow the current favour; E at Kevin's door reports back and gets the next one. The list loops forever (`src/content/favours.ts`):
+
+- Watch for his delivery van, from your own stoop. You have to stand there.
+- Count the parked cars.
+- Ask the Lug Nutz what time it is. It's leg day.
+- See if the corner store has left-handed scissors.
+- Guard his recycling bin.
+- Ask Big Wanda what she wants for a bent spoon. She wants the satchel.
+- Water his plant. It's plastic.
+- Stand at the end of the lane for a bit.
+
+At three favours owed there's a photo card: "Fame: imminent."
+
+## Big Wanda's gate
+
+Her gate on the lane is padlocked ("CLOSED. wanda is at lunch. a long lunch.") until the cable and stump errands are done. Then it swings open: "Somewhere down the lane, a junkyard gate creaks open."
