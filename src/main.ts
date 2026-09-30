@@ -19,12 +19,12 @@ import { buildRoute, GARY_POST, PRIZE_AT } from "./world/route";
 import { occludes, inRect, roofReach, WALKABLE } from "./world/site";
 import { Hazards } from "./world/hazards";
 import { buildJunkyard, inJunkyard, JUNKYARD, GRATE_AT, WANDA_HOME, TOSS_TO } from "./world/junkyard";
-import { buildStreet, FRONT_YARD, KEVIN, ACROSS, PARCELS_AT } from "./world/street";
+import { buildStreet, FRONT_YARD, ROAD, KEVIN, ACROSS, PARCELS_AT, KEVIN_STOOP } from "./world/street";
 import { Townie, type TownieMode } from "./actors/townie";
 import { regionOf } from "./game/wayfinding";
 import { Wanda } from "./actors/wanda";
 import { applaudWanda, isWinded, type WandaMode } from "./game/wanda";
-import { buildProps, PaperTrain, Pantry, HOARD_AT, TOASTER_AT, FRIDGE_AT, ADAPTER_BOX_AT, WORKBENCH_AT, TYPEWRITER_AT, STICKY_AT } from "./world/props";
+import { buildProps, PaperTrain, Pantry, HOARD_AT, TOASTER_AT, FRIDGE_AT, ADAPTER_BOX_AT, WORKBENCH_AT, TYPEWRITER_AT, STICKY_AT, MANUSCRIPT_AT } from "./world/props";
 import { BASEMENT_Y } from "./world/stairs";
 import { newJam, press as jamPress, nextKey, type Jam, type JamKey } from "./game/jam";
 import { newSoup, collect, distill, canDistill, isReady, eat } from "./game/soup";
@@ -46,10 +46,13 @@ import { newMissionState, onPickup, onDrop, deliverable, deliver, objective, cyc
 import { PHOTOS, type PhotoKey } from "./content/photos";
 import { nextWaypoint } from "./game/wayfinding";
 import { isGuarded, gagGary, type GaryMode } from "./game/gary";
-import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL, HOARD_DIVE, HAMMER_TIME, LEGAL_DEPT, INSULT_VOLLEY, THE_PITCH } from "./game/challenge";
+import { Tug, STUMP_WRESTLE, DUMPSTER_DUEL, HOARD_DIVE, HAMMER_TIME, LEGAL_DEPT, INSULT_VOLLEY, THE_PITCH, LIFE_LESSONS } from "./game/challenge";
+import { newFavours, assign as assignFavour, stepFavour, report as reportFavour, currentFavour } from "./game/favours";
+import { KEVIN_FAVOUR_SAYS } from "./content/favours";
+import { zoneOf, MUSINGS, HINTS, type Zone } from "./content/musings";
 import { GagDirector } from "./game/gags";
 import { ITEMS, QUIPS, type ItemId, type Surface } from "./content/items";
-import { MISSIONS, MISSION_ORDER, MISSION_QUIPS, GARY_SAYS, BILL_GAGS, JAM_LINES, WANDA_SAYS, LUGNUTZ_SAYS, KEVIN_SAYS, JOGGER_SAYS, MOVIE_IDEAS, type MissionId, type PointId } from "./content/missions";
+import { MISSIONS, MISSION_ORDER, MISSION_QUIPS, GARY_SAYS, BILL_GAGS, JAM_LINES, WANDA_SAYS, LUGNUTZ_SAYS, KEVIN_SAYS, JOGGER_SAYS, MOVIE_IDEAS, KIDS_SAYS, LESSONS, type MissionId, type PointId } from "./content/missions";
 import { LIGHTING } from "./content/palette";
 import { GameAudio } from "./audio/audio";
 import { Hud } from "./ui/hud";
@@ -66,6 +69,7 @@ const BILL_SAYS: Record<ItemId, string> = {
   complaint: "For the record.",
   parcels: "Protected.",
   movieIdeas: "Forty years of genius.",
+  manuscript: "Captain Caffeine. The first page is excellent.",
 };
 
 async function boot() {
@@ -107,6 +111,7 @@ async function boot() {
   // complaint, which doesn't exist until it's been typed
   items.spawn("parcels", PARCELS_AT.clone());
   items.spawn("movieIdeas", STICKY_AT.clone());
+  items.spawn("manuscript", MANUSCRIPT_AT.clone());
   const complaint = items.spawn("complaint", new THREE.Vector3(TYPEWRITER_AT.x, 0.95, TYPEWRITER_AT.z - 0.75));
   items.hold(complaint);
   let complaintTyped = false;
@@ -127,6 +132,22 @@ async function boot() {
     { t: new Townie({ skin: "#8a5a3a", shirt: "#b5d94a", pants: "#2a6fb5", shoes: "#f4f1e6", headband: "#f4f1e6", earbuds: true }), s: 90, speed: 3.3, sprint: 0, off: 0 },
   ];
   for (const j of joggers) { j.t.mode = "run"; scene.add(j.t.root); }
+  // his former students, loitering in front of the corner store (he taught them; they remember)
+  const KIDS_AT = new THREE.Vector3(28.3, 0, -7.4);
+  const kids = [
+    { t: new Townie({ size: 0.9, skin: "#e0b08f", shirt: "#6f7f86", pants: "#2a2350", shoes: "#f4f1e6", cap: "#c8312d" }), at: [27.0, -7.0], face: Math.PI + 0.4 },
+    { t: new Townie({ size: 0.88, skin: "#8a5a3a", shirt: "#e8b23a", pants: "#1e1a18", shoes: "#2aa6a1", hair: "#1e1a18" }), at: [28.3, -6.8], face: Math.PI },
+    { t: new Townie({ size: 0.92, skin: "#d69a7a", shirt: "#2f6e4f", pants: "#3a3d42", shoes: "#e0367a", hair: "#7a5238" }), at: [29.6, -7.1], face: Math.PI - 0.4 },
+  ];
+  for (const k of kids) { k.t.root.position.set(k.at[0], 0, k.at[1]); k.t.facing = k.face; scene.add(k.t.root); }
+  {
+    // a low wall to lean on
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.5, 0.35), toonShared("#b3ab9b", 0.6));
+    wall.position.set(KIDS_AT.x, 0.25, -6.4);
+    wall.userData.tag = "outdoors";
+    scene.add(wall);
+    phys.box([KIDS_AT.x - 1.8, 0, -6.58], [KIDS_AT.x + 1.8, 0.5, -6.22]);
+  }
   ensureInkNormals(scene);
   const fx = new Fx(scene);
   const slap = new Slapstick();
@@ -219,7 +240,23 @@ async function boot() {
   // ---------- missions ----------
   function refreshObjective() {
     const o = objective(ms);
+    if (!o && favours.stage !== "none") {
+      const f = currentFavour(favours);
+      hud.setObjective(`Kevin's Favour #${favours.n + 1}`, favours.stage === "report"
+        ? `Report back to Kevin. He'll be thrilled. By your count he owes you ${favours.owed}.`
+        : f.guide);
+      return;
+    }
     hud.setObjective(o ? MISSIONS[o.mission].title : allDone(ms) ? "Errands complete" : null, o?.guide ?? (allDone(ms) ? "The masterpiece is now only one adapter away." : ""));
+  }
+  const favours = newFavours();
+  // test hook: favour=n (Kevin's nth favour, being done) or favour=n:report (done, ready to report)
+  const favourHook = hash.get("favour");
+  if (favourHook) {
+    const [n, st] = favourHook.split(":");
+    assignFavour(favours);
+    favours.n = Number(n) || 0;
+    if (st === "report") { favours.stage = "report"; favours.owed = favours.n + 1; }
   }
   const carrying = () => [...inv.satchel, ...(inv.hands ? [inv.hands] : [])];
   function announce(events: MissionEvent[]) {
@@ -254,6 +291,7 @@ async function boot() {
   function doDeliver(d: { mission: MissionId }) {
     if (d.mission === "noiseComplaint") { startChallenge("insults"); return; }
     if (d.mission === "thePitch") { startChallenge("pitch"); return; }
+    if (d.mission === "theManuscript") { handOverManuscript(); return; }
     if (d.mission === "grateShelf") {
       // the grate goes on the bench, and then it has to be hammered into a shelf
       const from = new THREE.Vector3();
@@ -357,7 +395,9 @@ async function boot() {
     hud.hideCard();
     cardAge = -1;
     player.lockTimer = 0;
+    if (afterCard) { const f = afterCard; afterCard = null; later(0.3, f); }
   }
+  let afterCard: (() => void) | null = null;
 
   // ---------- interaction ----------
   const everHeld = new Set<ItemId>();
@@ -437,10 +477,12 @@ async function boot() {
   const _a = new THREE.Vector3(), _b = new THREE.Vector3();
   const headAt = (out = new THREE.Vector3()) => bill.head.getWorldPosition(out);
   const above = (dy: number) => headAt(_a).setY(_a.y + dy).clone();
+  let lastBillLine = -99;
   const billSay = (pool: readonly string[], sec = 2.4) => {
     const line = quip(pool);
     hud.say(line, sec, now());
     audio.speak(line);
+    lastBillLine = now();
   };
 
   /** A pratfall: pose, lock, sound, lettering. */
@@ -556,9 +598,9 @@ async function boot() {
   }
 
   // ---------- action challenges: the Stump Wrestle and the Dumpster Duel ----------
-  type ChallengeKind = "stump" | "duel" | "hoard" | "hammer" | "legal" | "insults" | "pitch";
+  type ChallengeKind = "stump" | "duel" | "hoard" | "hammer" | "legal" | "insults" | "pitch" | "lessons";
   const TITLES: Record<ChallengeKind, string> = {
-    stump: "STUMP WRESTLE!", duel: "DUMPSTER DUEL!", hoard: "HOARD DIVE!", hammer: "SHELF-IFY!", legal: "LEGAL DEPARTMENT!", insults: "INSULT VOLLEY!", pitch: "THE PITCH!",
+    stump: "STUMP WRESTLE!", duel: "DUMPSTER DUEL!", hoard: "HOARD DIVE!", hammer: "SHELF-IFY!", legal: "LEGAL DEPARTMENT!", insults: "INSULT VOLLEY!", pitch: "THE PITCH!", lessons: "LIFE LESSONS!",
   };
   const LEGAL_DESK = new THREE.Vector3(TYPEWRITER_AT.x, 0, TYPEWRITER_AT.z - 0.75);
   const lugMid = new THREE.Vector3(35.6, 0, 11.4);
@@ -574,10 +616,10 @@ async function boot() {
   function startChallenge(kind: ChallengeKind) {
     if (challenge || ride) return;
     const t = now();
-    const cfg = { stump: STUMP_WRESTLE, duel: DUMPSTER_DUEL, hoard: HOARD_DIVE, hammer: HAMMER_TIME, legal: LEGAL_DEPT, insults: INSULT_VOLLEY, pitch: THE_PITCH }[kind];
+    const cfg = { stump: STUMP_WRESTLE, duel: DUMPSTER_DUEL, hoard: HOARD_DIVE, hammer: HAMMER_TIME, legal: LEGAL_DEPT, insults: INSULT_VOLLEY, pitch: THE_PITCH, lessons: LIFE_LESSONS }[kind];
     challenge = { kind, tug: new Tug(cfg), title: TITLES[kind], mashes: 0, jolt: 0, surges: 0, brawl: 0, slapT: 0.4, insultT: 2.2, billsTurn: false };
     if (kind === "hoard" || kind === "hammer" || kind === "legal") slap.start("dig");
-    else if (kind === "insults" || kind === "pitch") slap.stop();
+    else if (kind === "insults" || kind === "pitch" || kind === "lessons") slap.stop();
     else slap.start("tug");
     player.stun(0.3);
     player.vel.x = player.vel.y = 0;
@@ -595,6 +637,10 @@ async function boot() {
       for (const l of lugnutz) l.t.mode = "flex";
       hud.narrate("The Lug Nutz gather round, delighted. Mash E to read them the complaint's main points.", 4.5, t);
       later(0.4, () => lugSay("Bill! Our guy!"));
+    } else if (kind === "lessons") {
+      billSay(BILL_GAGS.lessonsStart, 2);
+      for (const k of kids) k.t.mode = "laugh";
+      hud.narrate("His former students. He taught them to clean a classroom with white vinegar and to name prog rock albums in order. Mash E to remind them.", 5, t);
     } else if (kind === "pitch") {
       kevin.mode = "shocked";
       kevinSay(quip(KEVIN_SAYS.pitch));
@@ -619,7 +665,7 @@ async function boot() {
     const c = challenge, t = now();
     player.stun(0.2);
     // face what he's pulling on
-    const face = { stump: STUMP_ROOT, hoard: HOARD_AT, hammer: BENCH_TOP, legal: LEGAL_DESK, insults: lugMid, pitch: kevin.root.position, duel: gary.pos }[c.kind];
+    const face = { stump: STUMP_ROOT, hoard: HOARD_AT, hammer: BENCH_TOP, legal: LEGAL_DESK, insults: lugMid, pitch: kevin.root.position, duel: gary.pos, lessons: KIDS_AT }[c.kind];
     player.facing = dampAngle(player.facing, Math.atan2(face.x - player.pos.x, face.z - player.pos.z), 10, dt);
     if (input.consume("interact")) {
       c.tug.mash();
@@ -641,6 +687,9 @@ async function boot() {
         }
       } else if (c.kind === "pitch") {
         pitchNote();
+      } else if (c.kind === "lessons") {
+        fx.letter(quip(LESSONS), above(0.5 + pick() * 0.3), "#f2b632", 0.5, 0.55);
+        if (c.mashes % 4 === 1) audio.speak("wipe in circles");
       } else if (c.kind === "hammer") {
         audio.tink();
         fx.puff(BENCH_TOP.clone().setY(BENCH_TOP.y + 0.08), "#f7d547", 2, { spread: 0.3, up: 1.6, size: 0.07, life: 0.35, grow: 0.3 });
@@ -679,6 +728,10 @@ async function boot() {
         audio.grunt(0.6);
         later(0.1, () => audio.grunt(0.55));
         if (c.surges === 1) hud.narrate("The Lug Nutz flex in unison. It is less a rebuttal than a weather event.", 3.5, t);
+      } else if (c.kind === "lessons") {
+        // the groan
+        for (const k of kids) fx.letter("UGHHH", k.t.headWorld(_a).clone(), "#b8b0a0", 0.45, 0.5);
+        kidsSay(quip(KIDS_SAYS.groan));
       } else if (c.kind === "pitch") {
         // Kevin tries to close the door; Bill's foot is in it
         audio.thunk(2);
@@ -697,7 +750,7 @@ async function boot() {
         fx.letter("YOINK!", gary.headWorld(_a).clone(), "#f7d547", 0.7, 0.6);
       }
     }
-    if (c.kind === "legal" || c.kind === "insults" || c.kind === "pitch") {
+    if (c.kind === "legal" || c.kind === "insults" || c.kind === "pitch" || c.kind === "lessons") {
       // nothing to shake
     } else if (c.kind === "hammer") {
       rusty.obj.rotation.z = Math.sin(t * 50) * 0.02 * (0.2 + c.tug.progress);
@@ -778,6 +831,15 @@ async function boot() {
       later(2.2, () => lugSay("Good letter, Bill!"));
       later(4.5, () => { for (const l of lugnutz) l.t.mode = l.mode; });
       announce(deliver(ms, "noiseComplaint", carrying()));
+      return;
+    }
+    if (c.kind === "lessons") {
+      // a grudging compliment, at last
+      for (const k of kids) k.t.mode = "idle";
+      later(0.3, () => kidsSay(quip(KIDS_SAYS.grudging)));
+      later(1.8, () => { billSay(BILL_GAGS.lessonsWon, 2); anim.flash("elvis", 2, now()); fx.letter("TENURE!", above(0.6), "#f2b632", 1.0, 1.1); audio.jingle(); });
+      lastLessons = now();
+      if (!kidsPhoto) { kidsPhoto = true; commemorate("kids", "Life Lessons"); }
       return;
     }
     if (c.kind === "pitch") {
@@ -1273,6 +1335,78 @@ async function boot() {
   };
   pokes.push(typewriterPoke);
 
+  // ---------- his former students ----------
+  let lastLessons = -99, kidsPhoto = false, kidsMet = false, lastKidsLine = -99;
+  function kidsSay(line: string) {
+    hud.say(line, 2.2, now(), "kids");
+    audio.speak(line, 190);
+  }
+  pokes.push({
+    id: "kids", at: KIDS_AT.clone().setZ(-7.9), reach: 2.0, label: "E  Remind them of your life lessons",
+    ready: () => !challenge && now() - lastLessons > 20, use: () => startChallenge("lessons"),
+  });
+
+  // ---------- Captain Caffeine, and Kevin's favours ----------
+  const manuscript = itemOf("manuscript");
+  function handOverManuscript() {
+    const t = now();
+    deliverFromSatchel(manuscript);
+    kevin.mode = "shocked";
+    later(0.7, () => kevinSay("Captain... Caffeine?"));
+    later(1.6, () => { fx.letter("...hm.", kevin.headWorld(_a).clone(), "#fff7e3", 0.5, 0.8); });
+    later(2.4, () => { fx.letter("FLIP FLIP", kevin.headWorld(_a).clone().setY(_a.y - 0.4), "#f2d547", 0.5, 0.6); audio.rustle(); });
+    announce(deliver(ms, "theManuscript", carrying()));
+    // Kevin's first favour: he asks once the photo card's been put away
+    assignFavour(favours);
+    afterCard = () => { kevinSay(currentFavour(favours).ask); later(2.8, () => billSay(KEVIN_FAVOUR_SAYS.bill, 2.4)); kevin.mode = "idle"; refreshObjective(); };
+    refreshObjective();
+    gags.mark(t);
+  }
+  pokes.push({
+    id: "kevinFavour", at: KEVIN_STOOP, reach: 1.7, label: "E  Report back to Kevin",
+    ready: () => favours.stage === "report" && kevinHome && !challenge, use: () => {
+      reportFavour(favours);
+      kevinSay(quip(KEVIN_FAVOUR_SAYS.thanks));
+      later(1.6, () => kevinSay(`${quip(KEVIN_FAVOUR_SAYS.more)} ${currentFavour(favours).ask}`));
+      later(4.4, () => billSay(KEVIN_FAVOUR_SAYS.bill, 2.4));
+      if (favours.owed === 3) later(6.5, () => commemorate("favours", "Kevin's Favours"));
+      if (favours.n === KEVIN_FAVOUR_LOOP) later(6, () => hud.narrate("Kevin has run out of new favours and is re-using old ones. Bill does not notice.", 5, now(), true));
+      refreshObjective();
+    },
+  });
+  const KEVIN_FAVOUR_LOOP = 8;
+  function stepFavours(dt: number) {
+    if (favours.stage !== "doing") return;
+    if (stepFavour(favours, player.pos, dt) === "done") {
+      const f = favours.n, d = currentFavour(favours);
+      billSay([d.done], 2.8);
+      audio.sting(true);
+      fx.letter("DONE!", above(0.6), "#f2b632", 0.8, 0.9);
+      later(1.2, () => hud.narrate(d.narrator, 5, now(), true));
+      refreshObjective();
+      gags.mark(now());
+      void f;
+    }
+  }
+
+  // ---------- musings: a one-liner for wherever he is, and a hint if he's stalled ----------
+  let zone: Zone | null = null, zoneT = 0, lastMusing = -99;
+  const zoneSaid = new Map<Zone, number>();
+  const recentMusings: string[] = [];
+  function stepMusings(dt: number, t: number, busy: boolean) {
+    const z = zoneOf(player.pos);
+    if (z !== zone) { zone = z; zoneT = 0; } else zoneT += dt;
+    if (!zone || busy || zoneT < 1.6 || t - lastMusing < 14 || t - lastBillLine < 6 || t - (zoneSaid.get(zone) ?? -99) < 60) return;
+    const pool = MUSINGS[zone].filter((l) => !recentMusings.includes(l));
+    if (!pool.length) return;
+    lastMusing = t;
+    zoneSaid.set(zone, t);
+    const line = quip(pool);
+    recentMusings.push(line);
+    if (recentMusings.length > 12) recentMusings.shift();
+    billSay([line], 2.8);
+  }
+
   // ---------- ambient gags: the gag clock fills quiet stretches ----------
   type AmbientGag = "poop" | "gust" | "nose" | "burp" | "trip" | "blurt" | "snag" | "paper" | "lugnutz";
   let heardLugnutz = false;
@@ -1371,7 +1505,7 @@ async function boot() {
   let raccoonKO = 0;
 
   // ---------- simulation ----------
-  let inputYaw = CAM.yaw, stickIdle = 0;
+  let inputYaw = CAM.yaw, stickIdle = 0, rideStuck = 0;
   let autoT = 0;
   let lastSpeed = 0;
   let lastTaunt = -99;
@@ -1428,17 +1562,21 @@ async function boot() {
     }
     stepRide(dt, move);
     stepWheelspin(dt, move, hurry, !!challenge || !!ride || (player.lockTimer > 0 && spin <= 0));
-    // in the front yard the camera turns round to show the front of the house; the stick keeps
-    // its old meaning until it's let go, so he doesn't walk straight back out again
-    const Y = FRONT_YARD, m = cam.reversed ? 0.35 : -0.35;
-    const inYard = player.pos.y > -1 && player.pos.x > Y.x0 - m && player.pos.x < Y.x1 + m && player.pos.z > Y.z0 - m && player.pos.z < Y.z1 + m;
-    cam.reversed = inYard;
+    // The camera faces whichever side of the street he's on, so it always looks at the entrances:
+    // on Bill's side (his front yard, the sidewalk, the near half of the road) it turns round to
+    // show the fronts of his house, the store and the gym; across the road it looks back at the
+    // houses opposite. The stick keeps its old meaning until it's let go, so the flip doesn't turn
+    // him round mid-stride.
+    const m = cam.reversed ? 0.3 : -0.3, midRoad = (ROAD.z0 + ROAD.z1) / 2;
+    cam.reversed = player.pos.y > -1 && player.pos.z < FRONT_YARD.z1 - 0.05 + m && player.pos.z > midRoad - m;
     const wantYaw = CAM.yaw + (cam.reversed ? Math.PI : 0);
     stickIdle = Math.hypot(move.x, move.y) > 0.15 ? 0 : stickIdle + dt;
     if (stickIdle > 0.12 || Math.abs(angleDelta(inputYaw, wantYaw)) < 1e-3) inputYaw = wantYaw;
     player.step(dt, move, analog, hurry, inputYaw);
     stepToss(dt);
-    if (ride && ride.t > 0.15 && player.moveRatio < 0.45) endRide(true);
+    // a real wall stops him for several steps running; a one-step physics hiccup isn't a wall
+    rideStuck = ride && ride.t > 0.15 && player.moveRatio < 0.45 ? rideStuck + 1 : 0;
+    if (ride && rideStuck >= 3) endRide(true);
     else if (ride && ride.t > 2.3) endRide(false);
     else if (ride) hazards.ride(player.pos, ride.heading);
 
@@ -1502,6 +1640,20 @@ async function boot() {
     }
 
     stepNeighbours(dt, t0);
+    stepFavours(dt);
+    stepMusings(dt, t0, busy || cardAge >= 0 || posing > 0);
+    if (!challenge && player.pos.distanceTo(KIDS_AT) < 7 && t0 - lastKidsLine > 15) {
+      lastKidsLine = t0;
+      kidsSay(quip(KIDS_SAYS.taunt));
+      if (!kidsMet) { kidsMet = true; later(2.5, () => hud.narrate("His former students. He taught them for years. They remember him mostly as the vinegar guy.", 5, now(), true)); }
+    }
+    if (!junkyard.gateIsOpen() && ms.stages.cablePilgrimage === "complete" && ms.stages.stumpProphecy === "complete") {
+      junkyard.openGate();
+      if (frames > 120) {
+        later(2.5, () => hud.narrate(WANDA_SAYS.intro[0], 5.5, now(), true));
+      }
+    }
+    junkyard.updateGate(dt);
 
     // the newspaper train: when it's grown long enough he notices, and it goes everywhere
     const scattered = paper.update(dt, player.pos, t0);
@@ -1711,7 +1863,7 @@ async function boot() {
   const headPx = { x: 0, y: 0 };
   const garyPx = { x: 0, y: 0 };
   const wandaPx = { x: 0, y: 0 };
-  const kevinPx = { x: 0, y: 0 }, lugPx = { x: 0, y: 0 }, jogPx = { x: 0, y: 0 };
+  const kevinPx = { x: 0, y: 0 }, lugPx = { x: 0, y: 0 }, jogPx = { x: 0, y: 0 }, kidsPx = { x: 0, y: 0 };
   const tgtPx = { x: 0, y: 0 };
   const goalPx = { x: 0, y: 0 };
   const goalW = new THREE.Vector3();
@@ -1778,6 +1930,7 @@ async function boot() {
     kevin.root.visible = kevinHome && mode === "ground" && !cam.reversed;
     if (kevin.root.visible) { if (challenge?.kind === "pitch") kevin.facing = Math.atan2(player.pos.x - kevin.root.position.x, player.pos.z - kevin.root.position.z); kevin.update(frameDt, t); }
     for (const j of joggers) { j.t.root.visible = mode === "ground"; j.t.update(frameDt, t); }
+    for (const k of kids) { k.t.root.visible = mode === "ground"; k.t.facing = challenge?.kind === "lessons" || player.pos.distanceTo(KIDS_AT) < 5 ? Math.atan2(player.pos.x - k.at[0], player.pos.z - k.at[1]) : k.face; k.t.update(frameDt, t); }
 
     bill.satchelMouth(mouth);
     const arrived = items.update(frameDt, t, mouth, bill.carry, delivery ? null : target);
@@ -1804,6 +1957,7 @@ async function boot() {
     }
     for (const { o, tag } of decor) {
       if (o === route.raccoon) continue;
+      if (o === junkyard.lock) { o.visible = g.outdoors.visible && !junkyard.gateIsOpen(); continue; }
       const roof = route.roofs.find((r) => r.obj === o), onWall = route.wallDecor.find((d) => d.obj === o);
       o.visible = tag === "basement" ? g.basement.visible : tag === "ground" ? g.ground.visible : roof ? roof.obj.visible : onWall ? g.outdoors.visible && !inRect(pos, onWall.rect) : g.outdoors.visible;
     }
@@ -1850,6 +2004,7 @@ async function boot() {
     cam.project(kevin.headWorld(headW), kevinPx);
     cam.project(lugnutz[lugSpeaker].t.headWorld(headW), lugPx);
     cam.project(joggers[jogSpeaker].t.headWorld(headW), jogPx);
+    cam.project(kids[1].t.headWorld(headW), kidsPx);
     let tgt: { x: number; y: number; label: string } | null = null;
     if (delivery) {
       const m = MISSIONS[delivery.mission];
@@ -1870,14 +2025,17 @@ async function boot() {
     let goal: { x: number; y: number; label: string; dist: number } | null = null;
     const o = objective(ms);
     waypoint = null;
-    if (o) {
-      const m = MISSIONS[o.mission], it = itemOf(m.item), finding = ms.stages[o.mission] === "find";
-      if (finding && it.state === "world") goalW.copy(it.obj.position);
-      else goalW.copy(POINTS[o.point].at).setY(POINTS[o.point].at.y + 0.6);
+    // after the errands, the arrow follows Kevin's favours
+    const fav = !o && favours.stage !== "none" ? (favours.stage === "report" ? { at: KEVIN_STOOP, label: "KEVIN" } : { at: new THREE.Vector3(...currentFavour(favours).at), label: currentFavour(favours).label }) : null;
+    if (o || fav) {
+      const m = o ? MISSIONS[o.mission] : null, it = m ? itemOf(m.item) : null, finding = !!o && ms.stages[o.mission] === "find";
+      if (fav) goalW.copy(fav.at).setY(fav.at.y + 0.6);
+      else if (finding && it!.state === "world") goalW.copy(it!.obj.position);
+      else goalW.copy(POINTS[o!.point].at).setY(POINTS[o!.point].at.y + 0.6);
       // through doors, gates and stairs rather than through walls
       waypoint = nextWaypoint(pos, { x: goalW.x, y: goalW.y - 0.6, z: goalW.z });
       markW.copy(waypoint ? _a.set(waypoint.at.x, waypoint.at.y + 0.6, waypoint.at.z) : goalW);
-      const name = (finding ? m.pickupLabel : m.dropLabel).toUpperCase();
+      const name = fav ? fav.label : (finding ? m!.pickupLabel : m!.dropLabel).toUpperCase();
       goal = { ...cam.project(markW, goalPx), label: waypoint ? waypoint.label : name, dist: Math.hypot(markW.x - pos.x, markW.z - pos.z) };
       // and a ring on the ground where he's headed
       groundRing.position.set(markW.x, markW.y - 0.57, markW.z);
@@ -1885,7 +2043,7 @@ async function boot() {
       groundRing.scale.setScalar(0.7 + 0.8 * k);
       (groundRing.material as THREE.MeshBasicNodeMaterial).opacity = 0.85 * (1 - k);
     }
-    groundRing.visible = !!o && !challenge && onThisFloor(markW.y - 0.6) && (mode === "ground" || markW.y < -1);
+    groundRing.visible = !!(o || fav) && !challenge && onThisFloor(markW.y - 0.6) && (mode === "ground" || markW.y < -1);
     // little markers over errand items he's handled that are lying around again
     const marks: { x: number; y: number; label: string }[] = [];
     for (const it of items.list) {
@@ -1898,11 +2056,13 @@ async function boot() {
     hud.setItemMarks(challenge || cardAge >= 0 ? [] : marks);
     if (challenge || posing > 0 || cardAge >= 0) tgt = null;
     const g2 = mode === "ground";
-    hud.update(t, { bill: headPx, gary: g2 ? garyPx : null, wanda: g2 ? wandaPx : null, kevin: kevin.root.visible ? kevinPx : null, lugnutz: g2 ? lugPx : null, jogger: g2 ? jogPx : null }, tgt, challenge ? null : goal);
+    hud.update(t, { bill: headPx, gary: g2 ? garyPx : null, wanda: g2 ? wandaPx : null, kevin: kevin.root.visible ? kevinPx : null, lugnutz: g2 ? lugPx : null, jogger: g2 ? jogPx : null, kids: g2 ? kidsPx : null }, tgt, challenge ? null : goal);
     hud.setGas(gas, GAS.max, gasFill);
     hud.setSoup({ distilled: soup.distilled, of: DISTILLATIONS, pocket: soup.pocket.length, ready: isReady(soup), eaten: soup.eaten });
     hud.setJam(jam ? { take: takes, played: jam.j.step, sour: jam.j.done, next: nextKey(jam.j) } : null);
-    hud.setChallenge(challenge ? { title: challenge.title, progress: challenge.tug.progress, jolt: challenge.jolt, now: t } : null);
+    const fw = favours.stage === "doing" ? currentFavour(favours) : null;
+    const waiting = fw && fw.kind === "wait" && favours.waited > 0 ? { title: fw.waiting ?? "STANDING THERE...", progress: favours.waited / (fw.secs ?? 5), jolt: 0, now: t, prompt: "STAND STILL" } : null;
+    hud.setChallenge(challenge ? { title: challenge.title, progress: challenge.tug.progress, jolt: challenge.jolt, now: t } : waiting);
     nudge(t, o, goal);
     fpsAvg = damp(fpsAvg, 1 / Math.max(frameDt, 1e-3), 3, frameDt);
     hud.setDebug(
@@ -1937,17 +2097,28 @@ async function boot() {
     w.__scav.kevin = kevin.root.visible;
     w.__scav.reversed = cam.reversed;
     w.__scav.waypoint = waypoint?.label ?? null;
+    w.__scav.junkGate = junkyard.gateIsOpen() ? "open" : "closed";
+    w.__scav.favours = { stage: favours.stage, n: favours.n, owed: favours.owed };
+    w.__scav.zone = zone;
+    w.__scav.yaw = inputYaw;
     w.__scav.album = album.map((a) => a.key);
     w.__scav.card = hud.cardShown;
     w.__scav.photoOk = photoOk;
   }
 
   // ---------- guidance: the narrator nags, with escalating sarcasm, when progress stalls ----------
-  let progressKey = "", progressAt = 0, nudgeLevel = 0;
+  let progressKey = "", progressAt = 0, nudgeLevel = 0, hintLevel = 0;
   const NUDGE_AT = [25, 50, 80];
   function nudge(t: number, o: ReturnType<typeof objective>, goal: { x: number; y: number } | null) {
     const key = JSON.stringify(ms.stages) + inv.satchel.join() + (inv.hands ?? "");
-    if (key !== progressKey) { progressKey = key; progressAt = t; nudgeLevel = 0; }
+    if (key !== progressKey) { progressKey = key; progressAt = t; nudgeLevel = 0; hintLevel = 0; }
+    // before the narrator gets snide, Bill mutters a hint of his own
+    const stalled = t - progressAt;
+    if (o && !challenge && hintLevel < 2 && stalled > [12, 38][hintLevel] && t - lastBillLine > 4) {
+      hintLevel++;
+      const h = HINTS[o.mission];
+      if (h) billSay(ms.stages[o.mission] === "find" ? h.find : h.deliver, 3.2);
+    }
     if (!o || !goal || challenge || nudgeLevel >= 3 || t - progressAt < NUDGE_AT[nudgeLevel]) return;
     nudgeLevel++;
     const m = MISSIONS[o.mission], finding = ms.stages[o.mission] === "find";
@@ -1997,7 +2168,7 @@ async function boot() {
     __scav: {
       ready: boolean; frames: number; backend: string; pos: number[]; gary: string; stages: Record<string, string>; active: string | null;
       challenge?: { kind: string; progress: number } | null; slap?: string | null; gas?: number; ride?: boolean; rooted?: boolean; inv?: string[]; hits?: Record<string, number>; buried?: boolean; poke?: string | null;
-      jam?: { active: boolean; takes: number; step: number }; soup?: { distilled: number; pocket: number; eaten: boolean }; wanda?: string; tossed?: boolean; kevin?: boolean; reversed?: boolean; waypoint?: string | null; album?: string[]; card?: boolean; photoOk?: boolean;
+      jam?: { active: boolean; takes: number; step: number }; soup?: { distilled: number; pocket: number; eaten: boolean }; wanda?: string; tossed?: boolean; kevin?: boolean; reversed?: boolean; waypoint?: string | null; junkGate?: string; favours?: { stage: string; n: number; owed: number }; zone?: string | null; yaw?: number; album?: string[]; card?: boolean; photoOk?: boolean;
     };
   };
   w.__scav = { ready: false, frames: 0, backend: gfx.backend, pos: [0, 0, 0], gary: "guard", stages: {}, active: null };

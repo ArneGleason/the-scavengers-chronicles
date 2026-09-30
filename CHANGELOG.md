@@ -2,6 +2,15 @@
 
 All notable prototype milestones for The Scavenger's Chronicles are tracked here.
 
+## 0.8.0 - Neighbours (in progress)
+
+- The camera faces whichever side of the street Bill is on, anywhere along it. On his side it turns round to show the fronts of his house, the corner store and the gym (which now have street signs), and it turns back when he crosses the road.
+- Big Wanda's gate is padlocked until the cable and stump errands are done. Then it swings open.
+- The living-room synth's keys face the room instead of the window.
+- Bill has about seventy new one-liners, one set for each of about twenty areas, and he mutters a hint for the current errand when the player stalls.
+- Added a new errand, **Captain Caffeine**: take the masterpiece novel (twenty-seven sticky notes and one page) to Kevin, who works at a media company. After that, **Kevin's favours**: an endless loop of pointless errands (watch for his van, count the cars, guard his recycling, water his plastic plant) that Bill takes as proof that Kevin owes him.
+- Added Bill's **former students** outside the corner store (Bill was a teacher). They insult him; **LIFE LESSONS!** gets one of them to admit the vinegar thing works.
+
 ## 0.7.0 - The Street (in progress)
 
 - Added the front of the house (`docs/design/areas/the-street.md`):

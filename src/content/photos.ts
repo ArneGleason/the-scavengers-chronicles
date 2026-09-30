@@ -5,7 +5,7 @@
  */
 import type { MissionId } from "./missions";
 
-export type PhotoKey = MissionId | "soup";
+export type PhotoKey = MissionId | "soup" | "kids" | "favours";
 
 export interface PhotoDef {
   /** Handwritten under the photo. */
@@ -58,6 +58,24 @@ export const PHOTOS: Partial<Record<PhotoKey, PhotoDef>> = {
     pose: "Hollywood, get ready.",
     replies: [["Kevin", "please stop putting notes on my car"], ["Rob", "which idea did he like"], ["Sleep Barn Mattresses", "who is this"]],
     narrator: "He photographs Kevin under the sticky notes. It is the first time his ideas have been seen by anyone in media.",
+  },
+  theManuscript: {
+    caption: "Captain Caffeine: submitted. Kevin is reading it. (Kevin is not reading it.)",
+    pose: "A literary moment. Hold still.",
+    replies: [["Kevin", "Got it Bill!! Reading it now"], ["Rob", "is it the sticky notes"], ["Unknown number", "who is captain caffeine"]],
+    narrator: "He photographs the manuscript in Kevin's hands. Kevin is holding it the way you'd hold a live crab.",
+  },
+  kids: {
+    caption: "Life lesson: acknowledged. One of them said the vinegar thing works. (Tenure.)",
+    pose: "Class photo. Everybody say 'Tarkus'.",
+    replies: [["Former student", "who sent this"], ["Rob", "are those your students"], ["Dentist's office", "Please stop."]],
+    narrator: "He sends a class photo to everyone. The class did not agree to a class photo.",
+  },
+  favours: {
+    caption: "Favours Kevin owes me: three and counting. Fame: imminent.",
+    pose: "The ledger. For the record.",
+    replies: [["Kevin", "thanks bill!!"], ["Rob", "what favours"], ["Big Wanda", "you can do favours for ME"]],
+    narrator: "Kevin now owes Bill three favours, by Bill's count. Kevin's count is zero, and he'd like his packages back.",
   },
   soup: {
     caption: "Distillation eleven: consumed.",

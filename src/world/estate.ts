@@ -200,7 +200,7 @@ export function buildEstate(scene: THREE.Scene, phys: Physics): Estate {
   b.box([1.4, 0, 4.3], [1.5, 0.8, 4.4], P.plastic, "ground", { collide: false });
   b.box([2.7, 0, 4.3], [2.8, 0.8, 4.4], P.plastic, "ground", { collide: false });
   phys.box([1.4, 0, 4.2], [2.8, 0.95, 4.75]);
-  synth(b, 2.1, 0.8, 4.47, 1.4, "ground", leds, ledMat, scene);
+  synth(b, 2.1, 0.8, 4.47, 1.4, "ground", leds, ledMat, scene, -1); // keys to the room, not the window
   // floor lamp
   b.geo(new THREE.CylinderGeometry(0.02, 0.02, 1.5, 8), P.chrome, "ground", [5.55, 0.75, 0.55], undefined, undefined, 0.5);
   b.geo(new THREE.CylinderGeometry(0.16, 0.26, 0.3, 16, 1, true), P.cream, "ground", [5.55, 1.55, 0.55]);
@@ -360,13 +360,15 @@ function vase() {
   return new THREE.LatheGeometry(pts, 14);
 }
 
-function synth(b: StaticBuilder, cx: number, y: number, cz: number, w: number, tag: Tag, leds: THREE.Mesh[], ledMat: THREE.Material, scene: THREE.Scene) {
+/** A synth: keys on the side it faces (face 1 is +Z, -1 is -Z), knobs and LEDs behind them. */
+function synth(b: StaticBuilder, cx: number, y: number, cz: number, w: number, tag: Tag, leds: THREE.Mesh[], ledMat: THREE.Material, scene: THREE.Scene, face: 1 | -1 = 1) {
   b.box([cx - w / 2, y, cz - 0.25], [cx + w / 2, y + 0.1, cz + 0.25], P.plastic, tag, { collide: false });
-  b.box([cx - w / 2 + 0.08, y + 0.1, cz + 0.02], [cx + w / 2 - 0.08, y + 0.12, cz + 0.22], P.cassette, tag, { collide: false, ink: 0.35 });
+  const k0 = cz + 0.02 * face, k1 = cz + 0.22 * face;
+  b.box([cx - w / 2 + 0.08, y + 0.1, Math.min(k0, k1)], [cx + w / 2 - 0.08, y + 0.12, Math.max(k0, k1)], P.cassette, tag, { collide: false, ink: 0.35 });
   for (let i = 0; i < Math.floor(w / 0.12); i++) {
-    b.geo(new THREE.CylinderGeometry(0.018, 0.018, 0.03, 8), P.silver, tag, [cx - w / 2 + 0.12 + i * 0.12, y + 0.12, cz - 0.12], undefined, undefined, 0.3);
+    b.geo(new THREE.CylinderGeometry(0.018, 0.018, 0.03, 8), P.silver, tag, [cx - w / 2 + 0.12 + i * 0.12, y + 0.12, cz - 0.12 * face], undefined, undefined, 0.3);
   }
-  ledRow(scene, leds, ledMat, cx - w / 2 + 0.15, y + 0.105, cz - 0.2, cz - 0.2, Math.max(3, Math.floor(w / 0.25)), "x", cx + w / 2 - 0.15, tag);
+  ledRow(scene, leds, ledMat, cx - w / 2 + 0.15, y + 0.105, cz - 0.2 * face, cz - 0.2 * face, Math.max(3, Math.floor(w / 0.25)), "x", cx + w / 2 - 0.15, tag);
 }
 
 function ledRow(scene: THREE.Scene, leds: THREE.Mesh[], mat: THREE.Material, a: number, y: number, z0: number, z1: number, n: number, axis: "x" | "z", aEnd?: number, tag: Tag = "basement") {

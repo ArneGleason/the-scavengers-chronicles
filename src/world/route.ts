@@ -194,6 +194,16 @@ export function buildRoute(scene: THREE.Scene, phys: Physics, walls: Walls, surf
   const gymMural = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3), toon("#fff", { map: muralTex, ink: 0.4 }));
   gymMural.position.set(38.4, 2.6, GYM.z1 + 0.085); scene.add(gymMural); tagOutdoors(gymMural);
   wallDecor.push({ rect: GYM, obj: gymMural });
+  // the street sides, now that the camera turns round on the sidewalk
+  const storeFront = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 0.8), toon("#fff", { map: signTex("VARIETY · LOTTO · MILK", "#f2b632", "#c8312d", 1024, 128), ink: 0.8 }));
+  storeFront.position.set((STORE.x0 + STORE.x1) / 2, 3.3, STORE.z0 - 0.09); storeFront.rotation.y = Math.PI; scene.add(storeFront); tagOutdoors(storeFront);
+  wallDecor.push({ rect: STORE, obj: storeFront });
+  const gymFront = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.0), toon("#fff", { map: signTex("LUG NUTZ BOXING & IRON", "#2a2350", "#e8b23a", 1024, 160), ink: 0.8 }));
+  gymFront.position.set((GYM.x0 + GYM.x1) / 2, 3.4, GYM.z0 - 0.09); gymFront.rotation.y = Math.PI; scene.add(gymFront); tagOutdoors(gymFront);
+  wallDecor.push({ rect: GYM, obj: gymFront });
+  const hours = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.5), toon("#fff", { map: signTex("OPEN 5AM. NO QUIET HOURS.", "#fbf6ec", "#1e1a18", 512, 160, "900 34px 'Arial Black', sans-serif"), ink: 0.5 }));
+  hours.position.set(GYM.x0 + 1.6, 1.6, GYM.z0 - 0.09); hours.rotation.y = Math.PI; scene.add(hours); tagOutdoors(hours);
+  wallDecor.push({ rect: GYM, obj: hours });
   // a heavy bag and ring posts, visible through the roll-up door
   b.geo(new THREE.CylinderGeometry(0.22, 0.22, 1.1, 14), "#8a2b2b", "outdoors", [35.4, 1.6, 8.2]);
   b.geo(new THREE.CylinderGeometry(0.01, 0.01, 1.6, 4), P.ink, "outdoors", [35.4, 3.0, 8.2], undefined, undefined, 0);

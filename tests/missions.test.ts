@@ -7,6 +7,10 @@ import { newSoup, collect, distill, canDistill, isReady, eat } from "../src/game
 import { INGREDIENTS, DISTILLATIONS, type IngredientId } from "../src/content/soup";
 import { newWanda, stepWanda, applaudWanda, WANDA } from "../src/game/wanda";
 import { nextWaypoint, regionOf } from "../src/game/wayfinding";
+import { newFavours, assign, stepFavour, report, currentFavour } from "../src/game/favours";
+import { FAVOURS } from "../src/content/favours";
+import { zoneOf, MUSINGS, HINTS } from "../src/content/musings";
+import { MISSION_ORDER } from "../src/content/missions";
 import { GagDirector } from "../src/game/gags";
 
 describe("mission chain", () => {
@@ -61,7 +65,7 @@ describe("mission chain", () => {
     deliver(s, "grateVault");
     // then the street: the noise complaint, Kevin's parcels, and the pitch
     expect(objective(s)).toMatchObject({ mission: "noiseComplaint", point: "typewriter" });
-    for (const [id, item, drop] of [["noiseComplaint", "complaint", "gymDoor"], ["parcelProtection", "parcels", "billStoop"], ["thePitch", "movieIdeas", "kevinDoor"]] as const) {
+    for (const [id, item, drop] of [["noiseComplaint", "complaint", "gymDoor"], ["parcelProtection", "parcels", "billStoop"], ["thePitch", "movieIdeas", "kevinDoor"], ["theManuscript", "manuscript", "kevinDoor"]] as const) {
       expect(s.active).toBe(id);
       onPickup(s, item);
       expect(deliverable(s, drop, [item])).toBe(id);
@@ -342,5 +346,55 @@ describe("wayfinding: the arrow goes through doors, not walls", () => {
     const w = nextWaypoint({ x: 40, y: 0, z: 18 }, { x: 54.5, y: 0, z: 7.4 });
     expect(w?.label).toBe("JUNKYARD GATE");
     expect(w?.at.z).toBeGreaterThan(15);
+  });
+});
+
+describe("Kevin's favours", () => {
+  it("go there, report back, get another one, forever", () => {
+    const f = newFavours();
+    assign(f);
+    const go = FAVOURS.findIndex((d) => d.kind === "go");
+    f.n = go;
+    const [x, , z] = currentFavour(f).at;
+    expect(stepFavour(f, { x: x + 20, y: 0, z }, 0.1)).toBeNull();
+    expect(stepFavour(f, { x, y: 0, z }, 0.1)).toBe("done");
+    expect(f.stage).toBe("report");
+    expect(report(f)).toBe(true);
+    expect(f.stage).toBe("doing");
+    expect(f.owed).toBe(1);
+  });
+  it("wait favours need him to stand there, and lose progress if he wanders off", () => {
+    const f = newFavours();
+    assign(f);
+    const d = currentFavour(f);
+    expect(d.kind).toBe("wait");
+    const [x, , z] = d.at;
+    for (let i = 0; i < 20; i++) stepFavour(f, { x, y: 0, z }, 0.1);
+    expect(f.stage).toBe("doing");
+    stepFavour(f, { x: x + 20, y: 0, z }, 1);
+    expect(f.waited).toBeLessThan(1);
+    let r = null;
+    for (let i = 0; i < 200 && !r; i++) r = stepFavour(f, { x, y: 0, z }, 0.1);
+    expect(r).toBe("done");
+  });
+  it("loops through the whole list", () => {
+    const f = newFavours();
+    f.n = FAVOURS.length;
+    expect(currentFavour(f)).toBe(FAVOURS[0]);
+  });
+});
+
+describe("Bill's musings", () => {
+  it("knows where he is", () => {
+    expect(zoneOf({ x: -3, y: 0, z: 2 })).toBe("kitchen");
+    expect(zoneOf({ x: -2, y: -2.6, z: 0.8 })).toBe("hoard");
+    expect(zoneOf({ x: 0, y: 0, z: -8 })).toBe("frontYard");
+    expect(zoneOf({ x: 0.2, y: 0, z: -23 })).toBe("kevins");
+    expect(zoneOf({ x: 30, y: 0, z: -12 })).toBe("sidewalk");
+    expect(zoneOf({ x: 54, y: 0, z: 7 })).toBe("junkyard");
+  });
+  it("has lines for every area and a hint for every errand", () => {
+    for (const lines of Object.values(MUSINGS)) expect(lines.length).toBeGreaterThan(0);
+    for (const id of MISSION_ORDER) expect(HINTS[id]?.find.length && HINTS[id]?.deliver.length).toBeTruthy();
   });
 });

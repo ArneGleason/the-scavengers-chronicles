@@ -28,6 +28,8 @@ export const LEGAL_DEPT: TugConfig = { start: 0, gain: 0.09, pull: 0.03, surgeEv
 export const INSULT_VOLLEY: TugConfig = { start: 0.2, gain: 0.075, pull: 0.05, surgeEvery: 1.8, surge: 0.09, canLose: false };
 /** Sticky notes at Kevin, who keeps trying to close the door. Can't be lost. */
 export const THE_PITCH: TugConfig = { start: 0.05, gain: 0.045, pull: 0.03, surgeEvery: 2.0, surge: 0.08, canLose: false };
+/** Life lessons at his former students, who groan in waves. Can't be lost. */
+export const LIFE_LESSONS: TugConfig = { start: 0.1, gain: 0.06, pull: 0.04, surgeEvery: 1.9, surge: 0.08, canLose: false };
 export const DUMPSTER_DUEL: TugConfig = { start: 0.5, gain: 0.08, pull: 0.17, surgeEvery: 1.4, surge: 0.07, canLose: true };
 
 export type TugState = "running" | "won" | "lost";

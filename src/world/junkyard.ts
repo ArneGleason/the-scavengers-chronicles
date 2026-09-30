@@ -82,13 +82,53 @@ export function buildJunkyard(scene: THREE.Scene, phys: Physics, surfaces: Surfa
   }));
   arch.position.set((GATE.x0 + GATE.x1) / 2, 3.1, L.z1);
   tag(arch);
-  // the gate leaves, swung open into the yard
-  for (const [x, dir] of [[GATE.x0, 1], [GATE.x1, -1]] as const) {
-    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.8), link);
-    leaf.position.set(x + dir * 0.35, 0.95, L.z1 - 0.85);
-    leaf.rotation.y = dir * 1.2;
-    tag(leaf);
-  }
+  // the gate leaves, hinged on the posts; closed (and padlocked) until main.ts opens them
+  const half = (GATE.x1 - GATE.x0) / 2;
+  const leaves = ([[GATE.x0, 1], [GATE.x1, -1]] as const).map(([x, dir]) => {
+    const hinge = new THREE.Group();
+    hinge.position.set(x, 0, L.z1);
+    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(half, 1.8), link);
+    leaf.position.set((dir * half) / 2, 0.95, 0);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(half, 0.05, 0.05), toon("#7d858a", { ink: 0.5 }));
+    frame.position.set((dir * half) / 2, 1.86, 0);
+    hinge.add(leaf, frame);
+    hinge.userData.dir = dir;
+    return tag(hinge);
+  });
+  const lock = new THREE.Group();
+  const chain = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 6, 16), toon("#9aa3a8", { ink: 0.7 }));
+  chain.position.set(0, 1.0, 0);
+  const padlock = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.06), toon("#e8b23a", { ink: 0.9 }));
+  padlock.position.set(0, 0.8, 0.04);
+  const closedSign = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.45), toon("#fff", {
+    map: signTex([["CLOSED", "#c8312d", 44], ["wanda is at lunch. a long lunch.", "#1e1a18", 110]], "#fbf6ec", 360, 150), ink: 0.5,
+  }));
+  closedSign.position.set(0, 1.45, 0.05);
+  lock.add(chain, padlock, closedSign);
+  lock.position.set((GATE.x0 + GATE.x1) / 2, 0, L.z1 + 0.03);
+  tag(lock);
+  let gateCollider: ReturnType<Physics["box"]> | null = phys.box([GATE.x0, 0, L.z1 - 0.08], [GATE.x1, 2.1, L.z1 + 0.08]);
+  let gateOpen = 0; // 0 closed .. 1 open
+  let opening = false;
+  /** Swing the gate open (once), and take the padlock away. */
+  const openGate = () => {
+    if (opening) return;
+    opening = true;
+    lock.visible = false;
+    if (gateCollider) { phys.world.removeCollider(gateCollider, false); gateCollider = null; }
+  };
+  const updateGate = (dt: number) => {
+    if (!opening || gateOpen >= 1) return;
+    gateOpen = Math.min(1, gateOpen + dt / 1.2);
+    const k = 1 - (1 - gateOpen) ** 3;
+    for (const h of leaves) h.rotation.y = (h.userData.dir as number) * 1.25 * k;
+  };
+  // the street side of her north fence
+  const streetSign = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.6), toon("#fff", {
+    map: signTex([["BIG WANDA'S JUNKYARD", "#fbf6ec", 58], ["entrance on the lane. no browsing.", "#f2b632", 118]], "#2f6e4f"), ink: 0.6,
+  }));
+  streetSign.position.set(50, 1.3, L.z0 - 0.08); streetSign.rotation.y = Math.PI;
+  tag(streetSign);
 
   /* ---------- mounds: the archive's wild relatives ---------- */
   const mound = (x: number, z: number, r: number, h: number, seed: number) => {
@@ -146,5 +186,5 @@ export function buildJunkyard(scene: THREE.Scene, phys: Physics, surfaces: Surfa
   tag(shadow);
 
   b.finish();
-  return { builder: b };
+  return { builder: b, openGate, updateGate, gateIsOpen: () => opening, lock };
 }

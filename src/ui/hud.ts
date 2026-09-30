@@ -185,9 +185,12 @@ export class Hud {
   }
 
   /** The action-challenge panel: a title, a tug meter (0..1, 0.5 is even), and a mash prompt. */
-  setChallenge(c: { title: string; progress: number; jolt: number; now: number } | null) {
+  setChallenge(c: { title: string; progress: number; jolt: number; now: number; prompt?: string } | null) {
     this.challengeEl.hidden = !c;
     if (!c) return;
+    const mash = this.challengeEl.querySelector(".mash") as HTMLElement;
+    const want = c.prompt ? esc(c.prompt) : "MASH <kbd>E</kbd>!";
+    if (mash.dataset.p !== want) { mash.innerHTML = want; mash.dataset.p = want; }
     this.challengeEl.querySelector("b")!.textContent = c.title;
     (this.challengeEl.querySelector(".meter i") as HTMLElement).style.width = `${(c.progress * 100).toFixed(1)}%`;
     (this.challengeEl.querySelector(".meter em") as HTMLElement).style.left = `${(c.progress * 100).toFixed(1)}%`;
